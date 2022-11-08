@@ -20,7 +20,7 @@
 	///The cultist's full team, which holds their objectives.
 	var/datum/team/cult/cult_team
 	///How much Blood the cultist has gained through Blood spells, used for Powers.
-	var/stored_blood = 50
+	var/stored_blood = 0
 	/// UI displaying how much blood a cultist has
 	var/atom/movable/screen/blood_cult/stored_blood/stored_blood_display
 	/** Powers **/
@@ -28,6 +28,7 @@
 	var/datum/action/innate/blood_cult/mastervote/vote = new
 	var/datum/action/cooldown/spell/touch/blood_cult_spell/rites/brites = new
 	var/datum/action/cooldown/spell/touch/blood_cult_spell/stun/bstun = new
+	var/datum/action/cooldown/spell/touch/blood_cult_spell/twist/btwist = new
 
 
 /datum/antagonist/bloodcult/get_team()
@@ -56,6 +57,7 @@
 	QDEL_NULL(communion)
 	QDEL_NULL(vote)
 	QDEL_NULL(brites)
+	QDEL_NULL(btwist)
 	QDEL_NULL(bstun)
 	return ..()
 
@@ -73,6 +75,7 @@
 	add_objectives()
 	. = ..()
 	var/mob/living/current = owner.current
+	adjust_stored_blood(50)
 	if(give_equipment)
 		equip_cultist(TRUE)
 	current.log_message("has been converted to the cult of Nar'Sie!", LOG_ATTACK, color="#960000")
@@ -147,7 +150,6 @@
 	if(!isliving(mob_to_tweak))
 		return
 	var/mob/living/living_mob = mob_to_tweak
-	RegisterSignal(living_mob, COMSIG_LIVING_LIFE, .proc/on_life)
 	var/mob/living/current = owner.current
 	if(living_mob.hud_used)
 		var/datum/hud/hud_used = living_mob.hud_used
@@ -171,6 +173,7 @@
 	if(ishuman(current))
 		brites.Grant(current)
 		bstun.Grant(current)
+		btwist.Grant(current)
 	current.throw_alert("bloodsense", /atom/movable/screen/alert/bloodsense)
 	if(cult_team.cult_risen)
 		current.AddElement(/datum/element/cult_eyes, initial_delay = 0 SECONDS)
@@ -179,11 +182,10 @@
 
 	add_team_hud(current)
 
-/datum/antagonist/bloodcult/proc/on_life(datum/source, delta_time, times_fired)
-	SIGNAL_HANDLER
-	adjust_stored_blood(stored_blood)
-
 /datum/antagonist/bloodcult/proc/adjust_stored_blood(amount)
+	if(!isnum(amount))
+		return
+	stored_blood = max(0, stored_blood + amount)
 	stored_blood_display.maptext = FORMAT_STORED_BLOOD_TEXT(stored_blood)
 
 /datum/antagonist/bloodcult/proc/on_cult_hud_created(datum/source)
@@ -213,6 +215,7 @@
 	communion.Remove(current)
 	brites.Remove(current)
 	bstun.Remove(current)
+	btwist.Remove(current)
 	current.clear_alert("bloodsense")
 	if (HAS_TRAIT(current, TRAIT_UNNATURAL_RED_GLOWY_EYES))
 		current.RemoveElement(/datum/element/cult_eyes)
