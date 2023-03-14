@@ -5,7 +5,6 @@
 	dna = null
 	faction = list(ROLE_ALIEN)
 	sight = SEE_MOBS
-	see_in_dark = 4
 	verb_say = "hisses"
 	initial_language_holder = /datum/language_holder/alien
 	bubble_icon = "alien"
@@ -39,7 +38,7 @@
 	internal_organs += new /obj/item/organ/internal/brain/alien
 	internal_organs += new /obj/item/organ/internal/alien/hivenode
 	internal_organs += new /obj/item/organ/internal/tongue/alien
-	internal_organs += new /obj/item/organ/internal/eyes/night_vision/alien
+	internal_organs += new /obj/item/organ/internal/eyes/alien
 	internal_organs += new /obj/item/organ/internal/liver/alien
 	internal_organs += new /obj/item/organ/internal/ears
 	..()
@@ -108,6 +107,12 @@ Des: Removes all infected images from the alien.
 	if(num_hands < 2)
 		return FALSE
 	return TRUE
+
+/mob/living/carbon/alien/get_visible_suicide_message()
+	return "[src] is thrashing wildly! It looks like [p_theyre()] trying to commit suicide."
+
+/mob/living/carbon/alien/get_blind_suicide_message()
+	return "You hear thrashing."
 
 /mob/living/carbon/alien/proc/alien_evolve(mob/living/carbon/alien/new_xeno)
 	visible_message(

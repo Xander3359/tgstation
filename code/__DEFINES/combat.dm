@@ -87,6 +87,7 @@
 #define CLICK_CD_THROW 8
 #define CLICK_CD_RANGE 4
 #define CLICK_CD_RAPID 2
+#define CLICK_CD_HYPER_RAPID 1
 #define CLICK_CD_CLICK_ABILITY 6
 #define CLICK_CD_BREAKOUT 100
 #define CLICK_CD_HANDCUFFED 10
@@ -215,7 +216,7 @@ GLOBAL_LIST_INIT(shove_disarming_types, typecacheof(list(
 #define AMMO_BOX_ONE_SPRITE 0
 ///ammo box will have a different state for each bullet; <icon_state>-<bullets left>
 #define AMMO_BOX_PER_BULLET 1
-///ammo box will have a different state for full and empty; <icon_state>-max_ammo and <icon_state>-0
+/// Ammo box will have a different sprite for any ammo at all, and no ammo, <icon_state>-full <icon_state>-empty
 #define AMMO_BOX_FULL_EMPTY 2
 
 #define SUPPRESSED_NONE 0

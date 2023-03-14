@@ -365,6 +365,23 @@
 		/obj/item/stack/sheet/plasteel = 5)
 
 //Generic
+/obj/item/circuitboard/machine/component_printer
+	name = "\improper Component Printer (Machine Board)"
+	greyscale_colors = CIRCUIT_COLOR_SCIENCE
+	build_path = /obj/machinery/component_printer
+	req_components = list(
+		/datum/stock_part/matter_bin = 2,
+		/datum/stock_part/manipulator = 2,
+	)
+
+/obj/item/circuitboard/machine/module_duplicator
+	name = "\improper Module Duplicator (Machine Board)"
+	greyscale_colors = CIRCUIT_COLOR_SCIENCE
+	build_path = /obj/machinery/module_duplicator
+	req_components = list(
+		/datum/stock_part/matter_bin = 2,
+		/datum/stock_part/manipulator = 2,
+	)
 
 /obj/item/circuitboard/machine/circuit_imprinter
 	name = "Circuit Imprinter"
@@ -756,7 +773,7 @@
 /obj/item/circuitboard/machine/medical_kiosk/multitool_act(mob/living/user)
 	. = ..()
 	var/new_cost = tgui_input_number(user, "New cost for using this medical kiosk", "Pricing", custom_cost, 1000, 10)
-	if(!new_cost || QDELETED(user) || QDELETED(src) || !user.canUseTopic(src, be_close = TRUE, no_dexterity = FALSE, no_tk = TRUE))
+	if(!new_cost || QDELETED(user) || QDELETED(src) || !user.can_perform_action(src, FORBID_TELEKINESIS_REACH))
 		return
 	if(loc != user)
 		to_chat(user, span_warning("You must hold the circuitboard to change its cost!"))

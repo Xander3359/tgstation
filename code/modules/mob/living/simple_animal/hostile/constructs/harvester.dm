@@ -22,6 +22,7 @@
 		of illusion back to the Geometer so they may know Truth. Your form and any you are \
 		pulling can pass through runed walls effortlessly.</B>"
 	can_repair = TRUE
+	slowed_by_drag = FALSE
 
 
 /mob/living/simple_animal/hostile/construct/harvester/Bump(atom/thing)
@@ -83,6 +84,7 @@
 	overlay_icon_state = "bg_demon_border"
 
 	buttontooltipstyle = "cult"
+	button_icon = "icons/mob/actions/actions_cult.dmi"
 	button_icon_state = "cult_mark"
 	/// Where is nar nar? Are we even looking?
 	var/tracking = FALSE
