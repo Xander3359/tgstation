@@ -995,11 +995,11 @@
 	reset_inputs(user, TRUE)
 
 /obj/item/cursed_katana/attack(mob/living/target, mob/user, click_parameters)
+	. = ..()
+	if(!.)
+		return .
 	if(target.stat == DEAD || target == user)
 		return ..()
-	if(HAS_TRAIT(user, TRAIT_PACIFISM))
-		balloon_alert(user, "you don't want to harm!")
-		return
 	drew_blood = TRUE
 	var/list/modifiers = params2list(click_parameters)
 	if(LAZYACCESS(modifiers, RIGHT_CLICK))
@@ -1015,7 +1015,6 @@
 		return TRUE
 	else
 		timerid = addtimer(CALLBACK(src, PROC_REF(reset_inputs), user, FALSE), 5 SECONDS, TIMER_UNIQUE|TIMER_OVERRIDE|TIMER_STOPPABLE)
-		return ..()
 
 /obj/item/cursed_katana/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
 	if(attack_type == PROJECTILE_ATTACK)
