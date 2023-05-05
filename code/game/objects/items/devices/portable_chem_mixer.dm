@@ -96,6 +96,13 @@
 	if(severity > EXPLODE_LIGHT)
 		return ..()
 
+	return FALSE
+
+/obj/item/storage/portable_chem_mixer/attackby(obj/item/I, mob/user, params)
+	if (is_reagent_container(I) && !(I.item_flags & ABSTRACT) && I.is_open_container() && atom_storage.locked)
+		var/obj/item/reagent_containers/B = I
+		. = TRUE //no afterattack
+		if(!user.transferItemToLoc(B, src))
 /obj/item/storage/portable_chem_mixer/attackby(obj/item/attacking_item, mob/user, params)
 	if(!beaker && is_reagent_container(attacking_item) && attacking_item.is_open_container() && !atom_storage.locked)
 		if(attacking_item.forceMove(src))
