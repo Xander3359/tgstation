@@ -67,9 +67,12 @@
 	var/slowdown = affected_mob.reagents.has_reagent(/datum/reagent/medicine/spaceacillin) ? 0.5 : 1 // spaceacillin slows stage speed by 50%
 
 	if(has_cure())
+		if(disease_flags & CHRONIC && SPT_PROB(cure_chance, seconds_per_tick))
+			update_stage(1)
+			to_chat(affected_mob, span_notice("Your chronic illness is alleviated a little, though it can't be cured!"))
+			return
 		if(SPT_PROB(cure_chance, seconds_per_tick))
 			update_stage(max(stage - 1, 1))
-
 		if(disease_flags & CURABLE && SPT_PROB(cure_chance, seconds_per_tick))
 			cure()
 			return FALSE
@@ -83,7 +86,7 @@
 	stage = new_stage
 
 /datum/disease/proc/has_cure()
-	if(!(disease_flags & CURABLE))
+	if(!(disease_flags & (CURABLE | CHRONIC)))
 		return FALSE
 
 	. = cures.len
@@ -191,6 +194,8 @@
 //Use this to compare severities
 /proc/get_disease_severity_value(severity)
 	switch(severity)
+		if(DISEASE_SEVERITY_UNCURABLE)
+			return 0
 		if(DISEASE_SEVERITY_POSITIVE)
 			return 1
 		if(DISEASE_SEVERITY_NONTHREAT)
