@@ -4,15 +4,20 @@
 	id = SPECIES_FELINE
 	examine_limb_id = SPECIES_HUMAN
 	mutant_bodyparts = list("ears" = "Cat", "wings" = "None")
+	mutantbrain = /obj/item/organ/internal/brain/felinid
 	mutanttongue = /obj/item/organ/internal/tongue/cat
 	mutantears = /obj/item/organ/internal/ears/cat
 	external_organs = list(
 		/obj/item/organ/external/tail/cat = "Cat",
 	)
-	inherent_traits = list(TRAIT_CAN_USE_FLIGHT_POTION, TRAIT_HATED_BY_DOGS)
+	inherent_traits = list(
+		TRAIT_CAN_USE_FLIGHT_POTION,
+		TRAIT_HATED_BY_DOGS,
+		TRAIT_USES_SKINTONES,
+	)
 	changesource_flags = MIRROR_BADMIN | WABBAJACK | MIRROR_PRIDE | MIRROR_MAGIC | RACE_SWAP | ERT_SPAWN | SLIME_EXTRACT
 	species_language_holder = /datum/language_holder/felinid
-	payday_modifier = 0.75
+	payday_modifier = 1.0
 	ass_image = 'icons/ass/asscat.png'
 	family_heirlooms = list(/obj/item/toy/cattoy)
 	/// When false, this is a felinid created by mass-purrbation
