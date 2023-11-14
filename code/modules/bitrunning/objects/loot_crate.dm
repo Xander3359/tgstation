@@ -11,6 +11,8 @@
 /obj/structure/closet/crate/secure/bitrunning // Base class. Do not spawn this.
 	name = "base class cache"
 	desc = "Talk to a coder."
+	icon_state = "bitrunning"
+	base_icon_state = "bitrunning"
 
 /// The virtual domain - side of the bitrunning crate. Deliver to the send location.
 /obj/structure/closet/crate/secure/bitrunning/encrypted
@@ -62,8 +64,8 @@
 
 /// Handles generating random numbers & calculating loot totals
 /obj/structure/closet/crate/secure/bitrunning/decrypted/proc/calculate_loot(reward_points, rewards_multiplier, ore_multiplier)
-	var/base = 1 * (rewards_multiplier + reward_points)
-	var/random_sum = (rand() * 1.0 + 0.5) * base
+	var/base = rewards_multiplier + reward_points
+	var/random_sum = (rand() + 0.5) * base
 	return ROUND_UP(random_sum * ore_multiplier)
 
 /// Handles spawning extra loot. This tries to handle bad flat and assoc lists
