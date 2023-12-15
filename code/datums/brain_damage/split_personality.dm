@@ -266,9 +266,8 @@
 	notify_ghosts(
 		"[owner] is blacking out!",
 		source = owner,
-		action = NOTIFY_ORBIT,
-		notify_flags = NOTIFY_CATEGORY_NOFLASH,
 		header = "Bro I'm not even drunk right now",
+		notify_flags = NOTIFY_CATEGORY_NOFLASH,
 	)
 
 /datum/brain_trauma/severe/split_personality/blackout/on_lose()
@@ -294,8 +293,8 @@
 	if(duration_in_seconds <= 0)
 		qdel(src)
 		return
-	else if(duration_in_seconds <= 50)
-		to_chat(owner, span_warning("You have 50 seconds left before sobering up!"))
+	else if(duration_in_seconds <= 60 && !(duration_in_seconds % 20))
+		to_chat(owner, span_warning("You have [duration_in_seconds] seconds left before sobering up!"))
 	if(prob(10) && !HAS_TRAIT(owner, TRAIT_DISCOORDINATED_TOOL_USER))
 		ADD_TRAIT(owner, TRAIT_DISCOORDINATED_TOOL_USER, TRAUMA_TRAIT)
 		owner.balloon_alert(owner, "dexterity reduced temporarily!")
