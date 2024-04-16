@@ -12645,7 +12645,7 @@
 	dir = 8
 	},
 /turf/open/floor/engine,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "dJx" = (
 /obj/structure/cable,
 /obj/effect/spawner/structure/window/reinforced,
@@ -13929,9 +13929,6 @@
 /obj/structure/cable,
 /turf/open/floor/iron/white,
 /area/station/science/xenobiology)
-"egf" = (
-/turf/closed/wall/r_wall,
-/area/station/science/ordnance/burnchamber)
 "egj" = (
 /obj/structure/rack,
 /obj/machinery/light/small/directional/north,
@@ -16613,9 +16610,7 @@
 /turf/open/floor/iron/smooth,
 /area/mine/laborcamp/security)
 "eYH" = (
-/obj/machinery/power/smes{
-	charge = 5e+006
-	},
+/obj/machinery/power/smes/full,
 /obj/structure/cable,
 /turf/open/floor/circuit,
 /area/station/ai_monitored/turret_protected/ai)
@@ -19327,7 +19322,7 @@
 "fSG" = (
 /obj/machinery/atmospherics/pipe/smart/manifold4w/scrubbers/hidden/layer2,
 /turf/closed/wall/r_wall,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "fTb" = (
 /obj/structure/cable,
 /obj/machinery/atmospherics/pipe/smart/manifold4w/supply/hidden/layer4,
@@ -22775,7 +22770,7 @@
 "gWZ" = (
 /obj/machinery/atmospherics/components/unary/outlet_injector/monitored/ordnance_burn_chamber_input,
 /turf/open/floor/engine/vacuum,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "gXe" = (
 /obj/effect/turf_decal/siding/white{
 	dir = 4
@@ -25156,7 +25151,7 @@
 	dir = 4
 	},
 /turf/open/floor/engine,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "hKr" = (
 /obj/structure/table/glass,
 /obj/item/book/manual/wiki/infections{
@@ -26044,7 +26039,7 @@
 "iao" = (
 /obj/machinery/atmospherics/pipe/smart/simple/scrubbers/visible,
 /turf/closed/wall/r_wall,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "iar" = (
 /obj/structure/cable,
 /obj/machinery/door/poddoor/preopen{
@@ -26931,7 +26926,7 @@
 "inb" = (
 /obj/machinery/door/poddoor/incinerator_ordmix,
 /turf/open/floor/engine/vacuum,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "inh" = (
 /obj/structure/stairs/west,
 /obj/structure/railing,
@@ -27670,7 +27665,7 @@
 	dir = 8
 	},
 /turf/open/floor/engine,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "izn" = (
 /obj/effect/spawner/random/decoration/generic,
 /turf/open/floor/plating,
@@ -32833,7 +32828,7 @@
 /area/station/maintenance/port/fore)
 "keV" = (
 /turf/open/floor/engine/vacuum,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "keX" = (
 /obj/structure/table,
 /obj/item/stack/cable_coil{
@@ -41340,7 +41335,7 @@
 /obj/effect/mapping_helpers/airlock/locked,
 /obj/effect/mapping_helpers/airlock/access/all/science/ordnance,
 /turf/open/floor/engine/vacuum,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "mIE" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/cable,
@@ -42195,7 +42190,7 @@
 "mYd" = (
 /obj/machinery/air_sensor/ordnance_burn_chamber,
 /turf/open/floor/engine/vacuum,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "mYh" = (
 /turf/open/floor/iron/dark,
 /area/station/ai_monitored/turret_protected/ai)
@@ -44394,7 +44389,7 @@
 "nBV" = (
 /obj/machinery/atmospherics/components/unary/vent_scrubber/on,
 /turf/open/floor/engine/vacuum,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "nCa" = (
 /obj/structure/rack,
 /obj/item/pickaxe,
@@ -51115,8 +51110,8 @@
 /area/station/cargo/bitrunning/den)
 "pBI" = (
 /obj/machinery/power/smes{
-	capacity = 9e+006;
-	charge = 10000
+	capacity = 1.8e+008;
+	charge = 2e+005
 	},
 /obj/effect/decal/cleanable/cobweb/cobweb2,
 /obj/effect/decal/cleanable/dirt,
@@ -61130,7 +61125,7 @@
 "sDA" = (
 /obj/machinery/igniter/incinerator_ordmix,
 /turf/open/floor/engine/vacuum,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "sDQ" = (
 /obj/item/radio/intercom/prison/directional/north,
 /obj/effect/turf_decal/tile/red/half/contrasted{
@@ -68650,9 +68645,7 @@
 /area/station/engineering/atmos/hfr_room)
 "vbg" = (
 /obj/structure/cable,
-/obj/machinery/power/smes{
-	charge = 5e+006
-	},
+/obj/machinery/power/smes/full,
 /obj/machinery/camera/directional/south{
 	c_tag = "Labor Camp Utilities";
 	network = list("labor")
@@ -68660,9 +68653,7 @@
 /turf/open/floor/iron/smooth,
 /area/mine/laborcamp/security)
 "vbn" = (
-/obj/machinery/power/smes{
-	charge = 5e+006
-	},
+/obj/machinery/power/smes/full,
 /obj/structure/cable,
 /turf/open/floor/circuit/telecomms/mainframe,
 /area/station/tcommsat/server)
@@ -73912,7 +73903,7 @@
 "wHd" = (
 /obj/machinery/atmospherics/pipe/smart/simple/dark/visible,
 /turf/closed/wall/r_wall,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "wHe" = (
 /obj/structure/cable,
 /turf/open/floor/iron/dark/textured,
@@ -74389,7 +74380,7 @@
 	},
 /obj/effect/mapping_helpers/airlock/access/all/science/ordnance,
 /turf/open/floor/engine,
-/area/station/science/ordnance/burnchamber)
+/area/station/science/ordnance)
 "wPD" = (
 /obj/machinery/door/airlock/security/glass{
 	name = "Evidence Storage"
@@ -193607,10 +193598,10 @@ thA
 thA
 rcY
 iDt
-egf
-egf
-egf
-egf
+uIf
+uIf
+uIf
+uIf
 fSG
 fSG
 bId

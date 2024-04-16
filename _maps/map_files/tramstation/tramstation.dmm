@@ -22971,9 +22971,7 @@
 /turf/open/floor/iron/dark,
 /area/station/command/bridge)
 "hhf" = (
-/obj/machinery/power/smes{
-	charge = 5e+06
-	},
+/obj/machinery/power/smes/full,
 /obj/structure/cable,
 /turf/open/floor/circuit,
 /area/station/ai_monitored/turret_protected/ai)
@@ -65311,7 +65309,7 @@
 /obj/effect/turf_decal/stripes/line{
 	dir = 4
 	},
-/turf/open/floor/iron/dark,
+/turf/open/floor/plating,
 /area/station/ai_monitored/turret_protected/ai)
 "vTE" = (
 /obj/machinery/camera{
