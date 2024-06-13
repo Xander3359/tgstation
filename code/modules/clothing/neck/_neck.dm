@@ -351,6 +351,10 @@
 	greyscale_config_worn = /datum/greyscale_config/scarf/worn
 	flags_1 = IS_PLAYER_COLORABLE_1
 
+/obj/item/clothing/neck/scarf/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/surgery_initiator)
+
 /obj/item/clothing/neck/scarf/black
 	name = "black scarf"
 	greyscale_colors = "#4A4A4B#4A4A4B"
@@ -407,6 +411,10 @@
 	greyscale_config_worn = /datum/greyscale_config/scarf/worn
 	flags_1 = IS_PLAYER_COLORABLE_1
 
+/obj/item/clothing/neck/large_scarf/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/surgery_initiator)
+
 /obj/item/clothing/neck/large_scarf/red
 	name = "large red scarf"
 	greyscale_colors = "#8A2908#A06D66"
@@ -434,6 +442,10 @@
 	greyscale_config = /datum/greyscale_config/infinity_scarf
 	greyscale_config_worn = /datum/greyscale_config/infinity_scarf/worn
 	flags_1 = IS_PLAYER_COLORABLE_1
+
+/obj/item/clothing/neck/infinity_scarf/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/surgery_initiator)
 
 /obj/item/clothing/neck/petcollar
 	name = "pet collar"
