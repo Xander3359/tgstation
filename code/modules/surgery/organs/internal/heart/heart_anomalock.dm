@@ -43,27 +43,27 @@
 	if(!core)
 		return
 	UnregisterSignal(organ_owner, SIGNAL_ADDTRAIT(TRAIT_CRITICAL_CONDITION))
-	REMOVE_TRAIT(organ_owner, TRAIT_SHOCKIMMUNE, REF(src))
 	organ_owner.RemoveElement(/datum/element/empprotection, EMP_PROTECT_SELF|EMP_PROTECT_CONTENTS)
 	organ_owner.remove_status_effect(/datum/status_effect/stabilized/yellow)
 	tesla_zap(source = organ_owner, zap_range = 20, power = 2.5e5, cutoff = 1e3)
 	qdel(src)
 
 /obj/item/organ/internal/heart/cybernetic/anomalock/attack(mob/living/target_mob, mob/living/user, params)
-	if(target_mob == user && istype(target_mob) && core)
-		if(DOING_INTERACTION(user, "implanting"))
-			return
-		user.balloon_alert(user, "This will hurt...")
-		to_chat(user, span_userdanger("You see tendrils opening your ribcage"))
-		if(!do_after(user, 5 SECONDS, interaction_key = "implanting"))
-			return ..()
-		playsound(target_mob, 'sound/weapons/slice.ogg', 50, TRUE)
-		user.temporarilyRemoveItemFromInventory(src, TRUE)
-		Insert(user)
-		user.apply_damage(50, BRUTE, BODY_ZONE_CHEST)
-		user.emote("scream")
-		return TRUE
-	return ..()
+	if(target_mob != user || !istype(target_mob) || !core)
+		return ..()
+
+	if(DOING_INTERACTION(user, "implanting"))
+		return
+	user.balloon_alert(user, "This will hurt...")
+	to_chat(user, span_userdanger("You see tendrils opening your ribcage"))
+	if(!do_after(user, 5 SECONDS, interaction_key = "implanting"))
+		return ..()
+	playsound(target_mob, 'sound/weapons/slice.ogg', 50, TRUE)
+	user.temporarilyRemoveItemFromInventory(src, TRUE)
+	Insert(user)
+	user.apply_damage(100, BRUTE, BODY_ZONE_CHEST)
+	user.emote("scream")
+	return TRUE
 
 /obj/item/organ/internal/heart/cybernetic/anomalock/proc/on_emp_act(severity)
 	SIGNAL_HANDLER
@@ -81,9 +81,9 @@
 
 /obj/item/organ/internal/heart/cybernetic/anomalock/on_life(seconds_per_tick, times_fired)
 	. = ..()
-	if(owner.blood_volume < BLOOD_VOLUME_NORMAL)
+	if(owner.blood_volume <= BLOOD_VOLUME_NORMAL)
 		owner.blood_volume += 2.5 * seconds_per_tick
-	if(active && owner.health < owner.crit_threshold)
+	if(active && owner.health <= owner.crit_threshold)
 		owner.heal_overall_damage(3, 3)
 
 ///Does a few things to try to help you live whatever you may be going through
@@ -133,6 +133,7 @@
 		core = item
 		balloon_alert(user, "core installed")
 		playsound(src, 'sound/machines/click.ogg', 30, TRUE)
+		add_organ_trait(TRAIT_SHOCKIMMUNE)
 		update_icon_state()
 	else
 		return ..()
@@ -154,6 +155,7 @@
 	if(Adjacent(user) && !issilicon(user))
 		user.put_in_hands(core)
 	core = null
+	remove_organ_trait(TRAIT_SHOCKIMMUNE)
 	update_icon_state()
 
 /obj/item/organ/internal/heart/cybernetic/anomalock/update_icon_state()
