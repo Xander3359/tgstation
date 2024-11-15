@@ -60,16 +60,15 @@
 	remove_on_fullheal = TRUE
 	/// Our visual cue for the vulnerable state this status effect puts us in.
 	var/mutable_appearance/vulnverability_overlay
+	/// List of effects that clear the shove stun vulnerability
+	var/list/clear_stun_effects = list(COMSIG_LIVING_STATUS_PARALYZE, COMSIG_LIVING_STATUS_STUN, COMSIG_LIVING_STATUS_IMMOBILIZE)
 
 /datum/status_effect/next_shove_stuns/on_apply()
 	//Let's just clear this if they're dead or we can't stun them on a shove
 	if(owner.stat == DEAD || HAS_TRAIT(owner, TRAIT_NO_SIDE_KICK) || HAS_TRAIT(owner, TRAIT_IMMOBILIZED))
 		return FALSE
 	RegisterSignal(owner, COMSIG_LIVING_DEATH, PROC_REF(clear_stun_vulnverability_on_death))
-	RegisterSignals(owner, list(
-		COMSIG_LIVING_STATUS_PARALYZE,
-		COMSIG_LIVING_STATUS_STUN,
-		COMSIG_LIVING_STATUS_IMMOBILIZE), PROC_REF(clear_stun_vulnverability)
+	RegisterSignals(owner, clear_stun_effects, PROC_REF(clear_stun_vulnverability)
 	)
 	ADD_TRAIT(owner, TRAIT_STUN_ON_NEXT_SHOVE, STATUS_EFFECT_TRAIT)
 	vulnverability_overlay = mutable_appearance(icon = 'icons/effects/effects.dmi', icon_state = "dazed")
@@ -107,6 +106,9 @@
 /datum/status_effect/next_shove_stuns/proc/clear_stun_vulnverability_overlay()
 	owner.cut_overlay(vulnverability_overlay)
 	vulnverability_overlay = null
+
+/datum/status_effect/next_shove_stuns/heretic //Heretic subtype that bypasses the Paralyze check
+	clear_stun_effects = list(COMSIG_LIVING_STATUS_STUN, COMSIG_LIVING_STATUS_IMMOBILIZE)
 
 /// Status effect to prevent stuns from a shove
 /// Only applied by shoving someone to paralyze them

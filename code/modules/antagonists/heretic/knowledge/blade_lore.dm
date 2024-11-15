@@ -54,6 +54,7 @@
 		return
 
 	// We're officially behind them, apply effects
+	target.apply_status_effect(/datum/status_effect/next_shove_stuns/heretic) //This allows the heretic to shove stun despite the 1.5s paralyze from the backstab
 	target.AdjustParalyzed(1.5 SECONDS)
 	target.apply_damage(10, BRUTE, wound_bonus = CANT_WOUND)
 	target.balloon_alert(source, "backstab!")
