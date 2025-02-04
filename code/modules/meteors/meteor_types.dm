@@ -45,6 +45,9 @@
 
 /obj/effect/meteor/Destroy()
 	GLOB.meteor_list -= src
+	var/datum/move_loop/moveloop = GLOB.move_manager.processing_on(src, SSmovement)
+	if (!isnull(moveloop))
+		UnregisterSignal(moveloop, COMSIG_MOVELOOP_STOP)
 	return ..()
 
 /obj/effect/meteor/Moved(atom/old_loc, movement_dir, forced, list/old_locs, momentum_change = TRUE)
@@ -237,7 +240,7 @@
 //Flaming meteor
 /obj/effect/meteor/flaming
 	name = "flaming meteor"
-	desc = "An veritable shooting star, both beautiful and frightening. You should probably keep your distance from this."
+	desc = "A veritable shooting star, both beautiful and frightening. You should probably keep your distance from this."
 	icon_state = "flaming"
 	hits = 5
 	heavy = TRUE
