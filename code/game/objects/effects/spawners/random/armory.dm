@@ -24,6 +24,24 @@
 	icon_state = "rubbershot"
 	loot = list(/obj/item/storage/box/rubbershot)
 
+/obj/effect/spawner/random/armory/buckshot
+	name = "buckshot spawner"
+	icon_state = "buckshot"
+	loot = list(/obj/item/storage/box/lethalshot)
+
+/obj/effect/spawner/random/armory/buckshot/sketchy
+	name = "sketchy buckshot spawner"
+	icon_state = "buckshot"
+	loot = list(
+		/obj/item/storage/box/lethalshot = 4,
+		/obj/item/storage/box/lethalshot/old = 2,
+	)
+
+/obj/effect/spawner/random/armory/slug
+	name = "slug shell spawner"
+	icon_state = "buckshot"
+	loot = list(/obj/item/storage/box/slugs)
+
 // Weapons
 /obj/effect/spawner/random/armory/disablers
 	name = "disabler spawner"
@@ -44,6 +62,16 @@
 	name = "shotgun spawner"
 	icon_state = "shotgun"
 	loot = list(/obj/item/gun/ballistic/shotgun/riot)
+
+/obj/effect/spawner/random/armory/dragnet
+	name = "DRAGnet spawner"
+	icon_state = "dragnet"
+	loot = list(/obj/item/gun/energy/e_gun/dragnet)
+	spawn_loot_count = 2
+
+/obj/effect/spawner/random/armory/dragnet/spawn_loot(lootcount_override)
+	. = ..()
+	new /obj/item/dragnet_beacon(get_turf(src)) //And give them a beacon too!
 
 // Armor
 /obj/effect/spawner/random/armory/bulletproof_helmet

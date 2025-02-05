@@ -137,7 +137,7 @@
 
 	examine_text += span_notice("There is an integrated circuit attached. Use a multitool to access the wiring. Use a screwdriver to remove it from [source].")
 	examine_text += span_notice("The cover panel to the integrated circuit is [locked? "locked" : "unlocked"].")
-	var/obj/item/stock_parts/cell/cell = attached_circuit.cell
+	var/obj/item/stock_parts/power_store/cell = attached_circuit.cell
 	examine_text += span_notice("The charge meter reads [cell ? round(cell.percent(), 1) : 0]%.")
 
 	if (shell_flags & SHELL_FLAG_USB_PORT)
@@ -167,13 +167,13 @@
 	if(!is_authorized(attacker))
 		return
 
-	if(istype(item, /obj/item/stock_parts/cell))
+	if(istype(item, /obj/item/stock_parts/power_store/cell))
 		source.balloon_alert(attacker, "can't put cell in directly!")
 		return
 
 	if(istype(item, /obj/item/inducer))
 		var/obj/item/inducer/inducer = item
-		INVOKE_ASYNC(inducer, TYPE_PROC_REF(/obj/item, attack_atom), attached_circuit || parent, attacker, list())
+		INVOKE_ASYNC(inducer, TYPE_PROC_REF(/obj/item, interact_with_atom), attached_circuit || parent, attacker, list())
 		return COMPONENT_NO_AFTERATTACK
 
 	if(attached_circuit)
@@ -346,7 +346,11 @@
 	))
 	if(attached_circuit.loc == parent || (!QDELETED(attached_circuit) && attached_circuit.loc == null))
 		var/atom/parent_atom = parent
-		attached_circuit.forceMove(parent_atom.drop_location())
+		var/drop_location = parent_atom.drop_location()
+		if(drop_location)
+			attached_circuit.forceMove(drop_location)
+		else
+			attached_circuit.moveToNullspace()
 
 	for(var/obj/item/circuit_component/to_remove as anything in unremovable_circuit_components)
 		attached_circuit.remove_component(to_remove)
@@ -376,7 +380,7 @@
 	return COMSIG_USB_CABLE_CONNECTED_TO_CIRCUIT
 
 /**
- * Determines if a user is authorized to see the existance of this shell. Returns false if they are not
+ * Determines if a user is authorized to see the existence of this shell. Returns false if they are not
  *
  * Arguments:
  * * user - The user to check if they are authorized

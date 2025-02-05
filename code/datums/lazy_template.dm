@@ -131,6 +131,10 @@
 	key = LAZY_TEMPLATE_KEY_HERETIC_SACRIFICE
 	map_name = "heretic_sacrifice"
 
+/datum/lazy_template/voidwalker_void
+	key = LAZY_TEMPLATE_KEY_VOIDWALKER_VOID
+	map_name = "voidwalker_void"
+
 /datum/lazy_template/syndicate_satellite
 	key = LAZY_TEMPLATE_KEY_SYNDICATE_SATELLITE
 	map_name = "syndicate_satellite"
