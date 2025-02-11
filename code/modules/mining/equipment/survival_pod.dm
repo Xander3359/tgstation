@@ -148,6 +148,11 @@
 	desc = "Provides vital emergency support to employees who are caught short in the field."
 	template_id = "shelter_toilet"
 
+/obj/item/survivalcapsule/syndie
+	name = "XANTODO NAME"
+	desc = "XANTODO DESC"
+	template_id = "shelter_whiskey"
+
 //Pod objects
 
 //Window

@@ -226,3 +226,154 @@
 		return ..()
 	icon_state = base_icon_state
 	return ..()
+
+/obj/machinery/teleport/syndicate_gate
+	icon = 'icons/obj/machines/teleporter_multitile.dmi'
+	icon_state = "teleporter_off"
+	pixel_x = -32
+	///Tracks wether the portal is active or not, used to toggle the sprite
+	var/activated = FALSE
+	///When a painting targets us as their signal, we save them as our return target
+	var/atom/return_target
+	///Internal timer to prevent audio spam.
+	var/next_beep = 0
+/*
+/obj/machinery/teleport/syndicate_gate/Destroy()
+	GLOB.active_syndicate_gates -= src
+	return_target = null
+	return ..()
+
+/obj/machinery/teleport/syndicate_gate/Initialize(mapload)
+	. = ..()
+	RegisterSignal(src, COMSIG_PAINTING_SET_TARGET, PROC_REF(on_target_set))
+	RegisterSignals(src, list(COMSIG_QDELETING, COMSIG_MACHINERY_BROKEN, COMSIG_PAINTING_CUT_CONNECTIONS), PROC_REF(remove_connections))
+
+/obj/machinery/teleport/syndicate_gate/Bumped(mob/living/user)
+	if(!ishuman(user))
+		return //Otherwise the sparks keep making the sound spam
+	if(!return_target)
+		if(next_beep <= world.time)
+			next_beep = world.time + (2 SECONDS)
+			playsound(src, 'sound/machines/scanbuzz.ogg', 100, FALSE)
+		return
+
+	if(user.mind.has_antag_datum(/datum/antagonist/satellite_agent))
+		var/confirmation = tgui_alert(user, "Are you sure you wish to leave the satellite, this should only be a last resort to help a field agent", "WARNING", list("Teleport?", "cancel"))
+		if(confirmation != "Teleport?")
+			return
+		if(!Adjacent(user))
+			return
+
+	var/actual_target = return_target
+	if(!(locate(/obj/item/implant/gate_authorization) in user.implants) || return_target == "Random Teleport")
+		actual_target = get_random_station_turf() //Good luck
+	do_teleport(user, actual_target, forced = TRUE)
+
+///When a painting sets us as their teleport target, we save them as a reference so we may return to it
+/obj/machinery/teleport/syndicate_gate/proc/on_target_set(datum/source, atom/return_painting)
+	SIGNAL_HANDLER
+	remove_connections(src)
+	return_target = return_painting
+	update_appearance(UPDATE_ICON)
+
+///Removes any active return_target
+/obj/machinery/teleport/syndicate_gate/proc/remove_connections(datum/source)
+	SIGNAL_HANDLER
+	if(!return_target)
+		update_appearance(UPDATE_ICON)
+		return
+
+	if(!istext(return_target))
+		var/atom/old_return_target = return_target
+		return_target = null
+		SEND_SIGNAL(old_return_target, COMSIG_GATE_CUT_CONNECTIONS, src)
+	update_appearance(UPDATE_ICON)
+
+/obj/machinery/teleport/syndicate_gate/attack_hand(mob/living/user, list/modifiers)
+	. = ..()
+	if(!(src in GLOB.active_syndicate_gates))
+		GLOB.active_syndicate_gates += src
+		user.balloon_alert(user, "activated")
+		activated = TRUE
+		update_appearance(UPDATE_ICON)
+		return
+
+	if(return_target)
+		var/confirmation = tgui_alert(user, "This will cut the link to any other teleporter, are you sure?", "WARNING", list("DISABLE", "cancel"))
+		if(confirmation != "DISABLE")
+			return
+
+	GLOB.active_syndicate_gates -= src
+	user.balloon_alert(user, "deactivated")
+	activated = FALSE
+	remove_connections(src)
+	update_appearance(UPDATE_ICON)
+
+/obj/machinery/teleport/syndicate_gate/attack_hand_secondary(mob/user, list/modifiers)
+	. = ..()
+	if(. == SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN)
+		return .
+
+	if(!activated)
+		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+
+	if(return_target)
+		attack_hand(user, modifiers)
+		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+
+	var/list/targets = list("Random Teleport" = "Random Teleport")
+	for(var/obj/structure/sign/painting/syndicate_teleporter/potential_target in GLOB.active_syndicate_paintings)
+		if(potential_target.integrity_compromised)
+			continue
+
+		var/list/area_index = list()
+		var/area/target_area = get_area(potential_target)
+		targets[avoid_assoc_duplicate_keys(format_text(target_area.name), area_index)] = potential_target
+
+	var/target_input = tgui_input_list(user, "Where to launch to?", "Set Teleporter?", sort_list(targets))
+	if(!target_input)
+		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+	return_target = targets[target_input]
+	if(!istext(return_target))
+		SEND_SIGNAL(return_target, COMSIG_GATE_SET_TARGET, src)
+	update_appearance(UPDATE_ICON)
+	user.balloon_alert(user, "target set")
+	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+*/
+/obj/machinery/teleport/syndicate_gate/update_icon_state()
+	. = ..()
+	if(return_target)
+		icon_state = "teleporter_active"
+	else if(activated)
+		icon_state = "teleporter_on"
+	else
+		icon_state = "teleporter_off"
+
+// XANTODO DELETE DEBUGGING CRAP
+
+/obj/machinery/teleport/syndicate_gate/attack_hand(mob/living/user, list/modifiers)
+	. = ..()
+	if(activated)
+		user.balloon_alert(user, "deactivated")
+		activated = FALSE
+		update_appearance(UPDATE_ICON)
+	else
+		user.balloon_alert(user, "activated")
+		activated = TRUE
+		update_appearance(UPDATE_ICON)
+
+/*!
+ * Custom implant which makes it safe to use syndicate gates
+ */
+
+/obj/item/implant/gate_authorization
+	name = "Gate Authorization implant"
+	actions_types = null
+
+/obj/item/implant/gate_authorization/implant(mob/living/target, mob/user, silent, force)
+	. = ..()
+	target.faction |= ROLE_SYNDICATE
+
+/obj/item/implanter/gate_authorization
+	name = "implanter (gate authorization)"
+	imp_type = /obj/item/implant/gate_authorization

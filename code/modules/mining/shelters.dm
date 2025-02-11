@@ -89,6 +89,12 @@
 	blacklisted_turfs -= typesof(/turf/closed/mineral)
 	banned_objects = typecacheof(/obj/structure/stone_tile)
 
+/datum/map_template/shelter/whiskey
+	name = "Shelter Whiskey"
+	shelter_id = "shelter_whiskey"
+	description = "XANTODO DESC"
+	mappath = "_maps/templates/shelter_s.dmm"
+
 /datum/map_template/shelter/toilet
 	name = "Emergency Relief Shelter"
 	shelter_id = "shelter_toilet"
