@@ -227,6 +227,9 @@
 	icon_state = base_icon_state
 	return ..()
 
+// XANTODO - Put this in globalvars
+GLOBAL_DATUM(syndicate_gate, /obj/machinery/teleport/syndicate_gate)
+
 /obj/machinery/teleport/syndicate_gate
 	icon = 'icons/obj/machines/teleporter_multitile.dmi'
 	icon_state = "teleporter_off"
@@ -237,16 +240,17 @@
 	var/atom/return_target
 	///Internal timer to prevent audio spam.
 	var/next_beep = 0
-/*
+
 /obj/machinery/teleport/syndicate_gate/Destroy()
-	GLOB.active_syndicate_gates -= src
+	GLOB.syndicate_gate -= src
 	return_target = null
 	return ..()
 
 /obj/machinery/teleport/syndicate_gate/Initialize(mapload)
 	. = ..()
-	RegisterSignal(src, COMSIG_PAINTING_SET_TARGET, PROC_REF(on_target_set))
-	RegisterSignals(src, list(COMSIG_QDELETING, COMSIG_MACHINERY_BROKEN, COMSIG_PAINTING_CUT_CONNECTIONS), PROC_REF(remove_connections))
+	GLOB.syndicate_gate = src
+	//RegisterSignal(src, COMSIG_PAINTING_SET_TARGET, PROC_REF(on_target_set))
+	//RegisterSignals(src, list(COMSIG_QDELETING, COMSIG_MACHINERY_BROKEN, COMSIG_PAINTING_CUT_CONNECTIONS), PROC_REF(remove_connections))
 
 /obj/machinery/teleport/syndicate_gate/Bumped(mob/living/user)
 	if(!ishuman(user))
@@ -254,21 +258,25 @@
 	if(!return_target)
 		if(next_beep <= world.time)
 			next_beep = world.time + (2 SECONDS)
-			playsound(src, 'sound/machines/scanbuzz.ogg', 100, FALSE)
+			playsound(src, 'sound/machines/scanner/scanbuzz.ogg', 100, FALSE)
 		return
 
-	if(user.mind.has_antag_datum(/datum/antagonist/satellite_agent))
-		var/confirmation = tgui_alert(user, "Are you sure you wish to leave the satellite, this should only be a last resort to help a field agent", "WARNING", list("Teleport?", "cancel"))
-		if(confirmation != "Teleport?")
-			return
-		if(!Adjacent(user))
-			return
+	//if(user.mind.has_antag_datum(/datum/antagonist/satellite_agent))
+	//	var/confirmation = tgui_alert(user, "Are you sure you wish to leave the satellite, this should only be a last resort to help a field agent", "WARNING", list("Teleport?", "cancel"))
+	//	if(confirmation != "Teleport?")
+	//		return
+	//	if(!Adjacent(user))
+	//		return
 
 	var/actual_target = return_target
 	if(!(locate(/obj/item/implant/gate_authorization) in user.implants) || return_target == "Random Teleport")
 		actual_target = get_random_station_turf() //Good luck
+		user.adjustStaminaLoss(60)
+		user.apply_status_effect(/datum/status_effect/dizziness)
+		user.apply_status_effect(/datum/status_effect/confusion)
 	do_teleport(user, actual_target, forced = TRUE)
 
+/*
 ///When a painting sets us as their teleport target, we save them as a reference so we may return to it
 /obj/machinery/teleport/syndicate_gate/proc/on_target_set(datum/source, atom/return_painting)
 	SIGNAL_HANDLER
@@ -308,6 +316,7 @@
 	activated = FALSE
 	remove_connections(src)
 	update_appearance(UPDATE_ICON)
+*/
 
 /obj/machinery/teleport/syndicate_gate/attack_hand_secondary(mob/user, list/modifiers)
 	. = ..()
@@ -318,14 +327,15 @@
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 	if(return_target)
+		return_target = null
+		update_appearance(UPDATE_ICON)
+		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+		// XANTODO - Figure out why tf I did this back in 2024
 		attack_hand(user, modifiers)
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 	var/list/targets = list("Random Teleport" = "Random Teleport")
-	for(var/obj/structure/sign/painting/syndicate_teleporter/potential_target in GLOB.active_syndicate_paintings)
-		if(potential_target.integrity_compromised)
-			continue
-
+	for(var/obj/item/beacon/potential_target as anything in GLOB.teleportbeacons)
 		var/list/area_index = list()
 		var/area/target_area = get_area(potential_target)
 		targets[avoid_assoc_duplicate_keys(format_text(target_area.name), area_index)] = potential_target
@@ -334,12 +344,12 @@
 	if(!target_input)
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 	return_target = targets[target_input]
-	if(!istext(return_target))
-		SEND_SIGNAL(return_target, COMSIG_GATE_SET_TARGET, src)
+	//if(!istext(return_target))
+	//	SEND_SIGNAL(return_target, COMSIG_GATE_SET_TARGET, src)
 	update_appearance(UPDATE_ICON)
 	user.balloon_alert(user, "target set")
 	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
-*/
+
 /obj/machinery/teleport/syndicate_gate/update_icon_state()
 	. = ..()
 	if(return_target)
@@ -377,3 +387,41 @@
 /obj/item/implanter/gate_authorization
 	name = "implanter (gate authorization)"
 	imp_type = /obj/item/implant/gate_authorization
+
+// XANTODO - Figure out where to put the keycard
+
+/obj/item/keycard/gate_keycard
+	name = "suspicious keycard"
+
+/obj/item/keycard/gate_keycard/interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
+	. = ..()
+	if(isnull(GLOB.syndicate_gate)) // Can't teleport if there's no gate to teleport to
+		return NONE
+
+	if(istype(interacting_with, /obj/item/beacon))
+		if(!do_after(user, 10 SECONDS, interacting_with))
+			return NONE
+		var/obj/effect/portal/bad_portal = new(get_turf(user))
+		bad_portal.hard_target = get_turf(GLOB.syndicate_gate)
+		bad_portal.color = COLOR_SYNDIE_RED
+		QDEL_IN(bad_portal, 10 SECONDS)
+		do_teleport(user, GLOB.syndicate_gate, forced = TRUE)
+		return ITEM_INTERACT_SUCCESS
+
+	else if(istype(interacting_with, /obj/machinery/quantumpad))
+		if(!do_after(user, 5 SECONDS, interacting_with))
+			return NONE
+		var/obj/effect/portal/bad_portal = new(get_turf(user))
+		bad_portal.hard_target = get_turf(GLOB.syndicate_gate)
+		bad_portal.color = COLOR_SYNDIE_RED
+		QDEL_IN(bad_portal, 5 SECONDS)
+		do_teleport(user, GLOB.syndicate_gate, forced = TRUE)
+		return ITEM_INTERACT_SUCCESS
+
+	else if(istype(interacting_with, /obj/machinery/teleport/hub))
+		// Instant teleportation from this one
+		do_teleport(user, GLOB.syndicate_gate, forced = TRUE)
+		return ITEM_INTERACT_SUCCESS
+
+	else
+		return NONE

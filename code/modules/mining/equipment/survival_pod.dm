@@ -152,6 +152,7 @@
 	name = "XANTODO NAME"
 	desc = "XANTODO DESC"
 	template_id = "shelter_whiskey"
+	yeet_back = FALSE
 
 //Pod objects
 
