@@ -51,7 +51,17 @@
 			location_sanity++
 			continue
 
-		new /obj/effect/heretic_influence(chosen_location)
+		var/obj/effect/heretic_influence/new_influence = new(chosen_location)
+		for(var/current in 1 to length(tracked_heretics))
+			var/datum/mind/current_mind = tracked_heretics[current]
+			var/mob/living/current_body = current_mind.current
+			var/image/influence_image = image(new_influence.icon, current_body, new_influence.real_icon_state)
+			influence_image.pixel_x += 128
+			add_image_to_client(influence_image, current_body.client)
+			//var/image/influence_imagee = image(new_influence.icon, get_turf(current_body), new_influence.real_icon_state)
+			//add_image_to_client(influence_imagee, current_body.client)
+
+		//add_image_to_clients(influence_image, tracked_clients)
 
 /**
  * Adds a mind to the list of people that can see the reality smashes
