@@ -92,7 +92,7 @@
 		return underbarrel.try_fire_gun(target, user, params)
 	return ..()
 
-/obj/item/gun/ballistic/automatic/pistol/clandestine/fisher/afterattack(atom/target, mob/user, click_parameters)
+/obj/item/gun/ballistic/automatic/pistol/clandestine/fisher/afterattack(atom/target, mob/user, list/modifiers)
 	var/obj/projectile/energy/fisher/melee/simulated_hit = new
 	simulated_hit.firer = user
 	simulated_hit.on_hit(target)
@@ -176,7 +176,7 @@
 	icon_state = "reagle"
 	inhand_icon_state = "deagleg"
 	burst_size = 2
-	fire_delay = 1
+	burst_delay = 1
 	projectile_damage_multiplier = 1.25
 	accepted_magazine_type = /obj/item/ammo_box/magazine/r10mm
 	actions_types = list(/datum/action/item_action/toggle_firemode)
@@ -190,7 +190,7 @@
 	accepted_magazine_type = /obj/item/ammo_box/magazine/m9mm_aps
 	can_suppress = TRUE
 	burst_size = 3
-	fire_delay = 1
+	burst_delay = 1
 	spread = 10
 	actions_types = list(/datum/action/item_action/toggle_firemode)
 	suppressor_x_offset = 6

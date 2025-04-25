@@ -117,7 +117,7 @@
 		active_price = board.custom_cost
 	return
 
-/obj/machinery/medical_kiosk/attackby(obj/item/O, mob/user, params)
+/obj/machinery/medical_kiosk/attackby(obj/item/O, mob/user, list/modifiers)
 	if(default_deconstruction_screwdriver(user, "[base_icon_state]_open", "[base_icon_state]_off", O))
 		return
 	else if(default_deconstruction_crowbar(O))
@@ -178,7 +178,7 @@
 			user.visible_message(span_warning("[user] waves a suspicious card by the [src]'s biometric scanner!"))
 		balloon_alert(user, "sensors overloaded")
 	obj_flags |= EMAGGED
-	var/obj/item/circuitboard/computer/cargo/board = circuit
+	var/obj/item/circuitboard/board = circuit
 	board.obj_flags |= EMAGGED //Mirrors emag status onto the board as well.
 	pandemonium = TRUE
 	return TRUE

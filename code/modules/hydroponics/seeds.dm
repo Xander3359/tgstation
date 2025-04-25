@@ -208,7 +208,7 @@
 	///List of plants all harvested from the same batch.
 	var/list/result = list()
 	///Tile of the harvester to deposit the growables.
-	var/output_loc = parent.Adjacent(user) ? user.loc : parent.loc //needed for TK
+	var/output_loc = parent.Adjacent(user) ? user.drop_location() : parent.drop_location() //needed for TK
 	///Name of the grown products.
 	var/product_name
 	///The Number of products produced by the plant, typically the yield. Modified by certain traits.
@@ -463,7 +463,7 @@
 /obj/item/seeds/proc/on_chem_reaction(datum/reagents/reagents)
 	return
 
-/obj/item/seeds/attackby(obj/item/O, mob/user, params)
+/obj/item/seeds/attackby(obj/item/O, mob/user, list/modifiers)
 	if(IS_WRITING_UTENSIL(O))
 		var/choice = tgui_input_list(usr, "What would you like to change?", "Seed Alteration", list("Plant Name", "Seed Description", "Product Description"))
 		if(isnull(choice))
