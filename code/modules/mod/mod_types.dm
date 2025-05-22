@@ -370,6 +370,23 @@
 	. = ..()
 	ADD_TRAIT(src, TRAIT_CONTRABAND_BLOCKER, INNATE_TRAIT)
 
+/obj/item/mod/control/pre_equipped/contractor
+	theme = /datum/mod_theme/contractor
+	starting_frequency = MODLINK_FREQ_SYNDICATE
+	applied_cell = /obj/item/stock_parts/power_store/cell/super
+	applied_modules = list( // XANTODO Maybe change modules
+		/obj/item/mod/module/emp_shield,
+		/obj/item/mod/module/magnetic_harness,
+		/obj/item/mod/module/quick_carry,
+		/obj/item/mod/module/visor/diaghud,
+		/obj/item/mod/module/hat_stabilizer/syndicate,
+		/obj/item/mod/module/quick_cuff,
+	)
+
+/obj/item/mod/control/pre_equipped/contractor/Initialize(mapload, new_theme, new_skin, new_core)
+	. = ..()
+	ADD_TRAIT(src, TRAIT_CONTRABAND_BLOCKER, INNATE_TRAIT)
+
 /obj/item/mod/control/pre_equipped/interdyne
 	theme = /datum/mod_theme/interdyne
 	starting_frequency = MODLINK_FREQ_SYNDICATE

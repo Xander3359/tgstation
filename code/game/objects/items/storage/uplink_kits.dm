@@ -866,6 +866,7 @@
 
 /obj/item/storage/box/syndicate/contractor_loadout/PopulateContents()
 	new /obj/item/mod/control/pre_equipped/infiltrator(src)
+	new /obj/item/mod/control/pre_equipped/contractor(src)
 	new /obj/item/clothing/head/helmet/space/syndicate/contract(src)
 	new /obj/item/clothing/suit/space/syndicate/contract(src)
 	new /obj/item/clothing/under/chameleon(src)

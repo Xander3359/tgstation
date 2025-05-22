@@ -1392,6 +1392,68 @@
 	acid = 100
 	wound = 25
 
+/datum/mod_theme/contractor
+	name = "contractor"
+	desc = "XANTODO DESC"
+	extended_desc = "XANTODO Wall of text"
+	default_skin = "contractor"
+	armor_type = /datum/armor/mod_theme_contractor
+	resistance_flags = FIRE_PROOF | ACID_PROOF
+	atom_flags = PREVENT_CONTENTS_EXPLOSION_1
+	siemens_coefficient = 0
+	slowdown_deployed = 0
+	activation_step_time = MOD_ACTIVATION_STEP_TIME * 0.5
+	ui_theme = "syndicate"
+	inbuilt_modules = list(/obj/item/mod/module/infiltrator, /obj/item/mod/module/storage/belt, /obj/item/mod/module/demoralizer)
+	allowed_suit_storage = list(
+		/obj/item/restraints/handcuffs,
+		/obj/item/assembly/flash,
+		/obj/item/melee/baton,
+		/obj/item/melee/energy/sword,
+		/obj/item/shield/energy,
+	)
+	variants = list(
+		"contractor" = list(
+			/obj/item/clothing/head/mod = list(
+				UNSEALED_CLOTHING = SNUG_FIT|THICKMATERIAL,
+				UNSEALED_INVISIBILITY = HIDEEARS|HIDEHAIR,
+				SEALED_INVISIBILITY = HIDEFACIALHAIR|HIDEMASK|HIDEEYES|HIDEFACE|HIDESNOUT|HIDEANTENNAE,
+				SEALED_COVER = HEADCOVERSMOUTH|HEADCOVERSEYES|PEPPERPROOF,
+				CAN_OVERSLOT = TRUE,
+				UNSEALED_MESSAGE = HELMET_UNSEAL_MESSAGE,
+				SEALED_MESSAGE = HELMET_SEAL_MESSAGE,
+			),
+			/obj/item/clothing/suit/mod = list(
+				UNSEALED_CLOTHING = THICKMATERIAL,
+				SEALED_INVISIBILITY = HIDEJUMPSUIT|HIDEMUTWINGS,
+				CAN_OVERSLOT = TRUE,
+				UNSEALED_MESSAGE = CHESTPLATE_UNSEAL_MESSAGE,
+				SEALED_MESSAGE = CHESTPLATE_SEAL_MESSAGE,
+			),
+			/obj/item/clothing/gloves/mod = list(
+				SEALED_CLOTHING = THICKMATERIAL,
+				CAN_OVERSLOT = TRUE,
+				UNSEALED_MESSAGE = GAUNTLET_UNSEAL_MESSAGE,
+				SEALED_MESSAGE = GAUNTLET_SEAL_MESSAGE,
+			),
+			/obj/item/clothing/shoes/mod = list(
+				SEALED_CLOTHING = THICKMATERIAL,
+				CAN_OVERSLOT = TRUE,
+				UNSEALED_MESSAGE = BOOT_UNSEAL_MESSAGE,
+				SEALED_MESSAGE = BOOT_SEAL_MESSAGE,
+			),
+		),
+	)
+/datum/armor/mod_theme_contractor // XANTODO Check armor values
+	melee = 50
+	bullet = 50
+	laser = 40
+	energy = 50
+	bomb = 40
+	fire = 100
+	acid = 100
+	wound = 25
+
 /datum/mod_theme/interdyne
 	name = "interdyne"
 	desc = "A corpse-snatching and rapid-retrieval modsuit, resulting from a lucrative tech exchange between Interdyne Pharmaceutics and Cybersun Industries."
