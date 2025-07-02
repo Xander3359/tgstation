@@ -112,6 +112,7 @@
 		if(!ispath(path))
 			continue
 		var/obj/item/mod_part = new path(mod)
+		apply_to_part(mod_part)
 		if(mod_part.slot_flags == ITEM_SLOT_OCLOTHING && isclothing(mod_part))
 			var/obj/item/clothing/chestplate = mod_part
 			chestplate.allowed |= allowed_suit_storage
@@ -167,6 +168,31 @@
 		part.worn_icon = used_skin[MOD_WORN_ICON_OVERRIDE] || 'icons/mob/clothing/modsuit/mod_clothing.dmi'
 		part.icon_state = "[skin]-[part.base_icon_state][mod.get_part_datum(part).sealed ? "-sealed" : ""]"
 		mod.wearer?.update_clothing(part.slot_flags)
+
+/datum/mod_theme/proc/apply_to_part(obj/item/mod_part)
+	if(!isclothing(mod_part))
+		return
+	switch(mod_part.slot_flags)
+		if(ITEM_SLOT_OCLOTHING)
+			apply_to_suit(mod_part)
+		if(ITEM_SLOT_GLOVES)
+			apply_to_gloves(mod_part)
+		if(ITEM_SLOT_HEAD)
+			apply_to_helmet(mod_part)
+		if(ITEM_SLOT_FEET)
+			apply_to_shoes(mod_part)
+
+/datum/mod_theme/proc/apply_to_suit(obj/item/mod_part)
+	SHOULD_CALL_PARENT(FALSE)
+
+/datum/mod_theme/proc/apply_to_gloves(obj/item/mod_part)
+	SHOULD_CALL_PARENT(FALSE)
+
+/datum/mod_theme/proc/apply_to_helmet(obj/item/mod_part)
+	SHOULD_CALL_PARENT(FALSE)
+
+/datum/mod_theme/proc/apply_to_shoes(obj/item/mod_part)
+	SHOULD_CALL_PARENT(FALSE)
 
 /datum/armor/mod_theme
 	melee = 10
@@ -860,6 +886,9 @@
 		),
 	)
 
+/datum/mod_theme/research/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_research
 	melee = 20
 	bullet = 15
@@ -926,6 +955,9 @@
 		),
 	)
 
+/datum/mod_theme/security/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_security
 	melee = 15
 	bullet = 15
@@ -991,6 +1023,9 @@
 			),
 		),
 	)
+
+/datum/mod_theme/safeguard/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
 
 /datum/armor/mod_theme_safeguard
 	melee = 15
@@ -1063,6 +1098,9 @@
 			),
 		),
 	)
+
+/datum/mod_theme/magnate/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
 
 /datum/armor/mod_theme_magnate
 	melee = 20
@@ -1238,6 +1276,9 @@
 		),
 	)
 
+/datum/mod_theme/syndicate/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_syndicate
 	melee = 15
 	bullet = 20
@@ -1310,6 +1351,9 @@
 		),
 	)
 
+/datum/mod_theme/elite/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_elite
 	melee = 35
 	bullet = 30
@@ -1381,6 +1425,9 @@
 			),
 		),
 	)
+
+/datum/mod_theme/infiltrator/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
 
 /datum/armor/mod_theme_infiltrator
 	melee = 50
@@ -1468,6 +1515,9 @@
 		),
 	)
 
+/datum/mod_theme/interdyne/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_interdyne
 	melee = 30
 	bullet = 30
@@ -1537,6 +1587,9 @@
 		),
 	)
 
+/datum/mod_theme/enchanted/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_enchanted
 	melee = 40
 	bullet = 40
@@ -1604,6 +1657,9 @@
 			),
 		),
 	)
+
+/datum/mod_theme/ninja/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
 
 /datum/armor/mod_theme_ninja
 	melee = 40
@@ -1742,6 +1798,9 @@
 		),
 	)
 
+/datum/mod_theme/glitch/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_glitch
 	melee = 15
 	bullet = 20
@@ -1839,6 +1898,9 @@
 		),
 	)
 
+/datum/mod_theme/responsory/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_responsory
 	melee = 50
 	bullet = 40
@@ -1921,6 +1983,9 @@
 		),
 	)
 
+/datum/mod_theme/apocryphal/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_apocryphal
 	melee = 80
 	bullet = 80
@@ -1989,6 +2054,9 @@
 		),
 	)
 
+/datum/mod_theme/corporate/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_corporate
 	melee = 65
 	bullet = 65
@@ -2051,6 +2119,9 @@
 			),
 		),
 	)
+
+/datum/mod_theme/chrono/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
 
 /datum/armor/mod_theme_chrono
 	melee = 60
@@ -2117,6 +2188,9 @@
 		),
 	)
 
+/datum/mod_theme/debug/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
+
 /datum/armor/mod_theme_debug
 	melee = 50
 	bullet = 50
@@ -2177,6 +2251,9 @@
 			),
 		),
 	)
+
+/datum/mod_theme/administrative/apply_to_helmet(obj/item/mod_part)
+	mod_part.AddComponent(/datum/component/wearertargeting/earprotection, list(ITEM_SLOT_HEAD))
 
 /datum/armor/mod_theme_administrative
 	melee = 100
