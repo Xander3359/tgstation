@@ -81,8 +81,8 @@
 
 	if(iscarbon(target))
 		var/mob/living/carbon/carbon_target = target
-		for(var/obj/item/bodypart/robotic_limb in carbon_target.bodyparts)
-			if(robotic_limb.biological_state & BIO_ROBOTIC)
+		for(var/obj/item/bodypart/robotic_limb as anything in carbon_target.bodyparts)
+			if(IS_ROBOTIC_LIMB(robotic_limb))
 				robotic_limb.receive_damage(500)
 
 	if(!issilicon(target) && !(target.mob_biotypes & MOB_ROBOTIC))
@@ -129,7 +129,7 @@
 
 /datum/heretic_knowledge/armor/rust
 	desc = "Allows you to transmute a table (or a suit), a mask and any trash item to create a Salvaged Remains. \
-			Has extra armor and syringe immunity while standing on rust. \
+			Has extra armor, tackle resistance and syringe immunity while standing on rust. \
 			Acts as a focus while hooded."
 	gain_text = "From beneath warped scrap, the Blacksmith pulls forth an ancient fabric. \
 				\"Whatever this once stood for is lost. So now, we give it new purpose.\""

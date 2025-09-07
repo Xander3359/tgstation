@@ -79,6 +79,7 @@
 	ADD_TRAIT(src, TRAIT_ASHSTORM_IMMUNE, INNATE_TRAIT)
 	ADD_TRAIT(src, TRAIT_MARTIAL_ARTS_IMMUNE, MEGAFAUNA_TRAIT)
 	ADD_TRAIT(src, TRAIT_NO_FLOATING_ANIM, INNATE_TRAIT)
+	ADD_TRAIT(src, TRAIT_MAGICALLY_GIFTED, INNATE_TRAIT)
 	set_light(4, l_color = "#dcaa5b")
 	INVOKE_ASYNC(src, PROC_REF(beg_for_ghost))
 	RegisterSignal(src, COMSIG_MOB_GHOSTIZED, PROC_REF(beg_for_ghost))
@@ -157,6 +158,7 @@
 	cooldown_time = 30 SECONDS
 	invocation = "SH''P D' W''P"
 	invocation_type = INVOCATION_SHOUT
+	spell_requirements = NONE
 	/// list of turfs we are hitting while shooting our beam
 	var/list/turf/targets
 	/// The laser beam we generate
@@ -253,6 +255,8 @@
 
 /obj/effect/abstract/gazer_beam/Initialize(mapload, turf/target)
 	. = ..()
+	if(!target)
+		return INITIALIZE_HINT_QDEL
 	var/Angle = get_angle_raw(x, y, pixel_x, pixel_y, target.x , target.y, target.pixel_x, target.pixel_y)
 	var/matrix/transform_matrix = matrix()
 	Angle = round(Angle, 45)
@@ -268,6 +272,8 @@
 
 /obj/effect/abstract/gazer_beam_filling/Initialize(mapload, direction)
 	. = ..()
+	if(!direction)
+		return INITIALIZE_HINT_QDEL
 	var/Angle = dir2angle(direction)
 	var/matrix/transform_matrix = matrix()
 	transform_matrix.Turn(Angle)
@@ -291,6 +297,8 @@
 
 /obj/effect/abstract/gazer_beamend/Initialize(mapload, atom/origin)
 	. = ..()
+	if(!origin)
+		return INITIALIZE_HINT_QDEL
 	var/Angle = get_angle_raw(origin.x , origin.y, origin.pixel_x, origin.pixel_y, x, y, pixel_x, pixel_y)
 	var/matrix/transform_matrix = matrix()
 	Angle = round(Angle, 45)

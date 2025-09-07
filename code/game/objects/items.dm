@@ -754,7 +754,7 @@
 	UnregisterSignal(src, list(SIGNAL_ADDTRAIT(TRAIT_NO_WORN_ICON), SIGNAL_REMOVETRAIT(TRAIT_NO_WORN_ICON)))
 	SEND_SIGNAL(src, COMSIG_ITEM_DROPPED, user)
 	SEND_SIGNAL(user, COMSIG_MOB_DROPPED_ITEM, src)
-	if(!silent)
+	if(!silent && drop_sound)
 		play_drop_sound(DROP_SOUND_VOLUME)
 	user?.update_equipment(src)
 

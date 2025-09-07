@@ -711,9 +711,10 @@
 
 /datum/antagonist/heretic/proc/adjust_knowledge_points(amount, update = TRUE)
 	knowledge_points = max(0, knowledge_points + amount) // Don't allow negative knowledge points
-	knowledge_gained += knowledge_points
+	knowledge_gained += max(0, amount)
 	if(knowledge_gained > 12 && !HAS_TRAIT_FROM(owner.current, TRAIT_UNLIMITED_BLADES, HELLA_KNOWLEDGE_TRAIT))
 		to_chat(owner.current, span_boldwarning("You have gained a lot of power, the mansus will no longer allow you to break your blades, but you can now make as many as you wish."))
+		owner.current.balloon_alert(owner.current, "blade breaking disabled!")
 		ADD_TRAIT(owner.current, TRAIT_UNLIMITED_BLADES, HELLA_KNOWLEDGE_TRAIT)
 	if(update)
 		update_data_for_all_viewers()
@@ -923,17 +924,10 @@
 	researched_knowledge[knowledge_type][HKT_INSTANCE] = initialized_knowledge
 	researched_knowledge[knowledge_type][HKT_CATEGORY] = category
 
-	if(category == HERETIC_KNOWLEDGE_DRAFT)
-		// get the index of the found depth
-		var/new_depth = knowledge_type::drafting_tier
-		researched_knowledge[knowledge_type][HKT_DEPTH] = new_depth // Default to 4 if no depth is specified
-		// find all drafts on the same depth and remove them
-		var/list/draft = heretic_shops[HERETIC_KNOWLEDGE_DRAFT]
-		for(var/knowledge_path in draft)
-			var/list/draft_knowledge_info = draft[knowledge_path]
-			if(draft_knowledge_info[HKT_DEPTH] != knowledge_data[HKT_DEPTH])
-				continue
-			draft -= knowledge_path
+	// case for letting you modify depth post-purchase
+	var/purchased_depth = knowledge_data[HKT_PURCHASED_DEPTH]
+	if(purchased_depth != 0 && isnum(purchased_depth))
+		researched_knowledge[knowledge_type][HKT_DEPTH] = purchased_depth
 
 	knowledge_list -= knowledge_type
 
