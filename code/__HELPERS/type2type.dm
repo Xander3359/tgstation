@@ -335,6 +335,33 @@ GLOBAL_LIST_INIT(modulo_angle_to_dir, list(NORTH,NORTHEAST,EAST,SOUTHEAST,SOUTH,
 					if(var_source.vars.Find(A))
 						. += A
 
+#define MAX_BITFIELD_BITS 24
+
+/// Converts a bitfield to a list of numbers
+/proc/bitfield2list(bitfield = 0, list/bitfield_list)
+	var/list/returned_list = list()
+	if(islist(bitfield_list))
+		var/max = min(length(bitfield_list), MAX_BITFIELD_BITS)
+		for(var/i in 1 to max)
+			if(bitfield & (1 << i))
+				returned_list += bitfield_list[i+1]
+	else
+		for(var/i in 1 to MAX_BITFIELD_BITS)
+			if(bitfield & (1 << i))
+				returned_list += (1 << i)
+
+	return returned_list
+#undef MAX_BITFIELD_BITS
+
+///Converts a screen loc param to a x,y coordinate pixel on the screen
+/proc/params2screenpixel(scr_loc)
+	var/list/x_and_y = splittext(scr_loc, ",")
+	var/list/x_dirty = splittext(x_and_y[1], ":")
+	var/list/y_dirty = splittext(x_and_y[2], ":")
+	var/x = (text2num(x_dirty[1])-1)*32 + text2num(x_dirty[2])
+	var/y = (text2num(y_dirty[1])-1)*32 + text2num(y_dirty[2])
+	return list(x, y)
+
 //word of warning: using a matrix like this as a color value will simplify it back to a string after being set
 /proc/color_hex2color_matrix(string)
 	var/length = length(string)
