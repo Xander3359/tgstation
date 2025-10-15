@@ -9,7 +9,7 @@
 
 	sound = 'sound/effects/magic/cosmic_expansion.ogg'
 	school = SCHOOL_FORBIDDEN
-	cooldown_time = 30 SECONDS
+	cooldown_time = 15 SECONDS
 
 	invocation = "C'SM'S 'XP'ND!"
 	invocation_type = INVOCATION_SHOUT
@@ -33,14 +33,14 @@
 		if(cast_on == nearby_mob || cast_on.buckled == nearby_mob || IS_HERETIC_OR_MONSTER(nearby_mob) || cast_on == summoner?.resolve())
 			continue
 		nearby_mob.apply_status_effect(/datum/status_effect/star_mark, cast_on)
-	if (ascended)
+	if (ascended && length(summon_type))
 		for(var/turf/cast_turf as anything in get_turfs(get_turf(cast_on)))
-			create_cosmic_field(cast_turf, owner, summon_type)
+			create_cosmic_field(cast_turf, owner, summon_type[1])
 	return ..()
 
 /datum/action/cooldown/spell/conjure/cosmic_expansion/proc/get_turfs(turf/target_turf)
 	var/list/target_turfs = list()
-	for (var/direction as anything in GLOB.cardinals)
+	for (var/direction in GLOB.cardinals)
 		target_turfs += get_ranged_target_turf(target_turf, direction, 2)
 		target_turfs += get_ranged_target_turf(target_turf, direction, 3)
 	return target_turfs

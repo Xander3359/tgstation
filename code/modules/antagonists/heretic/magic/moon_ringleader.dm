@@ -10,7 +10,7 @@
 
 	school = SCHOOL_FORBIDDEN
 	cooldown_time = 1 MINUTES
-	antimagic_flags = MAGIC_RESISTANCE_MIND
+	antimagic_flags = MAGIC_RESISTANCE_MOON
 	invocation = "R'S 'E!"
 	invocation_type = INVOCATION_SHOUT
 	spell_requirements = NONE
@@ -72,7 +72,7 @@
 			continue
 		var/datum/status_effect/heretic_passive/moon/our_passive = living_owner.has_status_effect(/datum/status_effect/heretic_passive/moon)
 		// We channel the amulet before the "spell effects" so that people don't get converted after 1 clone goes off
-		our_passive.amulet?.channel_amulet(living_owner, mob)
+		our_passive?.amulet?.channel_amulet(living_owner, mob)
 
 		mob.AdjustStun(1 SECONDS)
 		mob.AdjustKnockdown(1 SECONDS)

@@ -54,7 +54,8 @@
 	return .
 
 /obj/item/melee/sickly_blade/attack_self(mob/user)
-	if(HAS_TRAIT(user, TRAIT_UNLIMITED_BLADES))
+	var/datum/antagonist/heretic/heretic_datum = IS_HERETIC(user)
+	if(heretic_datum?.unlimited_blades)
 		return
 	if(HAS_TRAIT(user, TRAIT_ELDRITCH_ARENA_PARTICIPANT))
 		user.balloon_alert(user, "can't escape!")
@@ -232,7 +233,6 @@
 	icon_state = "moon_blade"
 	inhand_icon_state = "moon_blade"
 	after_use_message = "The Moon hears your call..."
-	item_flags = BYPASSES_PACIFISM // Moon robes will pacify you
 
 // Path of Nar'Sie's blade
 // What!? This blade is given to cultists as an altar item when they sacrifice a heretic.

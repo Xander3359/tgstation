@@ -358,13 +358,34 @@
 	alert_type = /atom/movable/screen/alert/status_effect/moon_grasp_hide
 
 /datum/status_effect/moon_grasp_hide/on_apply()
-	owner.add_traits(list(TRAIT_UNKNOWN, TRAIT_SILENT_FOOTSTEPS), TRAIT_STATUS_EFFECT(id))
+	owner.add_traits(list(TRAIT_UNKNOWN_APPEARANCE, TRAIT_UNKNOWN_VOICE, TRAIT_SILENT_FOOTSTEPS), TRAIT_STATUS_EFFECT(id))
 	return TRUE
 
 /datum/status_effect/moon_grasp_hide/on_remove()
-	owner.remove_traits(list(TRAIT_UNKNOWN, TRAIT_SILENT_FOOTSTEPS), TRAIT_STATUS_EFFECT(id))
+	owner.remove_traits(list(TRAIT_UNKNOWN_APPEARANCE, TRAIT_UNKNOWN_VOICE, TRAIT_SILENT_FOOTSTEPS), TRAIT_STATUS_EFFECT(id))
 
 /atom/movable/screen/alert/status_effect/moon_grasp_hide
 	name = "Blessing of The Moon"
 	desc = "The Moon clouds their vision, as the sun always has yours."
 	icon_state = "moon_hide"
+
+// Last Resort
+/datum/status_effect/heretic_lastresort
+	id = "heretic_lastresort"
+	alert_type = /atom/movable/screen/alert/status_effect/heretic_lastresort
+	duration = 12 SECONDS
+	status_type = STATUS_EFFECT_REPLACE
+	tick_interval = STATUS_EFFECT_NO_TICK
+
+/atom/movable/screen/alert/status_effect/heretic_lastresort
+	name = "Last Resort"
+	desc = "Your head spins, heart pumping as fast as it can, losing the fight with the ground. Run to safety!"
+	icon_state = "lastresort"
+
+/datum/status_effect/heretic_lastresort/on_apply()
+	ADD_TRAIT(owner, TRAIT_IGNORESLOWDOWN, TRAIT_STATUS_EFFECT(id))
+	to_chat(owner, span_userdanger("You won't give up that easily! Run to safety!"))
+	return TRUE
+
+/datum/status_effect/heretic_lastresort/on_remove()
+	REMOVE_TRAIT(owner, TRAIT_IGNORESLOWDOWN, TRAIT_STATUS_EFFECT(id))

@@ -90,12 +90,12 @@
 	gain_text = "The entity calls themself the Aristocrat. They effortlessly walk through air like \
 		nothing - leaving a harsh, cold breeze in their wake. They disappear, and I am left in the blizzard."
 	action_to_add = /datum/action/cooldown/spell/pointed/void_phase
-	cost = 1
+	cost = 2
 	research_tree_icon_frame = 7
 
 /datum/heretic_knowledge/spell/void_prison
 	name = "Void Prison"
-	desc = "Grants you Void Prison, a spell that places your victim into ball, making them unable to do anything or speak. \
+	desc = "Grants you Void Prison, a spell that places your victim into a ball, making them unable to do anything or speak. \
 		Applies void chill afterwards."
 	gain_text = "At first, I see myself, waltzing along a snow-laden street. \
 		I try to yell, grab hold of this fool and tell them to run. \
@@ -108,7 +108,7 @@
 
 /datum/heretic_knowledge/armor/void
 	name = "Hollow Weave"
-	desc = "Allows you to transmute a table (or a suit) and a mask in sub-zero temperatures to create a Hollow Weave, this armor will periodicall nullify attacks and grant you a short stealth camo to reposition yourself. \
+	desc = "Allows you to transmute a table (or a suit) and a mask in sub-zero temperatures to create a Hollow Weave, this armor will periodically nullify attacks and grant you a short stealth camoflage to reposition yourself. \
 			Acts as a focus while hooded."
 	gain_text = "Stepping through the cold air, I am shocked by a new sensation. \
 				Thousands of almost imperceivable threads cling to my form. \

@@ -79,7 +79,7 @@
 	gain_text = "The distant stars crept into my dreams, roaring and screaming without reason. \
 		I spoke, and heard my own words echoed back."
 	action_to_add = /datum/action/cooldown/spell/cosmic_rune
-	cost = 1
+	cost = 2
 	drafting_tier = 5
 
 /datum/heretic_knowledge/spell/star_blast
@@ -263,7 +263,7 @@
 		heretic_eyes?.color_cutoffs = list(30, 30, 30)
 		ascended_human.update_sight()
 
-	var/mob/living/basic/heretic_summon/star_gazer/star_gazer_mob = new /mob/living/basic/heretic_summon/star_gazer(loc)
+	var/mob/living/basic/heretic_summon/star_gazer/star_gazer_mob = new /mob/living/basic/heretic_summon/star_gazer(loc, user)
 	star_gazer_mob.maxHealth = INFINITY
 	star_gazer_mob.health = INFINITY
 	user.AddComponent(/datum/component/death_linked, star_gazer_mob)
@@ -276,9 +276,7 @@
 		star_touch_spell.set_star_gazer(star_gazer_mob)
 		star_touch_spell.ascended = TRUE
 	star_gazer_mob.add_traits(stargazer_traits, type)
-	star_gazer_mob.summoner = WEAKREF(user)
 	star_gazer_mob.leash_to(star_gazer_mob, user)
-	star_gazer_mob.giga_laser.our_master = WEAKREF(user)
 
 	var/datum/antagonist/heretic/heretic_datum = user.mind.has_antag_datum(/datum/antagonist/heretic)
 	var/datum/heretic_knowledge/blade_upgrade/cosmic/blade_upgrade = heretic_datum.get_knowledge(/datum/heretic_knowledge/blade_upgrade/cosmic)
@@ -316,14 +314,14 @@
 
 	var/mob/living/to_reset = bad_dog.resolve()
 
-	to_chat(owner, span_holoparasite("You attempt to reset [to_reset]'s personality..."))
+	to_chat(owner, span_hierophant("You prompt [to_reset] to shift it\'s personality..."))
 	var/mob/chosen_one = SSpolling.poll_ghost_candidates("Do you want to play as [span_danger("[owner.real_name]'s")] [span_notice(to_reset.name)]?", check_jobban = ROLE_PAI, poll_time = 10 SECONDS, alert_pic = to_reset, jump_target = owner, role_name_text = to_reset.name, amount_to_pick = 1)
 	if(isnull(chosen_one))
-		to_chat(owner, span_holoparasite("Your attempt to reset the personality of [to_reset] appears to have failed... Looks like you're stuck with it for now."))
+		to_chat(owner, span_hierophant("Your request to shift [to_reset]'\s personality appears to have been denied... Looks like you're stuck with it for now."))
 		StartCooldown()
 		return FALSE
-	to_chat(to_reset, span_holoparasite("Your user reset you, and your body was taken over by a ghost. Looks like they weren't happy with your performance."))
-	to_chat(owner, span_boldholoparasite("The personality of [to_reset] has been successfully reset."))
+	to_chat(to_reset, span_hierophant("Your summoner reset you, and your body was taken over by a ghost. Looks like they weren't happy with your performance."))
+	to_chat(owner, span_hierophant("The mind of [to_reset] has twisted itself to suit you better."))
 	message_admins("[key_name_admin(chosen_one)] has taken control of ([ADMIN_LOOKUPFLW(to_reset)])")
 	to_reset.ghostize(FALSE)
 	to_reset.PossessByPlayer(chosen_one.key)

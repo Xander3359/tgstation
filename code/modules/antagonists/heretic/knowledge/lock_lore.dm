@@ -106,6 +106,10 @@
 	SEND_SOUND(source, 'sound/effects/magic/hereticknock.ogg')
 
 	if(HAS_TRAIT(source, TRAIT_LOCK_GRASP_UPGRADED))
+		var/datum/action/cooldown/spell/touch/mansus_grasp/grasp = locate() in source.actions
+		if(grasp)
+			grasp.next_use_time -= round(grasp.cooldown_time*0.75)
+			grasp.build_all_button_icons()
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 	return COMPONENT_USE_HAND
@@ -125,7 +129,7 @@
 		/obj/item/card/id/advanced = 1,
 	)
 	result_atoms = list(/obj/item/card/id/advanced/heretic)
-	cost = 1
+	cost = 2
 	research_tree_icon_path = 'icons/obj/card.dmi'
 	research_tree_icon_state = "card_gold"
 

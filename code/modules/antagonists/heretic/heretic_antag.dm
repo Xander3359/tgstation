@@ -38,50 +38,52 @@
 		HERETIC_KNOWLEDGE_SHOP = list(),
 		HERETIC_KNOWLEDGE_DRAFT = list()
 	)
-
-	/// Whether we give this antagonist objectives on gain.
-	var/give_objectives = TRUE
-	/// Whether we've ascended! (Completed one of the final rituals)
-	var/ascended = FALSE
-	/// The path our heretic has chosen. Mostly used for flavor.
-	var/datum/heretic_knowledge_tree_column/heretic_path
-	/// A sum of how many knowledge points this heretic CURRENTLY has. Used to research.
-	var/knowledge_points = 1
-	/// The time between gaining influence passively. The heretic gain +1 knowledge points every this duration of time.
-	var/passive_gain_timer = 20 MINUTES
-	/// Tracks how many knowledge points the heretic has aqcuired. Once you get enough points you lose the ability to blade break
-	var/knowledge_gained = 0
-	/// Assoc list of [typepath] = [knowledge instance]. A list of all knowledge this heretic's reserached.
-	var/list/researched_knowledge = list()
-	/// The organ slot we place our Living Heart in.
-	var/living_heart_organ_slot = ORGAN_SLOT_HEART
-	/// A list of TOTAL how many sacrifices completed. (Includes high value sacrifices)
-	var/total_sacrifices = 0
-	/// A list of TOTAL how many high value sacrifices completed. (Heads of staff)
-	var/high_value_sacrifices = 0
-	/// Lazy assoc list of [refs to humans] to [image previews of the human]. Humans that we have as sacrifice targets.
-	var/list/mob/living/carbon/human/sac_targets
-	/// List of all sacrifice target's names, used for end of round report
-	var/list/all_sac_targets = list()
-	/// Whether we're drawing a rune or not
-	var/drawing_rune = FALSE
 	/// A static typecache of all tools we can scribe with.
 	var/static/list/scribing_tools = typecacheof(list(/obj/item/pen, /obj/item/toy/crayon))
 	/// A blacklist of turfs we cannot scribe on.
 	var/static/list/blacklisted_rune_turfs = typecacheof(list(/turf/open/space, /turf/open/openspace, /turf/open/lava, /turf/open/chasm))
 	/// A static list of all paths we can take and related info for the UI
 	var/static/list/path_info = list()
-	/// Controls what types of turf we can spread rust to
-	var/rust_strength = 1
-	/// Wether we are allowed to ascend
-	var/feast_of_owls = FALSE
-
+	/// Assoc list of [typepath] = [knowledge instance]. A list of all knowledge this heretic's reserached.
+	var/list/researched_knowledge = list()
+	/// Lazy assoc list of [refs to humans] to [image previews of the human]. Humans that we have as sacrifice targets.
+	var/list/mob/living/carbon/human/sac_targets
+	/// List of all sacrifice target's names, used for end of round report
+	var/list/all_sac_targets = list()
 	/// List that keeps track of which items have been gifted to the heretic after a cultist was sacrificed. Used to alter drop chances to reduce dupes.
 	var/list/unlocked_heretic_items = list(
 		/obj/item/melee/sickly_blade/cursed = 0,
 		/obj/item/clothing/neck/heretic_focus/crimson_medallion = 0,
 		/mob/living/basic/construct/harvester/heretic = 0,
 	)
+	/// Whether or not the heretic can make unlimited blades, but unable to blade break to teleport
+	var/unlimited_blades = FALSE
+	/// Whether we are allowed to ascend
+	var/feast_of_owls = FALSE
+	/// Whether we give this antagonist objectives on gain.
+	var/give_objectives = TRUE
+	/// Whether we've ascended! (Completed one of the final rituals)
+	var/ascended = FALSE
+	/// Whether we're drawing a rune or not
+	var/drawing_rune = FALSE
+	/// The path our heretic has chosen.
+	var/datum/heretic_knowledge_tree_column/heretic_path
+	/// Reference to the overlay heretics get when they get strong enough
+	var/static/mutable_appearance/eldritch_overlay = mutable_appearance('icons/mob/effects/heretic_aura.dmi', "heretic_aura")
+	/// A sum of how many knowledge points this heretic CURRENTLY has. Used to research.
+	var/knowledge_points = 1
+	/// The time between gaining influence passively. The heretic gain +1 knowledge points every this duration of time.
+	var/passive_gain_timer = 20 MINUTES
+	/// Tracks how many knowledge points the heretic has aqcuired. Once you get enough points you lose the ability to blade break
+	var/knowledge_gained = 0
+	/// The organ slot we place our Living Heart in.
+	var/living_heart_organ_slot = ORGAN_SLOT_HEART
+	/// A list of TOTAL how many sacrifices completed. (Includes high value sacrifices)
+	var/total_sacrifices = 0
+	/// A list of TOTAL how many high value sacrifices completed. (Heads of staff)
+	var/high_value_sacrifices = 0
+	/// Controls what types of turf we can spread rust to
+	var/rust_strength = 1
 	/// Simpler version of above used to limit amount of loot that can be hoarded
 	var/rewards_given = 0
 	/// Our heretic passive level. Tracked here in case of body moving shenanigans
@@ -215,7 +217,11 @@
 
 		// Final knowledge can't be learned until all objectives are complete.
 		if(ispath(knowledge_path, /datum/heretic_knowledge/ultimate))
-			knowledge_data["disabled"] ||= !can_ascend()
+			var/ascension_check = can_ascend()
+			if(ascension_check != HERETIC_CAN_ASCEND)
+				knowledge_data["disabled"] = TRUE
+				knowledge_data["tooltip"] = ascension_check
+
 
 		var/depth = knowledge_data[HKT_DEPTH]
 
@@ -244,7 +250,7 @@
 
 	data["knowledge_tiers"] = tree_data
 	var/list/shop = heretic_shops[HERETIC_KNOWLEDGE_SHOP]
-	for(var/knowledge_path as anything in shop)
+	for(var/knowledge_path in shop)
 		var/list/knowledge_info = shop[knowledge_path]
 		if(!(knowledge_info[HKT_ID] in researchable_knowledges))
 			continue
@@ -270,7 +276,7 @@
 			if(!researchable_knowledge(researched_path, shop_category))
 				message_admins("Heretic [key_name(owner)] potentially attempted to href exploit to learn knowledge they can't learn!")
 				CRASH("Heretic attempted to learn knowledge they can't learn! (Got: [researched_path])")
-			if(ispath(researched_path, /datum/heretic_knowledge/ultimate) & !can_ascend())
+			if(ispath(researched_path, /datum/heretic_knowledge/ultimate) & can_ascend() != HERETIC_CAN_ASCEND)
 				message_admins("Heretic [key_name(owner)] potentially attempted to href exploit to learn ascension knowledge without completing objectives!")
 				CRASH("Heretic attempted to learn a final knowledge despite not being able to ascend!")
 
@@ -332,7 +338,7 @@
 	return ..()
 
 /datum/antagonist/heretic/on_gain()
-	generate_starting_knowledge()
+	generate_heretic_starting_knowledge(heretic_shops[HERETIC_KNOWLEDGE_START])
 	if(!length(path_info))
 		for(var/datum/heretic_knowledge_tree_column/path as anything in subtypesof(/datum/heretic_knowledge_tree_column))
 			path = new path()
@@ -361,7 +367,7 @@
 	REMOVE_TRAIT(owner, TRAIT_SEE_BLESSED_TILES, REF(src))
 	owner.current.RemoveElement(/datum/element/leeching_walk/minor)
 	QDEL_NULL(heretic_path)
-
+	owner.current.cut_overlay(eldritch_overlay)
 	return ..()
 
 /datum/antagonist/heretic/apply_innate_effects(mob/living/mob_override)
@@ -369,7 +375,7 @@
 	handle_clown_mutation(our_mob, "Ancient knowledge described to you has allowed you to overcome your clownish nature, allowing you to wield weapons without harming yourself.")
 	our_mob.faction |= FACTION_HERETIC
 
-	if (!issilicon(our_mob))
+	if(!issilicon(our_mob))
 		GLOB.reality_smash_track.add_tracked_mind(owner)
 
 	ADD_TRAIT(our_mob, TRAIT_MANSUS_TOUCHED, REF(src))
@@ -377,24 +383,81 @@
 	RegisterSignals(our_mob, list(COMSIG_MOB_BEFORE_SPELL_CAST, COMSIG_MOB_SPELL_ACTIVATED), PROC_REF(on_spell_cast))
 	RegisterSignal(our_mob, COMSIG_USER_ITEM_INTERACTION, PROC_REF(on_item_use))
 	RegisterSignal(our_mob, COMSIG_LIVING_POST_FULLY_HEAL, PROC_REF(after_fully_healed))
+	RegisterSignal(our_mob, COMSIG_ATOM_EXAMINE, PROC_REF(on_heretic_examine))
+
+	RegisterSignals(
+		our_mob,
+		list(SIGNAL_ADDTRAIT(TRAIT_HERETIC_AURA_HIDDEN), SIGNAL_REMOVETRAIT(TRAIT_HERETIC_AURA_HIDDEN)),
+		PROC_REF(update_heretic_aura)
+	)
 
 /datum/antagonist/heretic/remove_innate_effects(mob/living/mob_override)
 	var/mob/living/our_mob = mob_override || owner.current
 	handle_clown_mutation(our_mob, removing = FALSE)
 	our_mob.faction -= FACTION_HERETIC
 
-	if (owner in GLOB.reality_smash_track.tracked_heretics)
+	if(owner in GLOB.reality_smash_track.tracked_heretics)
 		GLOB.reality_smash_track.remove_tracked_mind(owner)
 
-	REMOVE_TRAIT(our_mob, TRAIT_UNLIMITED_BLADES, HELLA_KNOWLEDGE_TRAIT)
 	REMOVE_TRAIT(our_mob, TRAIT_MANSUS_TOUCHED, REF(src))
-	UnregisterSignal(our_mob, list(
-		COMSIG_MOB_BEFORE_SPELL_CAST,
-		COMSIG_MOB_SPELL_ACTIVATED,
-		COMSIG_USER_ITEM_INTERACTION,
-		COMSIG_LIVING_POST_FULLY_HEAL,
-		COMSIG_LIVING_CULT_SACRIFICED,
-	))
+	UnregisterSignal(
+		our_mob,
+		list(
+			COMSIG_MOB_BEFORE_SPELL_CAST,
+			COMSIG_MOB_SPELL_ACTIVATED,
+			COMSIG_USER_ITEM_INTERACTION,
+			COMSIG_LIVING_POST_FULLY_HEAL,
+			COMSIG_LIVING_CULT_SACRIFICED,
+			COMSIG_ATOM_EXAMINE,
+			SIGNAL_ADDTRAIT(TRAIT_HERETIC_AURA_HIDDEN),
+			SIGNAL_REMOVETRAIT(TRAIT_HERETIC_AURA_HIDDEN)
+		)
+	)
+
+/// Removes the ability to blade break, removes cloak of shadows and removes the cap on how many blades you can craft
+/datum/antagonist/heretic/proc/disable_blade_breaking()
+	if(unlimited_blades)
+		return
+	var/mob/heretic_mob = owner.current
+	unlimited_blades = TRUE
+	to_chat(heretic_mob, span_boldwarning("You have gained a lot of power, the mansus will no longer allow you to break your blades, but you can now make as many as you wish."))
+	heretic_mob.balloon_alert(heretic_mob, "blade breaking disabled!")
+	update_heretic_aura()
+	var/datum/action/cooldown/spell/shadow_cloak/cloak_spell = locate() in heretic_mob.actions
+	cloak_spell.Remove(heretic_mob)
+
+/// Adds an overlay to the heretic
+/datum/antagonist/heretic/proc/update_heretic_aura()
+	SIGNAL_HANDLER
+	var/mob/heretic_mob = owner.current
+	heretic_mob.cut_overlay(eldritch_overlay)
+
+	if(!should_show_aura())
+		return FALSE
+
+	heretic_mob.add_overlay(eldritch_overlay)
+	return TRUE
+
+/datum/antagonist/heretic/proc/should_show_aura()
+	if(!can_assign_self_objectives)
+		return FALSE // We spurned the offer of the Mansus :(
+	if(!unlimited_blades || HAS_TRAIT(owner.current, TRAIT_HERETIC_AURA_HIDDEN))
+		return FALSE // No aura if we have the trait or is too early still
+	if(feast_of_owls)
+		return FALSE // No use in giving the aura to a heretic that can't ascend
+	if(heretic_path?.route == PATH_LOCK)
+		return FALSE // Lock heretics never get this aura
+	return TRUE
+
+/datum/antagonist/heretic/proc/on_heretic_examine(datum/source, mob/user, text)
+	SIGNAL_HANDLER
+	if(!should_show_aura())
+		return
+	var/mob/heretic_mob = owner.current
+	var/potential_string = "[heretic_mob.p_They()] [heretic_mob.p_are()] crackling with a swirling green vortex of energy."
+	if(can_ascend() == HERETIC_CAN_ASCEND)
+		potential_string += " [heretic_mob.p_They()] [heretic_mob.p_are()] shedding [heretic_mob.p_their()] mortal shell!"
+	text += span_green(potential_string)
 
 /datum/antagonist/heretic/on_body_transfer(mob/living/old_body, mob/living/new_body)
 	. = ..()
@@ -402,7 +465,7 @@
 		return
 
 	for(var/knowledge_path in researched_knowledge)
-		var/datum/heretic_knowledge/knowledge = researched_knowledge[knowledge_path]
+		var/datum/heretic_knowledge/knowledge = researched_knowledge[knowledge_path][HKT_INSTANCE]
 		knowledge.on_lose(old_body, src)
 		knowledge.on_gain(new_body, src)
 
@@ -712,10 +775,8 @@
 /datum/antagonist/heretic/proc/adjust_knowledge_points(amount, update = TRUE)
 	knowledge_points = max(0, knowledge_points + amount) // Don't allow negative knowledge points
 	knowledge_gained += max(0, amount)
-	if(knowledge_gained > 12 && !HAS_TRAIT_FROM(owner.current, TRAIT_UNLIMITED_BLADES, HELLA_KNOWLEDGE_TRAIT))
-		to_chat(owner.current, span_boldwarning("You have gained a lot of power, the mansus will no longer allow you to break your blades, but you can now make as many as you wish."))
-		owner.current.balloon_alert(owner.current, "blade breaking disabled!")
-		ADD_TRAIT(owner.current, TRAIT_UNLIMITED_BLADES, HELLA_KNOWLEDGE_TRAIT)
+	if(knowledge_gained > 8 && !unlimited_blades)
+		disable_blade_breaking()
 	if(update)
 		update_data_for_all_viewers()
 
@@ -991,14 +1052,19 @@
  * Returns FALSE if not all of our objectives are complete, or TRUE otherwise.
  */
 /datum/antagonist/heretic/proc/can_ascend()
-	if(!can_assign_self_objectives)
-		return FALSE // We spurned the offer of the Mansus :(
 	if(feast_of_owls)
-		return FALSE // We sold our ambition for immediate power :/
+		return "The owls have taken your right of ascension (denied ascension)." // We sold our ambition for immediate power :/
+	if(!can_assign_self_objectives)
+		return "The mansus has spurned you (denied ascension)."
 	for(var/datum/objective/must_be_done as anything in objectives)
 		if(!must_be_done.check_completion())
-			return FALSE
-	return TRUE
+			return "Must complete all objectives before ascending."
+	var/config_time = CONFIG_GET(number/minimum_ascension_time) MINUTES
+
+	var/time_passed = STATION_TIME_PASSED()
+	if(config_time >= time_passed)
+		return "Too early, must wait [DisplayTimeText(config_time - time_passed)] before ascending."
+	return HERETIC_CAN_ASCEND
 
 /**
  * Helper to determine if a Heretic

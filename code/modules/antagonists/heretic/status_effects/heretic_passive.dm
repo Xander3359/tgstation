@@ -23,6 +23,8 @@
 /datum/status_effect/heretic_passive/on_apply()
 	. = ..()
 	heretic_datum = GET_HERETIC(owner)
+	RegisterSignal(heretic_datum, COMSIG_HERETIC_PASSIVE_UPGRADE_FIRST, PROC_REF(heretic_level_upgrade))
+	RegisterSignal(heretic_datum, COMSIG_HERETIC_PASSIVE_UPGRADE_FINAL, PROC_REF(heretic_level_final))
 	if(!heretic_datum)
 		return FALSE
 
@@ -34,15 +36,27 @@
 		heretic_level_upgrade()
 		return
 
+/datum/status_effect/heretic_passive/on_remove()
+	UnregisterSignal(heretic_datum, list(
+		COMSIG_HERETIC_PASSIVE_UPGRADE_FIRST,
+		COMSIG_HERETIC_PASSIVE_UPGRADE_FINAL,
+	))
+	heretic_datum = null
+	return ..()
+
 /// Gives our first upgrade
 /datum/status_effect/heretic_passive/proc/heretic_level_upgrade()
+	SIGNAL_HANDLER
 	SHOULD_CALL_PARENT(TRUE)
 	passive_level = HERETIC_LEVEL_UPGRADE
 	heretic_datum.passive_level = HERETIC_LEVEL_UPGRADE
 	heretic_datum.update_data_for_all_viewers()
+	if(!heretic_datum.unlimited_blades)
+		heretic_datum.disable_blade_breaking()
 
 /// Gives our final upgrade
 /datum/status_effect/heretic_passive/proc/heretic_level_final()
+	SIGNAL_HANDLER
 	SHOULD_CALL_PARENT(TRUE)
 	if(passive_level == HERETIC_LEVEL_START)
 		heretic_level_upgrade()
@@ -50,9 +64,6 @@
 	heretic_datum.passive_level = HERETIC_LEVEL_FINAL
 	heretic_datum.update_data_for_all_viewers()
 
-/datum/status_effect/heretic_passive/on_remove()
-	heretic_datum = null
-	return ..()
 
 //---- Ash Passive
 // Level 1 grants heat and ash storm immunity
@@ -90,8 +101,9 @@
 // Level 3 only has the cooldown reduction (nothing else added)
 /datum/status_effect/heretic_passive/blade
 	name = "Dance of the Brand"
+	id = "blade_passive"
 	passive_descriptions = list(
-		"Riposte with a 20 seconds cooldown, it now counts as a block.",
+		"Being attacked while wielding a Heretic Blade in either hand will deliver a free, instant counterattack to the attacker. This effect can only trigger once every 20 seconds.",
 		"Immunity to fall damage.",
 		"Cooldown of the riposte reduced to 10 seconds."
 	)
@@ -203,6 +215,7 @@
 // Level 3 Cosmic fields will temporarily slow down bullets that pass through them
 /datum/status_effect/heretic_passive/cosmic
 	name = "Chosen of the Stars"
+	id = "cosmic_passive"
 	passive_descriptions = list(
 		"Cosmic fields speed you up and regenerate stamina.",
 		"Cosmic fields disrupt grenades or signalers from being activated and turn off already primed grenades.",
@@ -247,10 +260,11 @@
 // Level 3, being fat gives damage resistance
 /datum/status_effect/heretic_passive/flesh
 	name = "Ravenous Hunger"
+	id = "flesh_passive"
 	passive_descriptions = list(
 		"Immunity to Diseases, Disgust and space ants.",
 		"Eating organs or meat now heals you, gain the voracious and gluttonous trait and being fat doesn't slow you down.",
-		"Gain a flat 25% damage and stamina damage reduction when fat and baton resistance as well."
+		"Gain a flat 25% damage and stamina damage reduction when fat as well as baton resistance."
 	)
 
 /datum/status_effect/heretic_passive/flesh/on_apply()
@@ -263,7 +277,7 @@
 
 /datum/status_effect/heretic_passive/flesh/heretic_level_upgrade()
 	. = ..()
-	RegisterSignal(owner, COMSIG_FOOD_BIT, PROC_REF(on_eat))
+	RegisterSignal(owner, COMSIG_LIVING_EAT_FOOD, PROC_REF(on_eat))
 	owner.add_traits(list(TRAIT_FAT_IGNORE_SLOWDOWN, TRAIT_VORACIOUS, TRAIT_GLUTTON), REF(src))
 	if(!ishuman(owner))
 		return
@@ -325,7 +339,7 @@
 /datum/status_effect/heretic_passive/flesh/on_remove()
 	. = ..()
 	owner.remove_traits(list(TRAIT_VIRUSIMMUNE, TRAIT_SPACE_ANT_IMMUNITY, TRAIT_FAT_IGNORE_SLOWDOWN, TRAIT_VORACIOUS, TRAIT_GLUTTON, TRAIT_BATON_RESISTANCE), REF(src))
-	UnregisterSignal(owner, list(COMSIG_FOOD_BIT, SIGNAL_ADDTRAIT(TRAIT_FAT), SIGNAL_REMOVETRAIT(TRAIT_FAT)))
+	UnregisterSignal(owner, list(COMSIG_LIVING_EAT_FOOD, SIGNAL_ADDTRAIT(TRAIT_FAT), SIGNAL_REMOVETRAIT(TRAIT_FAT)))
 	if(!ishuman(owner))
 		return
 	var/mob/living/carbon/human/heretic = owner
@@ -341,6 +355,7 @@
 // Level 3 your grasp no longer goes on cooldown when opening things
 /datum/status_effect/heretic_passive/lock
 	name = "Open Invitation"
+	id = "lock_passive"
 	passive_descriptions = list(
 		"Shock insulation, all knowledges researched from the shop are cheaper",
 		"X-ray vision, you can see through walls and objects.",
@@ -359,7 +374,7 @@
 
 /datum/status_effect/heretic_passive/lock/heretic_level_final()
 	. = ..()
-	ADD_TRAIT(heretic_datum, TRAIT_LOCK_GRASP_UPGRADED, REF(src))
+	ADD_TRAIT(owner, TRAIT_LOCK_GRASP_UPGRADED, REF(src))
 
 /datum/status_effect/heretic_passive/lock/on_remove()
 	UnregisterSignal(owner, COMSIG_HERETIC_SHOP_SETUP)
@@ -382,15 +397,20 @@
 // Level 3, Mind gate + Ringleader's rise will channel the moon amulet effects
 /datum/status_effect/heretic_passive/moon
 	name = "Do You Hear The Voices Too?"
+	id = "moon_passive"
 	passive_descriptions = list(
-		"Can no longer develop brain traumas except for special ones, passively regenerates brain health, (this bonus is halved in combat).",
+		"Can no longer develop brain traumas, passively regenerates brain health, (this bonus is halved in combat).",
 		"Sleep immunity, increases the ratio at which your brain damage regenerates.",
-		"Mind gate and Ringleader's rise will channel the moon amulet effects."
+		"Mind gate and Ringleader's rise will channel the moon amulet effects, further inreases brain regeneration."
 	)
 	/// Built-in moon amulet which channels through your spells
 	var/obj/item/clothing/neck/heretic_focus/moon_amulet/amulet
 	/// When were we last attacked?
 	var/last_attack = 0
+	/// How long the combat tag lasts for
+	var/combat_lockout = 5 SECONDS
+	/// Boolean if you are wearing the moon amulet
+	var/amulet_equipped = FALSE
 
 /datum/status_effect/heretic_passive/moon/on_apply()
 	. = ..()
@@ -406,7 +426,12 @@
 
 /datum/status_effect/heretic_passive/moon/tick(seconds_between_ticks)
 	. = ..()
-	owner.adjustOrganLoss(ORGAN_SLOT_BRAIN, ((world.time > last_attack + 5 SECONDS) ? -2.5 * passive_level * seconds_between_ticks : -5 * passive_level * seconds_between_ticks))
+	var/healing_amount = ((world.time > last_attack + combat_lockout) ? -1 * passive_level * seconds_between_ticks : -2 * passive_level * seconds_between_ticks)
+	if(heretic_datum.ascended)
+		healing_amount = -15 * seconds_between_ticks
+	if(!amulet_equipped)
+		healing_amount *= 0.5 // Half healing if you dont have the moon amulet
+	owner.adjustOrganLoss(ORGAN_SLOT_BRAIN, healing_amount)
 
 	var/obj/item/organ/brain/our_brain = owner.get_organ_slot(ORGAN_SLOT_BRAIN)
 	if(!our_brain)
@@ -438,10 +463,11 @@
 // Level 3 will restore lost limbs when standing on rust
 /datum/status_effect/heretic_passive/rust
 	name = "Leeching Walk"
+	id = "rust_passive"
 	passive_descriptions = list(
 		"Standing on Rusted tiles heals and purge chems off your body.",
-		"Standing on Rusted tiles closes up your wounds and heals your organs, you may now rust reinforced floors and walls.",
-		"Standing on Rusted tiles regenerates your limbs, you may now rust titanium and plastitanium walls."
+		"Standing on Rusted tiles closes up your wounds and heals your organs, you may now rust reinforced floors and walls, healing effect increased.",
+		"Standing on Rusted tiles regenerates your limbs, you may now rust titanium and plastitanium walls, healing effect increased."
 	)
 
 /datum/status_effect/heretic_passive/rust/on_apply()
@@ -532,10 +558,11 @@
 // Level 3 No slip on water/ice
 /datum/status_effect/heretic_passive/void
 	name = "Aristocrat's Way"
+	id = "void_passive"
 	passive_descriptions = list(
 		"Cold and low pressure immunity.",
 		"You no longer need to breathe.",
-		"Water, ice and slippery surfaces no longer slow you down."
+		"Water, ice and slippery surfaces no slip you."
 	)
 
 /datum/status_effect/heretic_passive/void/on_apply()

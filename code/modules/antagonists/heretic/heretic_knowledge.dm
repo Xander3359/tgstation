@@ -54,7 +54,7 @@
  */
 /datum/heretic_knowledge/proc/pre_research(mob/user, datum/antagonist/heretic/our_heretic)
 	// consider moving this check to a type instead
-	if(is_final_knowledge && !HAS_TRAIT(user, TRAIT_UNLIMITED_BLADES))
+	if(is_final_knowledge && !our_heretic.unlimited_blades)
 		var/choice = tgui_alert(user, "THIS WILL DISABLE BLADE BREAKING, Are you ready to research this? The blade cap will also be removed.", "Get Final Spell?", list("Yes", "No"))
 		if(choice != "Yes")
 			return FALSE
@@ -73,8 +73,8 @@
 	if(gain_text)
 		to_chat(user, span_warning("[gain_text]"))
 	on_gain(user, our_heretic)
-	if(is_final_knowledge)
-		ADD_TRAIT(user, TRAIT_UNLIMITED_BLADES, HELLA_KNOWLEDGE_TRAIT)
+	if(is_final_knowledge && !our_heretic.unlimited_blades)
+		our_heretic.disable_blade_breaking()
 
 /**
  * Called when the knowledge is applied to a mob.
@@ -231,7 +231,8 @@
 	return ..()
 
 /datum/heretic_knowledge/limited_amount/recipe_snowflake_check(mob/living/user, list/atoms, list/selected_atoms, turf/loc)
-	if(HAS_TRAIT(user, TRAIT_UNLIMITED_BLADES))
+	var/datum/antagonist/heretic/our_heretic = IS_HERETIC(user)
+	if(our_heretic && our_heretic.unlimited_blades)
 		if(length(result_atoms & typesof(/obj/item/melee/sickly_blade)))
 			return TRUE
 
@@ -282,8 +283,16 @@
 		stack_trace("failed to find valid path [our_heretic.heretic_shops[HERETIC_KNOWLEDGE_TREE][type][HKT_ROUTE]] from researching [src]")
 		return
 	SSblackbox.record_feedback("tally", "heretic_path_taken", 1, our_heretic.heretic_path.route)
+	our_heretic.update_heretic_aura()
 	our_heretic.generate_heretic_research_tree()
-	our_heretic.determine_drafted_knowledge()
+	determine_drafted_knowledge(
+		our_heretic.heretic_path.route,
+		our_heretic.heretic_shops[HERETIC_KNOWLEDGE_TREE],
+		our_heretic.heretic_shops[HERETIC_KNOWLEDGE_SHOP],
+		our_heretic.heretic_shops[HERETIC_KNOWLEDGE_DRAFT],
+	)
+	SEND_SIGNAL(src, COMSIG_HERETIC_SHOP_SETUP)
+
 
 /datum/heretic_knowledge/limited_amount/starting/on_gain(mob/user, datum/antagonist/heretic/our_heretic)
 	RegisterSignals(user, list(COMSIG_HERETIC_MANSUS_GRASP_ATTACK, COMSIG_LIONHUNTER_ON_HIT), PROC_REF(on_mansus_grasp))
@@ -546,8 +555,7 @@
 	desc += " (Completed!)"
 	log_heretic_knowledge("[key_name(user)] completed a [name] at [gameTimestamp()].")
 	user.add_mob_memory(/datum/memory/heretic_knowledge_ritual)
-	var/datum/status_effect/heretic_passive/our_passive = user.has_status_effect(/datum/status_effect/heretic_passive)
-	our_passive?.heretic_level_final()
+	SEND_SIGNAL(our_heretic, COMSIG_HERETIC_PASSIVE_UPGRADE_FINAL)
 	return TRUE
 
 #undef KNOWLEDGE_RITUAL_POINTS
@@ -584,7 +592,7 @@
 	if(invoker.ascended)
 		return FALSE
 
-	if(!invoker.can_ascend())
+	if(invoker.can_ascend() != HERETIC_CAN_ASCEND)
 		return FALSE
 
 	return TRUE
@@ -611,11 +619,11 @@
 	return (sacrifice.stat == DEAD) && !ismonkey(sacrifice)
 
 /datum/heretic_knowledge/ultimate/on_finished_recipe(mob/living/user, list/selected_atoms, turf/loc)
+
 	var/datum/antagonist/heretic/heretic_datum = GET_HERETIC(user)
 	heretic_datum.ascended = TRUE
 	// In case we skipped ritual of knowledge
-	var/datum/status_effect/heretic_passive/our_passive = user.has_status_effect(/datum/status_effect/heretic_passive)
-	our_passive?.heretic_level_final()
+	SEND_SIGNAL(heretic_datum, COMSIG_HERETIC_PASSIVE_UPGRADE_FINAL)
 
 	// Show the cool red gradiant in our UI
 	heretic_datum.update_static_data(user)
@@ -625,7 +633,7 @@
 		human_user.physiology.brute_mod *= 0.5
 		human_user.physiology.burn_mod *= 0.5
 
-	SSblackbox.record_feedback("tally", "heretic_ascended", 1, heretic_datum.researched_knowledge[type][HKT_ROUTE])
+	SSblackbox.record_feedback("tally", "heretic_ascended", 1, heretic_datum.heretic_path.route)
 	log_heretic_knowledge("[key_name(user)] completed their final ritual at [gameTimestamp()].")
 	notify_ghosts(
 		"[user.real_name] has completed an ascension ritual!",
@@ -638,6 +646,10 @@
 		sound = announcement_sound,
 		color_override = "pink",
 	)
+
+	if(EMERGENCY_IDLE_OR_RECALLED)
+		SSshuttle.call_evac_shuttle("Critical reality rupture detected on supranatural casuality long-range scanners. Mass crew casualty and possible station destruction determined to be beyond acceptable probability. Priority evacuation shuttle dispatched.")
+	SSshuttle.emergency_no_recall = TRUE
 
 	if(!isnull(ascension_achievement))
 		user.client?.give_award(ascension_achievement, user)
