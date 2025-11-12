@@ -25,11 +25,12 @@
 	var/uplink_flag = UPLINK_TRAITORS
 	/// If the uplink is lockable, which defaults to false which most subtypes of this item are for debug reasons
 	var/lockable_uplink = FALSE
+	var/uplink_type = /datum/component/uplink
 
 /obj/item/uplink/Initialize(mapload, owner, tc_amount = 20, datum/uplink_handler/uplink_handler_override = null)
 	. = ..()
 	AddComponent(\
-		/datum/component/uplink, \
+		uplink_type, \
 		owner = owner, \
 		lockable = lockable_uplink, \
 		enabled = TRUE, \
@@ -93,3 +94,8 @@
 /obj/item/pen/uplink/Initialize(mapload, owner, tc_amount = 20, datum/uplink_handler/uplink_handler_override = null)
 	. = ..()
 	AddComponent(/datum/component/uplink, owner, TRUE, FALSE, UPLINK_TRAITORS, tc_amount)
+
+/obj/item/uplink/contractor
+	name = "contractor uplink"
+	uplink_type = /datum/component/uplink/contractor
+	uplink_flag = UPLINK_CONTRACTOR

@@ -169,6 +169,10 @@ export class Uplink extends Component<any, UplinkState> {
   }
 
   render() {
+    return this.renderUI();
+  }
+
+  renderUI() {
     const { data, act } = useBackend<UplinkData>();
     const {
       telecrystals,

@@ -38,6 +38,8 @@
 	var/unlock_note
 	/// The failsafe code that causes this uplink to blow up.
 	var/failsafe_code
+	/// Name of the TGUI UI to use in ui_interact
+	var/ui_name = "Uplink"
 
 /datum/component/uplink/Initialize(
 	owner,
@@ -156,7 +158,7 @@
 	active = TRUE
 	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, "Uplink", name)
+		ui = new(user, src, ui_name, name)
 		// This UI is only ever opened by one person,
 		// and never is updated outside of user input.
 		ui.set_autoupdate(FALSE)
@@ -437,3 +439,6 @@
 	qdel(parent) //Alternatively could brick the uplink.
 
 #undef PEN_ROTATIONS
+
+/datum/component/uplink/contractor
+	ui_name = "ContractorUplink"

@@ -14,6 +14,8 @@
 
 #define UPLINK_LONE_OP (1 << 4)
 
+#define UPLINK_CONTRACTOR (1 << 5)
+
 /// A blanket define for an item being purchasable by all types of nukie
 #define UPLINK_ALL_SYNDIE_OPS (UPLINK_NUKE_OPS | UPLINK_LONE_OP | UPLINK_CLOWN_OPS)
 

@@ -1,0 +1,31 @@
+html body * {
+  --background-color: radial-gradient(
+    circle,
+    rgb(3, 3, 7) 54%,
+    rgb(9, 9, 26) 60%,
+    rgb(8, 5, 15) 80%,
+    rgb(13, 7, 26) 100%
+  );
+  --background-color-title: radial-gradient(
+    circle,
+    rgb(3, 3, 7) 54%,
+    rgb(9, 9, 26) 60%,
+    rgb(8, 5, 15) 80%,
+    rgb(13, 7, 26) 100%
+  );
+
+  --background-color: radial-gradient(
+    circle,
+    rgba(24, 9, 9, 1) 54%,
+    rgba(31, 10, 10, 1) 60%,
+    rgba(46, 11, 11, 1) 80%,
+    rgba(47, 14, 14, 1) 100%
+  );
+  --background-color-title: radial-gradient(
+    circle,
+    rgba(24, 9, 9, 1) 54%,
+    rgba(31, 10, 10, 1) 60%,
+    rgba(46, 11, 11, 1) 80%,
+    rgba(47, 14, 14, 1) 100%
+  );
+}
