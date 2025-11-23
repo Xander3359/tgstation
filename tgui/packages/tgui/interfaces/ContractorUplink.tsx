@@ -19,8 +19,8 @@ import {
   dangerLevelsTooltip,
 } from './Uplink/calculateDangerLevel';
 import { Window } from '../layouts';
-import { PrimaryObjectiveMenu } from './Uplink/PrimaryObjectiveMenu';
 import { GenericUplink, Item } from './Uplink/GenericUplink';
+import '../styles/interfaces/ContractorUplink.scss';
 
 type UplinkItem = {
   id: string;
@@ -266,7 +266,7 @@ export class ContractorUplink extends Component<any, UplinkState> {
     }
 
     return (
-      <Window width={700} height={600} theme="syndicate">
+      <Window width={700} height={600} theme="contractor">
         <Window.Content>
           <Stack fill vertical>
             <Stack.Item grow>
@@ -319,7 +319,7 @@ const TabView = (props: TabViewProps) => {
       title: 'Marketplace',
       content: (
         <GenericUplink
-          currency={`${telecrystals} TC`}
+          currency={`${telecrystals} Contractor Coins`}
           categories={allCategories}
           items={items}
           handleBuy={(item: ItemExtraData) => {

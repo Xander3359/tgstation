@@ -441,4 +441,5 @@
 #undef PEN_ROTATIONS
 
 /datum/component/uplink/contractor
+	name = "contractor uplink"
 	ui_name = "ContractorUplink"
