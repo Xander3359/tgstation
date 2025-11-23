@@ -88,7 +88,7 @@ export function SyndicateContractor(props) {
   );
 }
 
-function SyndicateContractorContent(props) {
+export function SyndicateContractorContent(props) {
   const { data, act } = useBackend<Data>();
   const { error, logged_in, first_load, info_screen } = data;
 
