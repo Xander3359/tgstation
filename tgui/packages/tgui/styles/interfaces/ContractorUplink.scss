@@ -83,10 +83,14 @@
       var(--border-primary-lightness) / var(--border-primary-alpha)
   );
   --color-border-secondary: hsl(from var(--color-border-primary) h s l / 1);
-
   .Tabs {
     background-color: hsla(0, 0%, 0%, 0.671);
-
+    // font-family:;
+    // backdrop-filter: url(#pixelate);
     border-radius: 1rem;
+  }
+
+  .Window__contentPadding {
+    // backdrop-filter: url(#pixelate);
   }
 }

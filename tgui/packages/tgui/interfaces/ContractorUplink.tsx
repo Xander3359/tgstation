@@ -1,4 +1,10 @@
-import { Component, useState } from 'react';
+import React, {
+  Component,
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import {
   Box,
   Button,
@@ -21,6 +27,7 @@ import {
 import { Window } from '../layouts';
 import { GenericUplink, Item } from './Uplink/GenericUplink';
 import '../styles/interfaces/ContractorUplink.scss';
+// import PixelFilter from './pixelFilter.svg';
 
 type UplinkItem = {
   id: string;
@@ -267,33 +274,36 @@ export class ContractorUplink extends Component<any, UplinkState> {
 
     return (
       <Window width={700} height={600} theme="contractor">
-        <Window.Content>
-          <Stack fill vertical>
-            <Stack.Item grow>
-              <>
-                <TabView
-                  telecrystals={telecrystals}
-                  allCategories={allCategories}
-                  items={items}
-                />
-                {(shop_locked && !data.debug && (
-                  <Dimmer>
-                    <Box
-                      color="red"
-                      fontFamily={'Bahnschrift'}
-                      fontSize={3}
-                      align={'top'}
-                      as="span"
-                    >
-                      SHOP LOCKED
-                    </Box>
-                  </Dimmer>
-                )) ||
-                  null}
-              </>
-            </Stack.Item>
-          </Stack>
-        </Window.Content>
+        <SvgFilter />
+        <div>
+          <Window.Content>
+            <Stack fill vertical>
+              <Stack.Item grow>
+                <>
+                  <TabView
+                    telecrystals={telecrystals}
+                    allCategories={allCategories}
+                    items={items}
+                  />
+                  {(shop_locked && !data.debug && (
+                    <Dimmer>
+                      <Box
+                        color="red"
+                        fontFamily={'Bahnschrift'}
+                        fontSize={3}
+                        align={'top'}
+                        as="span"
+                      >
+                        SHOP LOCKED
+                      </Box>
+                    </Dimmer>
+                  )) ||
+                    null}
+                </>
+              </Stack.Item>
+            </Stack>
+          </Window.Content>
+        </div>
       </Window>
     );
   }
@@ -357,3 +367,102 @@ const TabView = (props: TabViewProps) => {
 const PrimaryObjectiveMenu = (props) => {
   return <Box>Primary Objective Menu Placeholder</Box>;
 };
+
+// temp todo import
+const pixelSize = 8; // try 6, 10, 14, etc.
+const PIXEL_RADIUS = 2;
+
+const SvgFilter = () => {
+  return (
+    <svg
+      id="svg-filter-container"
+      style={{ position: 'absolute', width: 0, height: 0 }}
+    >
+      <filter id="pixelate" x="0" y="0" width="100%" height="100%">
+        {/* 1. Downscale/Blur to average the colors for each 'pixel' */}
+        {/* The 'stdDeviation' controls the size of the pixel block's color average. */}
+        <feGaussianBlur stdDeviation={pixelSize} result="blur" />
+
+        {/* 2. Re-map the color channels to discrete steps to eliminate gradient */}
+        {/* This creates the sharp, single-color block edges *after* blurring. */}
+        {/* The tableValues should span the full range of 0 to 1 for full color. */}
+        <feComponentTransfer in="blur" result="pixelated">
+          {/* Setting fewer steps here (e.g., 0 and 1) is what limits colors. */}
+          {/* We'll use a type that forces stepping without a fixed table. */}
+          <feFuncR type="discrete" tableValues="0 0.5 1" />
+          <feFuncG type="discrete" tableValues="0 0.5 1" />
+          <feFuncB type="discrete" tableValues="0 0.5 1" />
+        </feComponentTransfer>
+
+        {/* 3. Re-scale or re-tile (Optional, but often necessary for a perfect grid) */}
+        {/* A simple feMorphology can sometimes solidify the blocks */}
+        {/* <feMorphology in="pixelated" operator="dilate" radius={pixelSize / 2} /> */}
+      </filter>
+    </svg>
+  );
+};
+
+// const SvgFilter = () => {
+//   return (
+//     <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+//       <filter id="pixelate" x="0" y="0" width="100%" height="100%">
+//         <feFlood x="1" y="1" height="1" width="1" />
+//         <feComposite
+//           id="composite"
+//           in2="SourceGraphic"
+//           operator="in"
+//           width={PIXEL_SIZE}
+//           height={PIXEL_SIZE}
+//         />
+//         <feTile result="tiled" />
+//         <feComposite in="SourceGraphic" in2="tiled" operator="in" />
+//         <feMorphology
+//           id="morphology"
+//           operator="dilate"
+//           radius={PIXEL_RADIUS}
+//           result="dilatedPixelation"
+//         />
+
+//         <feFlood x="1" y="1" height="1" width="1" result="floodFallbackX" />
+//         <feComposite
+//           id="compositeX"
+//           in2="SourceGraphic"
+//           operator="in"
+//           width={PIXEL_SIZE}
+//           height={PIXEL_SIZE * 2}
+//         />
+//         <feTile result="fullTileX" />
+//         <feComposite in="SourceGraphic" in2="fullTileX" operator="in" />
+//         <feMorphology
+//           id="morphologyX"
+//           operator="dilate"
+//           radius={PIXEL_RADIUS}
+//           result="dilatedFallbackX"
+//         />
+
+//         <feFlood x="1" y="1" height="1" width="1" />
+//         <feComposite
+//           id="compositeY"
+//           in2="SourceGraphic"
+//           operator="in"
+//           width={PIXEL_SIZE * 2}
+//           height={PIXEL_SIZE}
+//         />
+//         <feTile result="fullTileY" />
+//         <feComposite in="SourceGraphic" in2="fullTileY" operator="in" />
+//         <feMorphology
+//           id="morphologyY"
+//           operator="dilate"
+//           radius={PIXEL_RADIUS}
+//           result="dilatedFallbackY"
+//         />
+
+//         <feMerge>
+//           <feMergeNode in="dilatedFallbackX" />
+//           <feMergeNode in="dilatedFallbackY" />
+//           <feMergeNode in="dilatedPixelation" />
+//         </feMerge>
+//       </filter>
+//     </svg>
+//   );
+// };
