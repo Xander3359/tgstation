@@ -79,7 +79,7 @@ export default defineConfig({
       },
 
       {
-        test: /\.svg$/,
+        test: /\.(png|jpg|svg)$/,
         oneOf: [
           {
             issuer: /\.(s)?css$/,

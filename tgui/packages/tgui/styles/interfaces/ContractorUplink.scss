@@ -1,18 +1,14 @@
 .theme-contractor {
   /* Background colors */
-  --color-base: #ac3f0e;
+  --color-base: #341108;
   --color-section: hsla(0, 0%, 0%, 0.33);
   --color-secondary: #000000;
   // --secondary-hue: #7c5746;
   // --secondary-saturation: #7c5746;
   --secondary-lightness-adjustment: 15;
   // --base-gradient-spread: 0.2;
-  --color-base-start: hsl(
-    from var(--color-base) h s calc(l + var(--base-gradient-spread))
-  );
-  --color-base-end: hsl(
-    from var(--color-base) h s calc(l - var(--base-gradient-spread))
-  );
+  --color-base-start: #ae5c00;
+  --color-base-end: #341108;
 
   /* Scrollbar */
   --color-scrollbar-base: var(--color-section);
@@ -83,14 +79,45 @@
       var(--border-primary-lightness) / var(--border-primary-alpha)
   );
   --color-border-secondary: hsl(from var(--color-border-primary) h s l / 1);
+
+  --tab-color: #cd0606;
+  // --tab-background: #000000;
+  --tab-color-selected: #ffdeb0;
+  --tab-background-selected: #131217;
+
+  --section-background: #0000;
+
   .Tabs {
-    background-color: hsla(0, 0%, 0%, 0.671);
-    // font-family:;
-    // backdrop-filter: url(#pixelate);
-    border-radius: 1rem;
+    height: 100%;
+    background-color: #0d0402;
+    // border: var(--tab-indicator-size) solid var(--tab-color);
+    // border-bottom: transparent;
   }
 
-  .Window__contentPadding {
-    // backdrop-filter: url(#pixelate);
+  .uplink-currency {
+    color: black;
+    background-color: #ffff;
+  }
+
+  .TitleBar__title {
+    color: #2af6bc;
+  }
+
+  .Layout__content {
+    background-image: unset;
+  }
+
+  .Layout__content::before {
+    content: '';
+    inset: 0;
+    position: absolute;
+    background-repeat: no-repeat;
+    background-image: url('../assets/scuttle.png');
+    opacity: 0.5;
+
+    background-position-x: 75%;
+    background-position-y: 65%;
+    background-size: 60%;
+    image-rendering: crisp-edges;
   }
 }
