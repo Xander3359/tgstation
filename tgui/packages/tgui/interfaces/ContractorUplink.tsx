@@ -327,7 +327,7 @@ const TabView = (props: TabViewProps) => {
       title: 'Marketplace',
       content: (
         <GenericUplink
-          currency={`${telecrystals} Contractor Coins`}
+          currency={`${telecrystals} Coins`}
           categories={allCategories}
           items={items}
           handleBuy={(item: ItemExtraData) => {

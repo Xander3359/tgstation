@@ -7,8 +7,8 @@
   // --secondary-saturation: #7c5746;
   --secondary-lightness-adjustment: 15;
   // --base-gradient-spread: 0.2;
-  --color-base-start: #ae5c00;
-  --color-base-end: #341108;
+  // --color-base-start: #341108;
+  // --color-base-end: #341108;
 
   /* Scrollbar */
   --color-scrollbar-base: var(--color-section);
@@ -49,7 +49,7 @@
   --primary-hue: 5;
   --primary-saturation: 37.5%;
   --primary-lightness: 45%;
-  --color-primary: #ff0000;
+  --color-primary: #ff6600;
   --color-good: hsl(95, 62.5%, 40%);
   --color-average: hsl(32.5, 90%, 50%);
   --color-bad: hsl(0, 72.5%, 50%);
@@ -80,23 +80,61 @@
   );
   --color-border-secondary: hsl(from var(--color-border-primary) h s l / 1);
 
-  --tab-color: #cd0606;
-  // --tab-background: #000000;
-  --tab-color-selected: #ffdeb0;
-  --tab-background-selected: #131217;
-
+  --tab-color: #2af6bc;
+  --tab-color-selected: #cd0606;
+  // --tab-background: #240e09;
+  --tab-background-selected: #3b3a3a63;
+  --tabs-container-background: #0e0a0a;
   --section-background: #0000;
+  --main-border-size: 1px;
+  --main-border-color: rgb(212, 132, 20);
+  --main-border-radius: 4px;
+
+  --input-border-radius: var(--main-border-size);
+  --input-border-color: var(--main-border-color);
+
+  // --tab-transition: 1s;
+
+  .Input {
+    border-radius: var(--main-border-radius);
+  }
+
+  .Tabs--vertical {
+  }
+
+  // .Tabs .Tab {
+  //   color: var(--tab-color);
+  //   background-color: var(--tabs-container-background);
+  // }
 
   .Tabs {
-    height: 100%;
-    background-color: #0d0402;
-    // border: var(--tab-indicator-size) solid var(--tab-color);
-    // border-bottom: transparent;
+    border: var(--main-border-size) solid var(--main-border-color);
+    border-radius: var(--main-border-radius);
+    padding: 0;
+  }
+
+  .Tabs--horizontal .Tab:before {
+    background-color: var(--tab-color-selected);
+  }
+
+  .Tabs--vertical .Tab:before {
+    background-color: var(--tab-color-selected);
+  }
+
+  .Tab--selected {
+    border-bottom: none;
+  }
+
+  .uplink-category-tabs {
+    // --tab-color: #ffdeb0;
+    // border-radius: 5px;
+    // background-color: red;
+    // outline: 1px solid rgb(255, 222, 176);
   }
 
   .uplink-currency {
-    color: black;
-    background-color: #ffff;
+    // color: black;
+    background-color: #ac3f00;
   }
 
   .TitleBar__title {
@@ -107,17 +145,29 @@
     background-image: unset;
   }
 
-  .Layout__content::before {
+  .Layout__content {
     content: '';
     inset: 0;
     position: absolute;
     background-repeat: no-repeat;
-    background-image: url('../assets/scuttle.png');
-    opacity: 0.5;
+    background-image: url('../assets/scuttle.svg');
+    // opacity: 0.5;
 
-    background-position-x: 50%;
-    background-position-y: 50%;
+    background-position-x: 75%;
+    background-position-y: 65%;
     background-size: 60%;
     image-rendering: crisp-edges;
+  }
+
+  .Section {
+    --section-title-color: #f1aa03;
+
+    &__rest {
+      color: #db7317;
+
+      .Section__content div {
+        opacity: 1 !important;
+      }
+    }
   }
 }

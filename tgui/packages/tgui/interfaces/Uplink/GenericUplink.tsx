@@ -85,7 +85,7 @@ export const GenericUplink = (props: GenericUplinkProps) => {
             />
           </Stack.Item>
           <Stack.Item grow>
-            <Tabs vertical fill>
+            <Tabs vertical fill className="uplink-category-tabs">
               {categories.map((category) => (
                 <Tabs.Tab
                   py={0.8}
