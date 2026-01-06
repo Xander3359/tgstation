@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { Component, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -23,7 +23,7 @@ import {
 import { GenericUplink, type Item } from './GenericUplink';
 import { PrimaryObjectiveMenu } from './PrimaryObjectiveMenu';
 
-type UplinkItem = {
+export type UplinkItem = {
   id: string;
   name: string;
   icon: string;
@@ -44,7 +44,7 @@ type UplinkItem = {
   ref?: string;
 };
 
-type UplinkData = {
+export type UplinkData = {
   telecrystals: number;
   progression_points: number;
   joined_population?: number;
@@ -71,18 +71,18 @@ type UplinkData = {
   can_renegotiate: BooleanLike;
 };
 
-type UplinkState = {
+export type UplinkState = {
   allItems: UplinkItem[];
   allCategories: string[];
   currentTab: number;
 };
 
-type ServerData = {
+export type ServerData = {
   items: UplinkItem[];
   categories: string[];
 };
 
-type ItemExtraData = Item & {
+export type ItemExtraData = Item & {
   extraData: {
     ref?: string;
     icon: string;
@@ -169,102 +169,24 @@ export class Uplink extends Component<any, UplinkState> {
   }
 
   render() {
-    return this.renderUI();
+    return this.MainPages();
   }
 
-  renderUI() {
+  MainPages() {
     const { data, act } = useBackend<UplinkData>();
     const {
       telecrystals,
       progression_points,
-      joined_population,
       primary_objectives,
       can_renegotiate,
       has_progression,
       current_progression_scaling,
-      extra_purchasable,
-      extra_purchasable_stock,
-      current_stock,
       lockable,
-      purchased_items,
       shop_locked,
     } = data;
-    const { allItems, allCategories, currentTab } = this.state as UplinkState;
-    const itemsToAdd = [...allItems];
-    const items: ItemExtraData[] = [];
-    itemsToAdd.push(...extra_purchasable);
-    for (let i = 0; i < extra_purchasable.length; i++) {
-      const item = extra_purchasable[i];
-      if (!allCategories.includes(item.category)) {
-        allCategories.push(item.category);
-      }
-    }
-    for (let i = 0; i < itemsToAdd.length; i++) {
-      const item = itemsToAdd[i];
-      const hasEnoughProgression =
-        progression_points >= item.progression_minimum;
-      const hasEnoughPop =
-        !joined_population || joined_population >= item.population_minimum;
+    const { allCategories, currentTab } = this.state as UplinkState;
 
-      let stock: number | null = current_stock[item.stock_key];
-      if (item.ref) {
-        stock = extra_purchasable_stock[item.ref];
-      }
-      if (!stock && stock !== 0) {
-        stock = null;
-      }
-      const canBuy = telecrystals >= item.cost && (stock === null || stock > 0);
-      items.push({
-        id: item.id,
-        name: item.name,
-        icon: item.icon,
-        icon_state: item.icon_state,
-        category: item.category,
-        desc: (
-          <>
-            <Box>{item.desc}</Box>
-            {(item.lock_other_purchases && (
-              <NoticeBox mt={1}>
-                Taking this item will lock you from further purchasing from the
-                marketplace. Additionally, if you have already purchased an
-                item, you will not be able to purchase this.
-              </NoticeBox>
-            )) ||
-              null}
-          </>
-        ),
-        cost: (
-          <Box>
-            {item.cost_override_string || `${item.cost} TC`}
-            {has_progression ? (
-              <>
-                ,&nbsp;
-                <Box as="span">
-                  {calculateDangerLevel(item.progression_minimum, true)}
-                </Box>
-              </>
-            ) : (
-              ''
-            )}
-          </Box>
-        ),
-        population_tooltip:
-          'This item is not cleared for operations performed against stations crewed by fewer than ' +
-          item.population_minimum +
-          ' people.',
-        insufficient_population: !hasEnoughPop,
-        disabled:
-          !canBuy ||
-          !hasEnoughPop ||
-          (has_progression && !hasEnoughProgression) ||
-          (item.lock_other_purchases && purchased_items > 0),
-        extraData: {
-          ref: item.ref,
-          icon: item.icon,
-          icon_state: item.icon_state,
-        },
-      });
-    }
+    const items = this.uplinkItems();
 
     return (
       <Window width={700} height={600} theme="syndicate">
@@ -391,5 +313,96 @@ export class Uplink extends Component<any, UplinkState> {
         </Window.Content>
       </Window>
     );
+  }
+
+  uplinkItems() {
+    const { data } = useBackend<UplinkData>();
+    const {
+      telecrystals,
+      progression_points,
+      joined_population,
+      has_progression,
+      extra_purchasable,
+      extra_purchasable_stock,
+      current_stock,
+      purchased_items,
+    } = data;
+    const { allItems, allCategories } = this.state as UplinkState;
+    const itemsToAdd = [...allItems];
+    const items: ItemExtraData[] = [];
+    itemsToAdd.push(...extra_purchasable);
+    for (let i = 0; i < extra_purchasable.length; i++) {
+      const item = extra_purchasable[i];
+      if (!allCategories.includes(item.category)) {
+        allCategories.push(item.category);
+      }
+    }
+    for (let i = 0; i < itemsToAdd.length; i++) {
+      const item = itemsToAdd[i];
+      const hasEnoughProgression =
+        progression_points >= item.progression_minimum;
+      const hasEnoughPop =
+        !joined_population || joined_population >= item.population_minimum;
+
+      let stock: number | null = current_stock[item.stock_key];
+      if (item.ref) {
+        stock = extra_purchasable_stock[item.ref];
+      }
+      if (!stock && stock !== 0) {
+        stock = null;
+      }
+      const canBuy = telecrystals >= item.cost && (stock === null || stock > 0);
+      items.push({
+        id: item.id,
+        name: item.name,
+        icon: item.icon,
+        icon_state: item.icon_state,
+        category: item.category,
+        desc: (
+          <>
+            <Box>{item.desc}</Box>
+            {(item.lock_other_purchases && (
+              <NoticeBox mt={1}>
+                Taking this item will lock you from further purchasing from the
+                marketplace. Additionally, if you have already purchased an
+                item, you will not be able to purchase this.
+              </NoticeBox>
+            )) ||
+              null}
+          </>
+        ),
+        cost: (
+          <Box>
+            {item.cost_override_string || `${item.cost} TC`}
+            {has_progression ? (
+              <>
+                ,&nbsp;
+                <Box as="span">
+                  {calculateDangerLevel(item.progression_minimum, true)}
+                </Box>
+              </>
+            ) : (
+              ''
+            )}
+          </Box>
+        ),
+        population_tooltip:
+          'This item is not cleared for operations performed against stations crewed by fewer than ' +
+          item.population_minimum +
+          ' people.',
+        insufficient_population: !hasEnoughPop,
+        disabled:
+          !canBuy ||
+          !hasEnoughPop ||
+          (has_progression && !hasEnoughProgression) ||
+          (item.lock_other_purchases && purchased_items > 0),
+        extraData: {
+          ref: item.ref,
+          icon: item.icon,
+          icon_state: item.icon_state,
+        },
+      });
+    }
+    return items;
   }
 }

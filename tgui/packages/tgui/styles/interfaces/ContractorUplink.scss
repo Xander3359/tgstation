@@ -125,15 +125,12 @@
     border-bottom: none;
   }
 
-  .uplink-category-tabs {
-    // --tab-color: #ffdeb0;
-    // border-radius: 5px;
-    // background-color: red;
-    // outline: 1px solid rgb(255, 222, 176);
+  .contractor-uplink__border {
+    border: var(--main-border-size) solid var(--main-border-color);
+    border-radius: var(--main-border-radius);
   }
 
   .uplink-currency {
-    // color: black;
     background-color: #ac3f00;
   }
 
