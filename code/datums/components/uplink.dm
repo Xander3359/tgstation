@@ -444,92 +444,63 @@
 	name = "contractor uplink"
 	ui_name = "ContractorUplink"
 	var/list/bounty_targets = list()
-	var/list/mugshot_screens = list()
 	var/bounty_target_number = 4
+	var/list/saved_images = list()
+	var/high_bounty = 30
+	var/low_bounty = 10
 
 /datum/component/uplink/contractor/Initialize(owner, lockable, enabled, uplink_flag, starting_tc, has_progression, datum/uplink_handler/uplink_handler_override)
 	. = ..()
 	pick_bounty_targets()
 
-/datum/component/uplink/contractor/Destroy()
-	. = ..()
-	QDEL_LIST(mugshot_screens)
-
 /datum/component/uplink/contractor/proc/pick_bounty_targets()
 	bounty_targets.Cut()
-	QDEL_LIST(mugshot_screens)
 	var/list/potential_targets = GLOB.human_list.Copy()
-	for(var/index in 1 to bounty_target_number)
-		var/target = pick(potential_targets)
+	var/index = 0
+	while(index < bounty_target_number)
+		index++
+		var/mob/target = pick(potential_targets)
+		potential_targets -= target
 		if(!get_turf(target))
 			if(!length(potential_targets))
 				CRASH("Not enough valid targets to pick bounty targets from!")
-			index = max(1, index - 1)
+			index = max(0, index - 1)
 			continue
-		potential_targets -= target
 		bounty_targets += WEAKREF(target)
-		var/atom/movable/screen/map_view/tracking/mugshot_screen = new()
-		mugshot_screens += mugshot_screen
-		mugshot_screen.generate_view("mugshot_[REF(src)]_[index]_map")
-		mugshot_screen.target_ref = WEAKREF(target)
+		var/mutable_appearance/icon = new(target)
+		icon.dir = SOUTH
+		saved_images[WEAKREF(target)] = icon2base64(getFlatIcon(icon))
 
 /datum/component/uplink/contractor/ui_static_data(mob/user)
 	. = ..()
 	var/list/bounty_data = list()
-	var/target_index = 0
 	for(var/datum/weakref/target_ref in bounty_targets)
 		var/mob/target = target_ref?.resolve()
 		if(isnull(target))
 			continue
 		var/list/target_data = list()
-		var/turf/target_turf = get_turf(target)
 
-		target_index++
-
-		var/atom/movable/screen/map_view/tracking/mugshot = mugshot_screens[target_index]
 		target_data["name"] = target.name
-		target_data["location"] = target_turf?.loc || "Unknown"
-		target_data["bounty_reward"] = 20
-		target_data["mugshot_screen"] = mugshot.assigned_map
+		target_data["bounty_reward"] = rand(low_bounty, high_bounty)
+		target_data["mugshot_icon"] = saved_images[WEAKREF(target)]
 
 		bounty_data += list(target_data)
 
 	.["bounty_targets"] = bounty_data
+	.["low_bounty"] = low_bounty
+	.["high_bounty"] = high_bounty
 
-
-/datum/component/uplink/contractor/ui_act(action, params, datum/tgui/ui, datum/ui_state/state)
+/datum/component/uplink/contractor/ui_assets(mob/user)
 	. = ..()
-	if(action == "show_mugshots")
-		for(var/atom/movable/screen/map_view/tracking/mugshot_screen in mugshot_screens)
-			mugshot_screen.display_to(ui.user, ui.window)
-			mugshot_screen.start_tracking()
+	. += list(
+		get_asset_datum(/datum/asset/simple/contractor),
+	)
 
-	// if(action == "cleanup_mugshots")
 
-// TODO: optimization for not tracking while not viewed
-/atom/movable/screen/map_view/tracking
-	var/datum/movement_detector/tracker
-	var/datum/weakref/target_ref
-
-/atom/movable/screen/map_view/tracking/proc/start_tracking()
-	var/atom/movable/target = target_ref?.resolve()
-	if(isnull(target))
-		return
-	tracker = new(target, CALLBACK(src, PROC_REF(update_view), target_ref))
-	update_view()
-
-/atom/movable/screen/map_view/tracking/proc/update_view()
-	var/atom/movable/target = target_ref?.resolve()
-	if(isnull(target))
-		stop_tracking()
-		return
-	vis_contents.Cut()
-	vis_contents += get_turf(target)
-	vis_contents += target
-
-/atom/movable/screen/map_view/tracking/proc/stop_tracking()
-	QDEL_NULL(tracker)
-
-/atom/movable/screen/map_view/tracking/Destroy()
-	. = ..()
-	stop_tracking()
+/datum/asset/simple/contractor
+	assets = list(
+		"coin1.png" = 'icons/ui/antags/contractor/coin1.png',
+		"coin2.png" = 'icons/ui/antags/contractor/coin2.png',
+		"coin3.png" = 'icons/ui/antags/contractor/coin3.png',
+		"coin4.png" = 'icons/ui/antags/contractor/coin4.png',
+	)

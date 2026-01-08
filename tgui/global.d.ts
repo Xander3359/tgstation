@@ -21,6 +21,10 @@ declare module '*.svg' {
   export default content;
 }
 
+// Stylesheets imported for side effects.
+declare module '*.css';
+declare module '*.scss';
+
 namespace JSX {
   interface IntrinsicElements {
     marquee: any;

@@ -9,23 +9,16 @@ import React, {
 import {
   Box,
   Button,
-  ByondUi,
   Dimmer,
+  Image,
   NoticeBox,
-  Section,
   Stack,
   Tabs,
-  Tooltip,
 } from 'tgui-core/components';
 import { fetchRetry } from 'tgui-core/http';
-import type { BooleanLike } from 'tgui-core/react';
 import { resolveAsset } from '../assets';
 import { useBackend } from '../backend';
-import {
-  calculateDangerLevel,
-  calculateProgression,
-  dangerLevelsTooltip,
-} from './Uplink/calculateDangerLevel';
+
 import { Window } from '../layouts';
 import { GenericUplink, Item } from './Uplink/GenericUplink';
 import { ItemExtraData, Uplink, UplinkData, UplinkState } from './Uplink';
@@ -33,26 +26,29 @@ import '../styles/interfaces/ContractorUplink.scss';
 
 type ContractorUplinkData = UplinkData & {
   bounty_targets: BountyTargets[];
+  // low of high-to-low range for bounty payouts
+  high_bounty: number;
+  low_bounty: number;
+  allCategories: string[];
 };
 
-type TabViewProps = {
-  telecrystals: number;
-  allCategories: string[];
+type TabViewProps = ContractorUplinkData & {
   items: ItemExtraData[];
   currentTab: number;
   setTab: (tab: number) => void;
-  bountyTargets: BountyTargets[];
 };
 
 type PrimaryObjectiveMenuProps = {
-  bountyTargets: BountyTargets[];
+  bounty_targets: BountyTargets[];
+  high_bounty: number;
+  low_bounty: number;
 };
 
 type BountyTargets = {
   name: string;
   location: string;
   bounty_reward: number;
-  mugshot_screen: string;
+  mugshot_icon: string;
 };
 
 type Tab = {
@@ -64,7 +60,7 @@ type Tab = {
 export class ContractorUplink extends Uplink {
   render() {
     const { data } = useBackend<ContractorUplinkData>();
-    const { shop_locked, telecrystals, bounty_targets } = data;
+    const { shop_locked } = data;
     const { allCategories, currentTab } = this.state as UplinkState;
     const setTab = (tab: number) => {
       this.setState({ currentTab: tab });
@@ -78,12 +74,11 @@ export class ContractorUplink extends Uplink {
               <Stack.Item grow>
                 <>
                   <TabView
-                    telecrystals={telecrystals}
+                    {...data}
                     allCategories={allCategories}
-                    items={items}
                     currentTab={currentTab}
                     setTab={setTab}
-                    bountyTargets={bounty_targets}
+                    items={items}
                   />
                   {(shop_locked && !data.debug && (
                     <Dimmer>
@@ -109,6 +104,8 @@ export class ContractorUplink extends Uplink {
   }
 }
 
+let loadedMugshots = false;
+
 function TabView(props: TabViewProps) {
   const { act } = useBackend();
   const {
@@ -117,7 +114,9 @@ function TabView(props: TabViewProps) {
     currentTab,
     setTab,
     items,
-    bountyTargets,
+    bounty_targets,
+    high_bounty,
+    low_bounty,
   } = props;
 
   const tabs: Tab[] = [
@@ -127,7 +126,13 @@ function TabView(props: TabViewProps) {
     },
     {
       title: 'Bounty Targets',
-      content: <BountyTargets bountyTargets={bountyTargets} />,
+      content: (
+        <BountyTargets
+          bounty_targets={bounty_targets}
+          high_bounty={high_bounty}
+          low_bounty={low_bounty}
+        />
+      ),
       onSelect: () => act('show_mugshots'),
     },
     {
@@ -170,7 +175,9 @@ function TabView(props: TabViewProps) {
         </Tabs>
       </Stack.Item>
 
-      <Stack.Item grow>{tabs[currentTab].content}</Stack.Item>
+      <Stack.Item overflowY="auto" grow>
+        {tabs[currentTab].content}
+      </Stack.Item>
     </Stack>
   );
 }
@@ -180,34 +187,64 @@ function MissionInfo(props) {
 }
 
 function BountyTargets(props: PrimaryObjectiveMenuProps) {
-  const { bountyTargets } = props;
+  const { bounty_targets, low_bounty = 0, high_bounty = 30 } = props;
   const targetsElements =
-    bountyTargets?.map((target, index) => (
+    bounty_targets?.map((target, index) => (
       <Box
         key={index}
-        className="contractor-uplink__border"
+        className="ContractorBorder ContractorBlock"
         p={1}
         mb={1}
         align="center"
         style={{ display: 'flex' }}
       >
         <Box mr={2}>
-          <ByondUi
-            height="128px"
+          <Image
             width="128px"
-            params={{
-              id: target.mugshot_screen,
-              type: 'map',
-            }}
+            height="128px"
+            src={`data:image/jpeg;base64,${target.mugshot_icon}`}
           />
         </Box>
-        <Box>
-          <Box fontWeight="bold" fontSize={1.2} mb={0.5}>
-            {target.name}
+        <Stack m={1}>
+          <Box>
+            <Box fontWeight="bold" fontSize={1.2} mb={0.5}>
+              {target.name}
+            </Box>
+            <Box style={{ display: 'flex', alignItems: 'center' }}>
+              Reward: {target.bounty_reward}{' '}
+              <Image
+                height="32px"
+                src={resolveAsset(
+                  `coin${BountyRange(target.bounty_reward, low_bounty, high_bounty)}.png`,
+                )}
+              />
+            </Box>
           </Box>
-          <Box>Last Known Location: {target.location}</Box>
-          <Box>Reward: {target.bounty_reward} Coins</Box>
-        </Box>
+          <Box>
+            <h2>Choose Extraction Type</h2>
+            <Button
+              mb={1}
+              style={{ backgroundColor: 'green' }}
+              tooltip="Static location that doesn't provide additional rewards, bring your target to arrivals, departures, solar arrays or lavaland to extract your target."
+            >
+              Safe
+            </Button>
+            <Button
+              mb={1}
+              style={{ color: 'black', backgroundColor: 'yellow' }}
+              tooltip="RNG, any non secure area on the station, grants a small bonus of coins."
+            >
+              Unsafe
+            </Button>
+            <Button
+              mb={1}
+              style={{ backgroundColor: 'red' }}
+              tooltip="Usually a highly restricted area, provides the biggest reward."
+            >
+              Dangerous
+            </Button>
+          </Box>
+        </Stack>
       </Box>
     )) ?? [];
 
@@ -223,4 +260,14 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
       )}
     </Box>
   );
+}
+
+/// 1-4 range based on low and range, on whichever is closer to the high end
+function BountyRange(value: number, low: number, high: number): number {
+  const range = high - low;
+  const normalized = (value - low) / range;
+  const clamped = Math.max(0, Math.min(1, normalized));
+
+  const tier = Math.min(4, Math.floor(clamped * 4));
+  return tier;
 }

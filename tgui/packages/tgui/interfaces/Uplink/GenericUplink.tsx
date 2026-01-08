@@ -51,7 +51,7 @@ export const GenericUplink = (props: GenericUplinkProps) => {
                   bold
                   fluid
                   lineHeight={2}
-                  className="uplink-currency"
+                  className="UplinkCurrency"
                   style={{
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',

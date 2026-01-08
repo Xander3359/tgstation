@@ -82,7 +82,6 @@
 
   --tab-color: #2af6bc;
   --tab-color-selected: #cd0606;
-  // --tab-background: #240e09;
   --tab-background-selected: #3b3a3a63;
   --tabs-container-background: #0e0a0a;
   --section-background: #0000;
@@ -98,14 +97,6 @@
   .Input {
     border-radius: var(--main-border-radius);
   }
-
-  .Tabs--vertical {
-  }
-
-  // .Tabs .Tab {
-  //   color: var(--tab-color);
-  //   background-color: var(--tabs-container-background);
-  // }
 
   .Tabs {
     border: var(--main-border-size) solid var(--main-border-color);
@@ -125,12 +116,20 @@
     border-bottom: none;
   }
 
-  .contractor-uplink__border {
+  .ContractorBorder {
     border: var(--main-border-size) solid var(--main-border-color);
     border-radius: var(--main-border-radius);
   }
 
-  .uplink-currency {
+  .ContractorBlock {
+    background: var(--tabs-container-background);
+
+    &:hover {
+      background: var(--tab-background-selected);
+    }
+  }
+
+  .UplinkCurrency {
     background-color: #ac3f00;
   }
 
