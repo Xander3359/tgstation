@@ -440,20 +440,48 @@
 
 #undef PEN_ROTATIONS
 
-/datum/component/uplink/contractor
-	name = "contractor uplink"
-	ui_name = "ContractorUplink"
+/datum/contractor_bounty
+	var/datum/weakref/target_ref
+	var/image/cached_image
+	var/is_head = FALSE
+	var/payout = 0
+
+/datum/contractor_bounty/New(mob/target)
+	. = ..()
+	target_ref = WEAKREF(target)
+	is_head = target.job
+	INVOKE_ASYNC(src, PROC_REF(cache_image), target)
+
+/datum/contractor_bounty/proc/cache_image(mob/target)
+	var/mutable_appearance/icon = new(target)
+	icon.dir = SOUTH
+	cached_image = icon2base64(getFlatIcon(icon))
+
+/datum/contractor_bounty/proc/can_claim(mob/user)
+	return TRUE
+
+/datum/contractor_bounty/proc/to_ui_data()
+	var/mob/target = target_ref?.resolve()
+	return list(
+		"name" = target?.name || "Unknown Target",
+		"is_head" = is_head,
+		"bounty_reward" = payout,
+		"mugshot_icon" = cached_image,
+	)
+
+/datum/contractor_bounty_handler
 	var/list/bounty_targets = list()
 	var/bounty_target_number = 4
-	var/list/saved_images = list()
 	var/high_bounty = 30
 	var/low_bounty = 10
+	var/dangerous_extract_pop = 30
+	var/refresh_time = 20 MINUTES
 
-/datum/component/uplink/contractor/Initialize(owner, lockable, enabled, uplink_flag, starting_tc, has_progression, datum/uplink_handler/uplink_handler_override)
+/datum/contractor_bounty_handler/New()
 	. = ..()
 	pick_bounty_targets()
 
-/datum/component/uplink/contractor/proc/pick_bounty_targets()
+/datum/contractor_bounty_handler/proc/pick_bounty_targets()
 	bounty_targets.Cut()
 	var/list/potential_targets = GLOB.human_list.Copy()
 	var/index = 0
@@ -466,36 +494,46 @@
 				CRASH("Not enough valid targets to pick bounty targets from!")
 			index = max(0, index - 1)
 			continue
-		bounty_targets += WEAKREF(target)
-		var/mutable_appearance/icon = new(target)
-		icon.dir = SOUTH
-		saved_images[WEAKREF(target)] = icon2base64(getFlatIcon(icon))
+		var/datum/contractor_bounty = new(target)
+		bounty_targets[WEAKREF(target)] += contractor_bounty
+
+/datum/component/uplink/contractor
+	name = "contractor uplink"
+	ui_name = "ContractorUplink"
+	var/static/datum/contractor_bounty_handler/handler
+
+/datum/component/uplink/contractor/Initialize(owner, lockable, enabled, uplink_flag, starting_tc, has_progression, datum/uplink_handler/uplink_handler_override)
+	. = ..()
+	if(isnull(handler))
+		handler = new()
+
+/datum/component/uplink/contractor/ui_data(mob/user)
+	. = ..()
+	.["allow_dangerous_extract"] = allow_dangerous_extract()
 
 /datum/component/uplink/contractor/ui_static_data(mob/user)
 	. = ..()
 	var/list/bounty_data = list()
-	for(var/datum/weakref/target_ref in bounty_targets)
-		var/mob/target = target_ref?.resolve()
+	for(var/datum/contractor_bounty/bounty in handler.bounty_targets)
+		var/mob/target = bounty.target_ref?.resolve()
 		if(isnull(target))
 			continue
-		var/list/target_data = list()
-
-		target_data["name"] = target.name
-		target_data["bounty_reward"] = rand(low_bounty, high_bounty)
-		target_data["mugshot_icon"] = saved_images[WEAKREF(target)]
-
-		bounty_data += list(target_data)
+		bounty_data += list(bounty.to_ui_data())
 
 	.["bounty_targets"] = bounty_data
-	.["low_bounty"] = low_bounty
-	.["high_bounty"] = high_bounty
+	.["low_bounty"] = handler.low_bounty
+	.["high_bounty"] = handler.high_bounty
+
+/datum/component/uplink/contractor/proc/allow_dangerous_extract()
+	if(GLOB.joined_player_list < handler.dangerous_extract_pop)
+		return FALSE
+	return TRUE
 
 /datum/component/uplink/contractor/ui_assets(mob/user)
 	. = ..()
 	. += list(
 		get_asset_datum(/datum/asset/simple/contractor),
 	)
-
 
 /datum/asset/simple/contractor
 	assets = list(
