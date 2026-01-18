@@ -3517,6 +3517,7 @@
 #include "code\modules\antagonists\traitor\uplink_handler.dm"
 #include "code\modules\antagonists\traitor\components\demoraliser.dm"
 #include "code\modules\antagonists\traitor\contractor\contract_teammate.dm"
+#include "code\modules\antagonists\traitor\contractor\contract_uplink.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_hub.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_items.dm"
 #include "code\modules\antagonists\traitor\contractor\syndicate_contract.dm"
