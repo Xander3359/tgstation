@@ -64,6 +64,8 @@
 #define CALIBER_JUNK "junk"
 /// The caliber used by the (gatfruit) peashooter
 #define CALIBER_PEA "pea"
+/// Caliber used by the contractor gaus rifle
+#define CALIBER_GAUSS "2mm FM (ferromagnetic)"
 
 /// For gunpoints, how many tiles around the target the shooter can roam without losing their shot
 #define GUNPOINT_SHOOTER_STRAY_RANGE 2
