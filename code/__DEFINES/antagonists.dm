@@ -84,6 +84,9 @@
 #define CONTRACT_UPLINK_PAGE_CONTRACTS "CONTRACTS"
 #define CONTRACT_UPLINK_PAGE_HUB "HUB"
 
+#define CONTRACT_MAX_PAYOUT 13
+#define CONTRACT_MIN_PAYOUT 2
+
 
 // Heretic path defines.
 #define PATH_START "Start Path"

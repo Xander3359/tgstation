@@ -1,11 +1,10 @@
+
 /datum/contractor_hub
-	///The current contract in progress, and can be null if no contract is in progress.
-	var/datum/syndicate_contract/current_contract
 	///List of all available syndicate contracts that can be taken.
 	var/list/datum/syndicate_contract/assigned_contracts = list()
 
-	///Reference to a contractor teammate, if one has been purchased.
-	var/datum/antagonist/traitor/contractor_support/contractor_teammate
+	// ///Reference to a contractor teammate, if one has been purchased.
+	// var/datum/antagonist/traitor/contractor_support/contractor_teammate
 
 	///List of all people currently used as targets, to not roll doubles.
 	var/list/assigned_targets = list()
@@ -16,14 +15,56 @@
 	var/contract_TC_payed_out = 0
 	///How much TC we can cash out currently. Used when redeeming TC and for round-end logs.
 	var/contract_TC_to_redeem = 0
+	/// Time in seconds between contract refreshes.
+	var/refresh_time = 20 MINUTES
+	/// list of uplinks that need to be updated when contracts change, also used to decide if we want to refresh contracts
+	var/list/linked_uplinks = list()
+	/// timer for refreshing contracts
+	var/contract_refresh_timer
+
+	var/highest_payout = 0
+	var/lowest_payout = 0
+	var/dangerous_extract_pop = 30
+
+/datum/contractor_hub/proc/add_uplink(datum/component/uplink/contractor/uplink)
+	linked_uplinks += WEAKREF(uplink)
+	if(!length(assigned_targets))
+		create_contracts()
+		get_highest_lowest()
+
+/datum/contractor_hub/proc/remove_uplink(datum/component/uplink/contractor/uplink)
+	linked_uplinks -= WEAKREF(uplink)
+	if(!length(linked_uplinks))
+		refresh_needed()
+
+/datum/contractor_hub/proc/wait_for_refresh()
+	if(isnull(contract_refresh_timer))
+		contract_refresh_timer = addtimer(CALLBACK(src, PROC_REF(refresh_contracts)), refresh_time, TIMER_STOPPABLE)
+
+/datum/contractor_hub/proc/refresh_needed()
+	if(length(linked_uplinks))
+		return
+	deltimer(contract_refresh_timer)
+	contract_refresh_timer = null
+
+/datum/contractor_hub/proc/refresh_contracts()
+	create_contracts()
+	wait_for_refresh()
+
+/datum/contractor_hub/proc/get_highest_lowest()
+	highest_payout = 0
+	lowest_payout = 0
+	for(var/datum/syndicate_contract/contract in assigned_contracts)
+		var/total_payout = contract.contract.payout + contract.contract.payout_bonus
+		if(total_payout > highest_payout)
+			highest_payout = total_payout
+		if(lowest_payout == 0 || total_payout < lowest_payout)
+			lowest_payout = total_payout
 
 /datum/contractor_hub/proc/create_contracts(datum/mind/owner)
-	// 6 initial contracts
+	// 3 initial contracts
 	var/list/to_generate = list(
-		CONTRACT_PAYOUT_LARGE,
 		CONTRACT_PAYOUT_MEDIUM,
-		CONTRACT_PAYOUT_SMALL,
-		CONTRACT_PAYOUT_SMALL,
 		CONTRACT_PAYOUT_SMALL,
 		CONTRACT_PAYOUT_SMALL
 	)
@@ -49,7 +90,7 @@
 
 	// Generate contracts, and find the lowest paying.
 	for(var/i in 1 to to_generate.len)
-		var/datum/syndicate_contract/contract_to_add = new(owner, assigned_targets, to_generate[i])
+		var/datum/syndicate_contract/contract_to_add = new(assigned_targets, to_generate[i])
 		var/contract_payout_total = contract_to_add.contract.payout + contract_to_add.contract.payout_bonus
 
 		assigned_targets.Add(contract_to_add.contract.target)

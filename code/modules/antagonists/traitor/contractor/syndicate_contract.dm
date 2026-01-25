@@ -17,13 +17,36 @@
 	var/list/victim_belongings = list()
 	///timerid for stuff that handles victim chat messages, effects and returnal
 	var/victim_timerid
+	/// cached gFI icon of target for UI purposes
+	var/image/cached_image
+	/// Whether the target is a head of staff
+	var/is_head = FALSE
 
-/datum/syndicate_contract/New(contract_owner, blacklist, type=CONTRACT_PAYOUT_SMALL)
+/datum/syndicate_contract/proc/to_ui_data()
+	return list(
+		"name" = contract.target?.name || "Unknown Target",
+		"is_head" = is_head,
+		"status" = status,
+		"target_rank" = target_rank,
+		"bounty_reward" = contract.payout,
+		"payout_bonus" = contract.payout_bonus,
+		"ransom" = ransom,
+		"wanted_message" = wanted_message,
+		"mugshot_icon" = cached_image,
+	)
+
+/datum/syndicate_contract/New(blacklist, type=CONTRACT_PAYOUT_SMALL)
 	contract = new(src)
-	contract.owner = contract_owner
 	payout_type = type
 
 	generate(blacklist)
+	if(!isnull(contract.target))
+		INVOKE_ASYNC(src, PROC_REF(cache_image), contract.target)
+
+/datum/syndicate_contract/proc/cache_image(mob/target)
+	var/mutable_appearance/icon = new(target)
+	icon.dir = SOUTH
+	cached_image = icon2base64(getFlatIcon(icon))
 
 /datum/syndicate_contract/proc/generate(blacklist)
 	contract.find_target(null, blacklist)
@@ -31,9 +54,13 @@
 	var/datum/record/crew/record
 	if (contract.target)
 		record = find_record(contract.target.name)
+		var/datum/job/job = contract.target.assigned_role
+		if(job && job.job_flags & JOB_HEAD_OF_STAFF)
+			is_head = TRUE
 
 	if (record)
 		target_rank = record.rank
+		// is_head = record.is_head
 	else
 		target_rank = "Unknown"
 
@@ -62,13 +89,13 @@
 
 		if (free_location)
 			// We've got a valid location, launch.
-			launch_extraction_pod(free_location)
+			launch_extraction_pod(user, free_location)
 			return TRUE
 
 	return FALSE
 
 // Launch the pod to collect our victim.
-/datum/syndicate_contract/proc/launch_extraction_pod(turf/empty_pod_turf)
+/datum/syndicate_contract/proc/launch_extraction_pod(mob/living/user, turf/empty_pod_turf)
 	var/obj/structure/closet/supplypod/extractionpod/empty_pod = new()
 
 	RegisterSignal(empty_pod, COMSIG_ATOM_ENTERED, PROC_REF(enter_check))
@@ -77,30 +104,31 @@
 	empty_pod.reversing = TRUE
 	empty_pod.explosionSize = list(0,0,0,1)
 	empty_pod.leavingSound = 'sound/effects/podwoosh.ogg'
+	empty_pod.contractor_owner = WEAKREF(user)
 
 	new /obj/effect/pod_landingzone(empty_pod_turf, empty_pod)
 
 /datum/syndicate_contract/proc/enter_check(datum/source, sent_mob)
 	SIGNAL_HANDLER
-
-	if(!istype(source, /obj/structure/closet/supplypod/extractionpod))
-		return
-	if(!isliving(sent_mob))
+	var/obj/structure/closet/supplypod/extractionpod/pod = source
+	if(!istype(pod) || !isliving(sent_mob))
 		return
 	var/mob/living/person_sent = sent_mob
-	var/datum/antagonist/traitor/traitor_data = contract.owner.has_antag_datum(/datum/antagonist/traitor)
+	// var/mob/living/pod_owner = pod.contractor_owner?.resolve()
 	if(person_sent == contract.target.current)
-		traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem += contract.payout
-		traitor_data.uplink_handler.contractor_hub.contracts_completed++
-		if(person_sent.stat != DEAD)
-			traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem += contract.payout_bonus
+		// var/datum/antagonist/traitor/traitor_data = pod_owner?.mind?.has_antag_datum(/datum/antagonist/traitor)
+		// if(!isnull(traitor_data))
+		// 	traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem += contract.payout
+		// 	traitor_data.uplink_handler.contractor_hub.contracts_completed++
+		// 	if(person_sent.stat != DEAD)
+		// 		traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem += contract.payout_bonus
 		status = CONTRACT_STATUS_COMPLETE
-		if(traitor_data.uplink_handler.contractor_hub.current_contract == src)
-			traitor_data.uplink_handler.contractor_hub.current_contract = null
-	else
-		status = CONTRACT_STATUS_ABORTED // Sending a target that wasn't even yours is as good as just aborting it
-		if(traitor_data.uplink_handler.contractor_hub.current_contract == src)
-			traitor_data.uplink_handler.contractor_hub.current_contract = null
+	// 	if(traitor_data.uplink_handler.contractor_hub.current_contract == src)
+	// 		traitor_data.uplink_handler.contractor_hub.current_contract = null
+	// else
+	// 	status = CONTRACT_STATUS_ABORTED // Sending a target that wasn't even yours is as good as just aborting it
+	// 	if(traitor_data.uplink_handler.contractor_hub.current_contract == src)
+	// 		traitor_data.uplink_handler.contractor_hub.current_contract = null
 
 	for(var/obj/item/person_contents as anything in person_sent.gather_belongings(FALSE, FALSE))
 		if(ishuman(person_sent))
@@ -115,7 +143,6 @@
 		person_contents.moveToNullspace()
 		victim_belongings.Add(WEAKREF(person_contents))
 
-	var/obj/structure/closet/supplypod/extractionpod/pod = source
 	// Handle the pod returning
 	pod.startExitSequence(pod)
 

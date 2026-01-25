@@ -92,6 +92,7 @@
 	stay_after_drop = TRUE
 	leavingSound = 'sound/effects/podwoosh.ogg'
 	reverse_option_list = list("Mobs"=TRUE,"Objects"=FALSE,"Anchored"=FALSE,"Underfloor"=FALSE,"Wallmounted"=FALSE,"Floors"=FALSE,"Walls"=FALSE, "Mecha"=FALSE)
+	var/datum/weakref/contractor_owner
 
 /obj/structure/closet/supplypod/centcompod
 	style = /datum/pod_style/centcom
