@@ -76,7 +76,7 @@
 /datum/component/uplink/contractor/ui_static_data(mob/user)
 	. = ..()
 	var/list/bounty_data = list()
-	for(var/datum/syndicate_contract/bounty in handler.assigned_targets)
+	for(var/datum/syndicate_contract/bounty in handler.assigned_contracts)
 		var/mob/target = bounty.contract.target
 		if(QDELETED(target))
 			continue
@@ -87,7 +87,7 @@
 	.["low_bounty"] = handler.lowest_payout
 
 /datum/component/uplink/contractor/proc/allow_dangerous_extract()
-	if(GLOB.joined_player_list < handler.dangerous_extract_pop)
+	if(length(GLOB.joined_player_list) < handler.dangerous_extract_pop)
 		return FALSE
 	return TRUE
 

@@ -28,7 +28,7 @@
 
 /datum/contractor_hub/proc/add_uplink(datum/component/uplink/contractor/uplink)
 	linked_uplinks += WEAKREF(uplink)
-	if(!length(assigned_targets))
+	if(!length(assigned_contracts))
 		create_contracts()
 		get_highest_lowest()
 
@@ -50,6 +50,14 @@
 /datum/contractor_hub/proc/refresh_contracts()
 	create_contracts()
 	wait_for_refresh()
+	refresh_uplink_data()
+
+/datum/contractor_hub/proc/refresh_uplink_data()
+	for(var/datum/weakref/uplink_ref in linked_uplinks)
+		var/datum/component/uplink/contractor/uplink = uplink_ref.resolve()
+		if(isnull(uplink))
+			continue
+		uplink.update_static_data_for_all_viewers()
 
 /datum/contractor_hub/proc/get_highest_lowest()
 	highest_payout = 0
@@ -70,9 +78,10 @@
 	)
 
 	//What the fuck
+#ifndef TESTING
 	if(length(to_generate) > length(GLOB.manifest.locked))
 		to_generate.Cut(1, length(GLOB.manifest.locked))
-
+#endif
 	// We don't want the sum of all the payouts to be under this amount
 	var/lowest_TC_threshold = 30
 
