@@ -85,6 +85,7 @@
 	.["bounty_targets"] = bounty_data
 	.["high_bounty"] = handler.highest_payout
 	.["low_bounty"] = handler.lowest_payout
+	.["refresh_time"] = timeleft(handler.contract_refresh_timer)
 
 /datum/component/uplink/contractor/proc/allow_dangerous_extract()
 	if(length(GLOB.joined_player_list) < handler.dangerous_extract_pop)

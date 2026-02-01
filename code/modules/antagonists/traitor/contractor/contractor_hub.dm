@@ -53,7 +53,7 @@
 	refresh_uplink_data()
 
 /datum/contractor_hub/proc/refresh_uplink_data()
-	for(var/datum/weakref/uplink_ref in linked_uplinks)
+	for(var/datum/weakref/uplink_ref as anything in linked_uplinks)
 		var/datum/component/uplink/contractor/uplink = uplink_ref.resolve()
 		if(isnull(uplink))
 			continue
@@ -69,16 +69,9 @@
 		if(lowest_payout == 0 || total_payout < lowest_payout)
 			lowest_payout = total_payout
 
-/datum/contractor_hub/proc/create_contracts(datum/mind/owner)
-	// 3 initial contracts
-	var/list/to_generate = list(
-		CONTRACT_PAYOUT_MEDIUM,
-		CONTRACT_PAYOUT_SMALL,
-		CONTRACT_PAYOUT_SMALL
-	)
-
-	//What the fuck
+/datum/contractor_hub/proc/create_contracts(list/to_generate = list(CONTRACT_PAYOUT_MEDIUM, CONTRACT_PAYOUT_SMALL, CONTRACT_PAYOUT_SMALL))
 #ifndef TESTING
+	//What the fuck
 	if(length(to_generate) > length(GLOB.manifest.locked))
 		to_generate.Cut(1, length(GLOB.manifest.locked))
 #endif
@@ -117,3 +110,10 @@
 	// If the threshold for TC payouts isn't reached, boost the lowest paying contract
 	if (total < lowest_TC_threshold)
 		lowest_paying_contract.contract.payout_bonus += (lowest_TC_threshold - total)
+
+
+// /datum/contractor_hub/proc/create_contract(type)
+// 	var/datum/syndicate_contract/contract_to_add = new(assigned_targets, type)
+// 	contract_to_add.id = assigned_contracts.len + 1
+// 	assigned_targets += contract_to_add.contract.target
+// 	return contract_to_add

@@ -14,8 +14,8 @@ import {
   NoticeBox,
   Stack,
   Tabs,
+  TimeDisplay,
 } from 'tgui-core/components';
-import { fetchRetry } from 'tgui-core/http';
 import { resolveAsset } from '../assets';
 import { useBackend } from '../backend';
 
@@ -30,6 +30,7 @@ type ContractorUplinkData = UplinkData & {
   high_bounty: number;
   low_bounty: number;
   allCategories: string[];
+  contract_refresh_time: number;
 };
 
 type TabViewProps = ContractorUplinkData & {
@@ -42,6 +43,7 @@ type PrimaryObjectiveMenuProps = {
   bounty_targets: BountyTargets[];
   high_bounty: number;
   low_bounty: number;
+  refresh_time: number;
 };
 
 type BountyTargets = {
@@ -117,6 +119,7 @@ function TabView(props: TabViewProps) {
     bounty_targets,
     high_bounty,
     low_bounty,
+    contract_refresh_time,
   } = props;
 
   const tabs: Tab[] = [
@@ -131,6 +134,7 @@ function TabView(props: TabViewProps) {
           bounty_targets={bounty_targets}
           high_bounty={high_bounty}
           low_bounty={low_bounty}
+          refresh_time={contract_refresh_time}
         />
       ),
       onSelect: () => act('show_mugshots'),
@@ -187,7 +191,12 @@ function MissionInfo(props) {
 }
 
 function BountyTargets(props: PrimaryObjectiveMenuProps) {
-  const { bounty_targets, low_bounty = 0, high_bounty = 30 } = props;
+  const {
+    bounty_targets,
+    low_bounty = 0,
+    high_bounty = 30,
+    refresh_time = 0,
+  } = props;
   const targetsElements =
     bounty_targets?.map((target, index) => (
       <Box
@@ -253,6 +262,8 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
       <Box fontSize={1.5} fontWeight="bold" mb={1}>
         Bounty Targets
       </Box>
+      <TimeDisplay value={refresh_time}></TimeDisplay>
+
       {targetsElements.length > 0 ? (
         targetsElements
       ) : (
@@ -266,8 +277,13 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
 function BountyRange(value: number, low: number, high: number): number {
   const range = high - low;
   const normalized = (value - low) / range;
-  const clamped = Math.max(0, Math.min(1, normalized));
+  // should never be 0
+  const clamped = Math.min(1, Math.max(0, normalized));
 
   const tier = Math.min(4, Math.floor(clamped * 4));
-  return tier;
+  return clamp(tier, 1, 4);
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }

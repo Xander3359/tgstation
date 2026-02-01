@@ -17,8 +17,8 @@
 	var/list/victim_belongings = list()
 	///timerid for stuff that handles victim chat messages, effects and returnal
 	var/victim_timerid
-	/// cached gFI icon of target for UI purposes
-	var/image/cached_image
+	/// cached gFI icon base64 string of target for UI purposes
+	var/cached_image
 	/// Whether the target is a head of staff
 	var/is_head = FALSE
 
@@ -40,8 +40,9 @@
 	payout_type = type
 
 	generate(blacklist)
-	if(!isnull(contract.target))
-		INVOKE_ASYNC(src, PROC_REF(cache_image), contract.target)
+	var/mob/target_mob = contract?.target.current
+	if(!isnull(target_mob))
+		INVOKE_ASYNC(src, PROC_REF(cache_image), target_mob)
 
 /datum/syndicate_contract/proc/cache_image(mob/target)
 	var/mutable_appearance/icon = new(target)
