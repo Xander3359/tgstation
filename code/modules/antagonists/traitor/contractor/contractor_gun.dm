@@ -1,17 +1,50 @@
 
 /obj/item/gun/ballistic/gauss_rifle
 	name = "Raijin Horizon Gauss Rifle"
-	pixel_y
 	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_item.dmi'
 	lefthand_file = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_inhand_left.dmi'
 	righthand_file = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_inhand_right.dmi'
 	icon_state = "contractor_gun"
-	base_icon_state = "contractor_gun"
+	inhand_icon_state = "contractor_gun"
 	base_icon_state = "contractor_gun"
 	weapon_weight = WEAPON_HEAVY
 	accepted_magazine_type = /obj/item/ammo_box/magazine/gauss
 	w_class = WEIGHT_CLASS_BULKY
+	bolt_type = BOLT_TYPE_NO_BOLT
 	SET_BASE_PIXEL(-16, 0)
+	var/current_mode = "standard"
+	var/static/list/modes = list(
+		"standard",
+		"emp",
+		"gyro",
+		"antimatter",
+		"thermite",
+		"nopower"
+	)
+
+/obj/item/gun/ballistic/gauss_rifle/Initialize(mapload)
+	. = ..()
+	AddElement(/datum/element/update_icon_updates_onmob)
+
+/obj/item/gun/ballistic/gauss_rifle/click_alt(mob/user)
+	. = ..()
+	var/current_index = modes.Find(current_mode)
+	current_index++
+	if(current_index > length(modes))
+		current_index = 1
+	current_mode = modes[current_index]
+	update_appearance(UPDATE_ICON)
+
+/obj/item/gun/ballistic/gauss_rifle/update_icon_state()
+	. = ..()
+	if(current_mode == "standard")
+		icon_state = initial(icon_state)
+		inhand_icon_state = initial(inhand_icon_state)
+		return
+	if(current_mode in modes)
+		var/new_icon = "[base_icon_state]_[current_mode]"
+		icon_state = new_icon
+		inhand_icon_state = new_icon
 
 /obj/item/ammo_box/magazine/gauss
 	name = "Raijin Horizon Gauss Magazine"
