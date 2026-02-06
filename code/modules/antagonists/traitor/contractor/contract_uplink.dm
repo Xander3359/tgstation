@@ -98,9 +98,9 @@
 	.["error"] = error
 
 	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
-	var/datum/contractor_state = traitor?.uplink_handler?.contractor_state
+	var/datum/contractor_state/contract_state = traitor?.uplink_handler?.contractor_state
 
-	.["redeemable_tc"] = contractor_state?.contract_TC_to_redeem || 0
+	.["redeemable_tc"] = contract_state?.contract_TC_to_redeem || 0
 
 /datum/component/uplink/contractor/proc/allow_dangerous_extract()
 	if(length(GLOB.joined_player_list) < handler.dangerous_extract_pop)
@@ -127,16 +127,16 @@
 		return
 	var/mob/living/user = usr
 	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
-	var/datum/contractor_state = traitor?.uplink_handler?.contractor_state
-	if(isnull(contractor_state))
+	var/datum/contractor_state/contract_state = traitor?.uplink_handler?.contractor_state
+	if(isnull(contract_state))
 		return
 
 	switch(action)
 		if("contract_accept")
 			var/contract_id = text2num(params["contract_id"])
-			contractor_state.assigned_contracts[contract_id].status = CONTRACT_STATUS_ACTIVE
-			contractor_state.current_contract = handler.assigned_contracts[contract_id]
-			program_open_overlay = "contractor-contract"
+			handler.assigned_contracts[contract_id].status = CONTRACT_STATUS_ACTIVE
+			contract_state.current_contract = handler.assigned_contracts[contract_id]
+			// program_open_overlay = "contractor-contract"
 			return TRUE
 		// if("PRG_login")
 		// 	var/datum/antagonist/traitor/traitor_user = user.mind.has_antag_datum(/datum/antagonist/traitor)
@@ -151,11 +151,11 @@
 		// 		program_open_overlay = "contractor-contractlist"
 		// 	return TRUE
 		if("call_extraction")
-			if (contractor_state.current_contract.status != CONTRACT_STATUS_EXTRACTING)
-				if (contractor_state.current_contract.handle_extraction(user))
+			if (contract_state.current_contract.status != CONTRACT_STATUS_EXTRACTING)
+				if (contract_state.current_contract.handle_extraction(user))
 					user.playsound_local(user, 'sound/effects/confirmdropoff.ogg', 100, TRUE)
-					contractor_state.current_contract.status = CONTRACT_STATUS_EXTRACTING
-					program_open_overlay = "contractor-extracted"
+					contract_state.current_contract.status = CONTRACT_STATUS_EXTRACTING
+					// program_open_overlay = "contractor-extracted"
 				else
 					user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
 					error = "Either both you or your target aren't at the dropoff location, or the pod hasn't got a valid place to land. Clear space, or make sure you're both inside."
@@ -164,22 +164,22 @@
 				error = "Already extracting... Place the target into the pod. If the pod was destroyed, this contract is no longer possible."
 			return TRUE
 		if("contract_abort")
-			var/contract_id = contractor_state.current_contract.id
-			contractor_state.current_contract = null
+			var/contract_id = contract_state.current_contract.id
+			contract_state.current_contract = null
 			handler.assigned_contracts[contract_id].status = CONTRACT_STATUS_ABORTED
-			program_open_overlay = "contractor-contractlist"
+			// program_open_overlay = "contractor-contractlist"
 			return TRUE
 		if("redeem_tc")
-			if (contractor_state.contract_TC_to_redeem)
-				var/obj/item/stack/telecrystal/crystals = new /obj/item/stack/telecrystal(get_turf(user), contractor_state.contract_TC_to_redeem)
+			if (contract_state.contract_TC_to_redeem)
+				var/obj/item/stack/telecrystal/crystals = new /obj/item/stack/telecrystal(get_turf(user), contract_state.contract_TC_to_redeem)
 				if(ishuman(user))
 					var/mob/living/carbon/human/H = user
 					if(H.put_in_hands(crystals))
 						to_chat(H, span_notice("Your payment materializes into your hands!"))
 					else
 						to_chat(user, span_notice("Your payment materializes onto the floor."))
-				contractor_state.contract_TC_payed_out += contractor_state.contract_TC_to_redeem
-				contractor_state.contract_TC_to_redeem = 0
+				contract_state.contract_TC_payed_out += contract_state.contract_TC_to_redeem
+				contract_state.contract_TC_to_redeem = 0
 				return TRUE
 			else
 				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)

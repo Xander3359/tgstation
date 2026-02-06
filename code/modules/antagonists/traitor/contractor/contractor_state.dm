@@ -1,6 +1,7 @@
 
 /datum/contractor_state
-	var/status
+	///The current contract in progress, and can be null if no contract is in progress.
+	var/datum/syndicate_contract/current_contract
 	///Amount of contracts that have already been completed, for flavor in the UI & round-end logs.
 	var/contracts_completed = 0
 	///How much TC has been paid out, for flavor in the UI & round-end logs.

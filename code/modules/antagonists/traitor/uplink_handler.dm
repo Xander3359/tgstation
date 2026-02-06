@@ -34,7 +34,7 @@
 	var/datum/callback/can_replace_objectives
 	/// Callback which performs that operation
 	var/datum/callback/replace_objectives
-	///Reference to a contractor hub that the infiltrator can run, if they purchase it.
+	///Holds contractor related state, only initialized if the traitor becomes a contractor
 	var/datum/contractor_state/contractor_state
 
 /datum/uplink_handler/Destroy(force)
