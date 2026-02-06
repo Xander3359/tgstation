@@ -105,3 +105,73 @@
 		"coin3.png" = 'icons/ui/antags/contractor/coin3.png',
 		"coin4.png" = 'icons/ui/antags/contractor/coin4.png',
 	)
+
+
+
+/datum/computer_file/program/contract_uplink/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
+	. = ..()
+	if(.)
+		return
+	var/mob/living/user = usr
+	switch(action)
+		if("contract_accept")
+			var/contract_id = text2num(params["contract_id"])
+			traitor_data.uplink_handler.contractor_hub.assigned_contracts[contract_id].status = CONTRACT_STATUS_ACTIVE
+			traitor_data.uplink_handler.contractor_hub.current_contract = traitor_data.uplink_handler.contractor_hub.assigned_contracts[contract_id]
+			program_open_overlay = "contractor-contract"
+			return TRUE
+		// if("PRG_login")
+		// 	var/datum/antagonist/traitor/traitor_user = user.mind.has_antag_datum(/datum/antagonist/traitor)
+		// 	if(!traitor_user)
+		// 		error = "UNAUTHORIZED USER"
+		// 		return TRUE
+		// 	traitor_data = traitor_user
+		// 	if(!traitor_data.uplink_handler.contractor_hub)
+		// 		traitor_data.uplink_handler.contractor_hub = new
+		// 		traitor_data.uplink_handler.contractor_hub.create_contracts(traitor_user.owner)
+		// 		user.playsound_local(user, 'sound/music/antag/contractstartup.ogg', 100, FALSE)
+		// 		program_open_overlay = "contractor-contractlist"
+		// 	return TRUE
+		if("call_extraction")
+			if (traitor_data.uplink_handler.contractor_hub.current_contract.status != CONTRACT_STATUS_EXTRACTING)
+				if (traitor_data.uplink_handler.contractor_hub.current_contract.handle_extraction(user))
+					user.playsound_local(user, 'sound/effects/confirmdropoff.ogg', 100, TRUE)
+					traitor_data.uplink_handler.contractor_hub.current_contract.status = CONTRACT_STATUS_EXTRACTING
+					program_open_overlay = "contractor-extracted"
+				else
+					user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
+					error = "Either both you or your target aren't at the dropoff location, or the pod hasn't got a valid place to land. Clear space, or make sure you're both inside."
+			else
+				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
+				error = "Already extracting... Place the target into the pod. If the pod was destroyed, this contract is no longer possible."
+			return TRUE
+		if("PRG_contract_abort")
+			var/contract_id = traitor_data.uplink_handler.contractor_hub.current_contract.id
+			traitor_data.uplink_handler.contractor_hub.current_contract = null
+			traitor_data.uplink_handler.contractor_hub.assigned_contracts[contract_id].status = CONTRACT_STATUS_ABORTED
+			program_open_overlay = "contractor-contractlist"
+			return TRUE
+		if("PRG_redeem_TC")
+			if (traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem)
+				var/obj/item/stack/telecrystal/crystals = new /obj/item/stack/telecrystal(get_turf(user), traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem)
+				if(ishuman(user))
+					var/mob/living/carbon/human/H = user
+					if(H.put_in_hands(crystals))
+						to_chat(H, span_notice("Your payment materializes into your hands!"))
+					else
+						to_chat(user, span_notice("Your payment materializes onto the floor."))
+				traitor_data.uplink_handler.contractor_hub.contract_TC_payed_out += traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem
+				traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem = 0
+				return TRUE
+			else
+				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
+			return TRUE
+		if ("PRG_clear_error")
+			error = ""
+			return TRUE
+		if("PRG_set_first_load_finished")
+			first_load = FALSE
+			return TRUE
+		if("PRG_toggle_info")
+			info_screen = !info_screen
+			return TRUE
