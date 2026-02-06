@@ -298,21 +298,22 @@
 	return result.Join("<br>")
 
 ///Tells how many contracts have been completed.
-// /datum/antagonist/traitor/proc/contractor_round_end()
-// 	var/completed_contracts = uplink_handler.contractor_hub.contracts_completed
-// 	var/tc_total = uplink_handler.contractor_hub.contract_TC_payed_out + uplink_handler.contractor_hub.contract_TC_to_redeem
+/datum/antagonist/traitor/proc/contractor_round_end()
+	var/datum/contractor_state = uplink_handler.contractor_state
+	var/completed_contracts = contractor_state.contracts_completed
+	var/tc_total = contractor_state.contract_TC_payed_out + contractor_state.contract_TC_to_redeem
 
-// 	var/datum/antagonist/traitor/contractor_support/contractor_support_unit = uplink_handler.contractor_hub.contractor_teammate
+	var/datum/antagonist/traitor/contractor_support/contractor_support_unit = contractor_state.contractor_teammate
 
-// 	if(completed_contracts <= 0)
-// 		return
-// 	var/plural_check = "contract"
-// 	if (completed_contracts > 1)
-// 		plural_check = "contracts"
-// 	var/sent_data = "Completed [span_greentext("[completed_contracts]")] [plural_check] for a total of [span_greentext("[tc_total] TC")]!<br>"
-// 	if(contractor_support_unit)
-// 		sent_data += "<b>[contractor_support_unit.owner.key]</b> played <b>[contractor_support_unit.owner.current.name]</b>, their contractor support unit.<br>"
-// 	return sent_data
+	if(completed_contracts <= 0)
+		return
+	var/plural_check = "contract"
+	if (completed_contracts > 1)
+		plural_check = "contracts"
+	var/sent_data = "Completed [span_greentext("[completed_contracts]")] [plural_check] for a total of [span_greentext("[tc_total] TC")]!<br>"
+	if(contractor_support_unit)
+		sent_data += "<b>[contractor_support_unit.owner.key]</b> played <b>[contractor_support_unit.owner.current.name]</b>, their contractor support unit.<br>"
+	return sent_data
 
 /datum/antagonist/traitor/roundend_report_footer()
 	var/phrases = jointext(GLOB.syndicate_code_phrase, ", ")

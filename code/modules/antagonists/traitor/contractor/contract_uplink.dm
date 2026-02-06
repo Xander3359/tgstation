@@ -58,6 +58,7 @@
 	name = "contractor uplink"
 	ui_name = "ContractorUplink"
 	var/static/datum/contractor_hub/handler
+	var/error = ""
 
 /datum/component/uplink/contractor/Initialize(owner, lockable, enabled, uplink_flag, starting_tc, has_progression, datum/uplink_handler/uplink_handler_override)
 	. = ..()
@@ -69,7 +70,7 @@
 /datum/component/uplink/contractor/ui_interact(mob/user, datum/tgui/ui)
 	. = ..()
 	var/datum/antagonist/traitor/traitor_user = IS_TRAITOR(user)
-	if(traitor_user && isnull(traitor_user.uplink_handler.contractor_state))
+	if(!isnull(traitor_user) && isnull(traitor_user.uplink_handler.contractor_state))
 		traitor_user.uplink_handler.contractor_state = new()
 		user.playsound_local(user, 'sound/music/antag/contractstartup.ogg', 100, FALSE)
 
@@ -94,6 +95,12 @@
 	.["high_bounty"] = handler.highest_payout
 	.["low_bounty"] = handler.lowest_payout
 	.["refresh_time"] = timeleft(handler.contract_refresh_timer)
+	.["error"] = error
+
+	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
+	var/datum/contractor_state = traitor?.uplink_handler?.contractor_state
+
+	.["redeemable_tc"] = contractor_state?.contract_TC_to_redeem || 0
 
 /datum/component/uplink/contractor/proc/allow_dangerous_extract()
 	if(length(GLOB.joined_player_list) < handler.dangerous_extract_pop)
@@ -121,6 +128,9 @@
 	var/mob/living/user = usr
 	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
 	var/datum/contractor_state = traitor?.uplink_handler?.contractor_state
+	if(isnull(contractor_state))
+		return
+
 	switch(action)
 		if("contract_accept")
 			var/contract_id = text2num(params["contract_id"])
@@ -174,9 +184,9 @@
 			else
 				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
 			return TRUE
-		// if ("clear_error")
-		// 	error = ""
-		// 	return TRUE
+		if ("clear_error")
+			error = ""
+			return TRUE
 		// if("PRG_set_first_load_finished")
 		// 	first_load = FALSE
 		// 	return TRUE

@@ -115,21 +115,21 @@
 	if(!istype(pod) || !isliving(sent_mob))
 		return
 	var/mob/living/person_sent = sent_mob
-	// var/mob/living/pod_owner = pod.contractor_owner?.resolve()
+	var/mob/living/pod_owner = pod.contractor_owner?.resolve()
 	if(person_sent == contract.target.current)
-		// var/datum/antagonist/traitor/traitor_data = pod_owner?.mind?.has_antag_datum(/datum/antagonist/traitor)
-		// if(!isnull(traitor_data))
-		// 	traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem += contract.payout
-		// 	traitor_data.uplink_handler.contractor_hub.contracts_completed++
-		// 	if(person_sent.stat != DEAD)
-		// 		traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem += contract.payout_bonus
+		var/datum/antagonist/traitor/traitor_data = pod_owner?.mind?.has_antag_datum(/datum/antagonist/traitor)
+		if(!isnull(traitor_data))
+			traitor_data.uplink_handler.contractor_state.contract_TC_to_redeem += contract.payout
+			traitor_data.uplink_handler.contractor_state.contracts_completed++
+			if(person_sent.stat != DEAD)
+				traitor_data.uplink_handler.contractor_state.contract_TC_to_redeem += contract.payout_bonus
 		status = CONTRACT_STATUS_COMPLETE
-	// 	if(traitor_data.uplink_handler.contractor_hub.current_contract == src)
-	// 		traitor_data.uplink_handler.contractor_hub.current_contract = null
-	// else
-	// 	status = CONTRACT_STATUS_ABORTED // Sending a target that wasn't even yours is as good as just aborting it
-	// 	if(traitor_data.uplink_handler.contractor_hub.current_contract == src)
-	// 		traitor_data.uplink_handler.contractor_hub.current_contract = null
+		if(traitor_data.uplink_handler.contractor_state.current_contract == src)
+			traitor_data.uplink_handler.contractor_state.current_contract = null
+	else
+		status = CONTRACT_STATUS_ABORTED // Sending a target that wasn't even yours is as good as just aborting it
+		if(traitor_data.uplink_handler.contractor_state.current_contract == src)
+			traitor_data.uplink_handler.contractor_state.current_contract = null
 
 	for(var/obj/item/person_contents as anything in person_sent.gather_belongings(FALSE, FALSE))
 		if(ishuman(person_sent))
