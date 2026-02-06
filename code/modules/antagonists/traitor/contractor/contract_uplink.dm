@@ -65,6 +65,14 @@
 		handler = new()
 	handler.add_uplink(src)
 
+// TODO: move this to a login act
+/datum/component/uplink/contractor/ui_interact(mob/user, datum/tgui/ui)
+	. = ..()
+	var/datum/antagonist/traitor/traitor_user = IS_TRAITOR(user)
+	if(traitor_user && isnull(traitor_user.uplink_handler.contractor_state))
+		traitor_user.uplink_handler.contractor_state = new()
+		user.playsound_local(user, 'sound/music/antag/contractstartup.ogg', 100, FALSE)
+
 /datum/component/uplink/contractor/Destroy()
 	. = ..()
 	handler.remove_uplink(src)
@@ -106,18 +114,18 @@
 		"coin4.png" = 'icons/ui/antags/contractor/coin4.png',
 	)
 
-
-
-/datum/computer_file/program/contract_uplink/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
+/datum/component/uplink/contractor/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
 	if(.)
 		return
 	var/mob/living/user = usr
+	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
+	var/datum/contractor_state = traitor?.uplink_handler?.contractor_state
 	switch(action)
 		if("contract_accept")
 			var/contract_id = text2num(params["contract_id"])
-			traitor_data.uplink_handler.contractor_hub.assigned_contracts[contract_id].status = CONTRACT_STATUS_ACTIVE
-			traitor_data.uplink_handler.contractor_hub.current_contract = traitor_data.uplink_handler.contractor_hub.assigned_contracts[contract_id]
+			contractor_state.assigned_contracts[contract_id].status = CONTRACT_STATUS_ACTIVE
+			contractor_state.current_contract = handler.assigned_contracts[contract_id]
 			program_open_overlay = "contractor-contract"
 			return TRUE
 		// if("PRG_login")
@@ -133,10 +141,10 @@
 		// 		program_open_overlay = "contractor-contractlist"
 		// 	return TRUE
 		if("call_extraction")
-			if (traitor_data.uplink_handler.contractor_hub.current_contract.status != CONTRACT_STATUS_EXTRACTING)
-				if (traitor_data.uplink_handler.contractor_hub.current_contract.handle_extraction(user))
+			if (contractor_state.current_contract.status != CONTRACT_STATUS_EXTRACTING)
+				if (contractor_state.current_contract.handle_extraction(user))
 					user.playsound_local(user, 'sound/effects/confirmdropoff.ogg', 100, TRUE)
-					traitor_data.uplink_handler.contractor_hub.current_contract.status = CONTRACT_STATUS_EXTRACTING
+					contractor_state.current_contract.status = CONTRACT_STATUS_EXTRACTING
 					program_open_overlay = "contractor-extracted"
 				else
 					user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
@@ -145,33 +153,33 @@
 				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
 				error = "Already extracting... Place the target into the pod. If the pod was destroyed, this contract is no longer possible."
 			return TRUE
-		if("PRG_contract_abort")
-			var/contract_id = traitor_data.uplink_handler.contractor_hub.current_contract.id
-			traitor_data.uplink_handler.contractor_hub.current_contract = null
-			traitor_data.uplink_handler.contractor_hub.assigned_contracts[contract_id].status = CONTRACT_STATUS_ABORTED
+		if("contract_abort")
+			var/contract_id = contractor_state.current_contract.id
+			contractor_state.current_contract = null
+			handler.assigned_contracts[contract_id].status = CONTRACT_STATUS_ABORTED
 			program_open_overlay = "contractor-contractlist"
 			return TRUE
-		if("PRG_redeem_TC")
-			if (traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem)
-				var/obj/item/stack/telecrystal/crystals = new /obj/item/stack/telecrystal(get_turf(user), traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem)
+		if("redeem_tc")
+			if (contractor_state.contract_TC_to_redeem)
+				var/obj/item/stack/telecrystal/crystals = new /obj/item/stack/telecrystal(get_turf(user), contractor_state.contract_TC_to_redeem)
 				if(ishuman(user))
 					var/mob/living/carbon/human/H = user
 					if(H.put_in_hands(crystals))
 						to_chat(H, span_notice("Your payment materializes into your hands!"))
 					else
 						to_chat(user, span_notice("Your payment materializes onto the floor."))
-				traitor_data.uplink_handler.contractor_hub.contract_TC_payed_out += traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem
-				traitor_data.uplink_handler.contractor_hub.contract_TC_to_redeem = 0
+				contractor_state.contract_TC_payed_out += contractor_state.contract_TC_to_redeem
+				contractor_state.contract_TC_to_redeem = 0
 				return TRUE
 			else
 				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
 			return TRUE
-		if ("PRG_clear_error")
-			error = ""
-			return TRUE
-		if("PRG_set_first_load_finished")
-			first_load = FALSE
-			return TRUE
-		if("PRG_toggle_info")
-			info_screen = !info_screen
-			return TRUE
+		// if ("clear_error")
+		// 	error = ""
+		// 	return TRUE
+		// if("PRG_set_first_load_finished")
+		// 	first_load = FALSE
+		// 	return TRUE
+		// if("PRG_toggle_info")
+		// 	info_screen = !info_screen
+		// 	return TRUE

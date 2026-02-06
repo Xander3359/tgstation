@@ -3521,6 +3521,7 @@
 #include "code\modules\antagonists\traitor\contractor\contractor_gun.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_hub.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_items.dm"
+#include "code\modules\antagonists\traitor\contractor\contractor_state.dm"
 #include "code\modules\antagonists\traitor\contractor\syndicate_contract.dm"
 #include "code\modules\antagonists\valentines\heartbreaker.dm"
 #include "code\modules\antagonists\valentines\valentine.dm"

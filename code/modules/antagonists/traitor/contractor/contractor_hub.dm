@@ -3,18 +3,8 @@
 	///List of all available syndicate contracts that can be taken.
 	var/list/datum/syndicate_contract/assigned_contracts = list()
 
-	// ///Reference to a contractor teammate, if one has been purchased.
-	// var/datum/antagonist/traitor/contractor_support/contractor_teammate
-
 	///List of all people currently used as targets, to not roll doubles.
 	var/list/assigned_targets = list()
-
-	///Amount of contracts that have already been completed, for flavor in the UI & round-end logs.
-	var/contracts_completed = 0
-	///How much TC has been paid out, for flavor in the UI & round-end logs.
-	var/contract_TC_payed_out = 0
-	///How much TC we can cash out currently. Used when redeeming TC and for round-end logs.
-	var/contract_TC_to_redeem = 0
 	/// Time in seconds between contract refreshes.
 	var/refresh_time = 20 MINUTES
 	/// list of uplinks that need to be updated when contracts change, also used to decide if we want to refresh contracts

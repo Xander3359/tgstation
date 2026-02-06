@@ -34,6 +34,8 @@
 	var/datum/callback/can_replace_objectives
 	/// Callback which performs that operation
 	var/datum/callback/replace_objectives
+	///Reference to a contractor hub that the infiltrator can run, if they purchase it.
+	var/datum/contractor_state/contractor_state
 
 /datum/uplink_handler/Destroy(force)
 	can_replace_objectives = null
