@@ -40,6 +40,8 @@
 	var/failsafe_code
 	/// Name of the TGUI UI to use in ui_interact
 	var/ui_name = "Uplink"
+	/// Should the UI autoupdate?
+	var/ui_autoupdate = TRUE
 
 /datum/component/uplink/Initialize(
 	owner,
@@ -161,7 +163,7 @@
 		ui = new(user, src, ui_name, name)
 		// This UI is only ever opened by one person,
 		// and never is updated outside of user input.
-		ui.set_autoupdate(FALSE)
+		ui.set_autoupdate(ui_autoupdate)
 		ui.open()
 
 /datum/component/uplink/ui_data(mob/user)

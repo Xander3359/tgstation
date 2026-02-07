@@ -24,13 +24,19 @@ import { GenericUplink, Item } from './Uplink/GenericUplink';
 import { ItemExtraData, Uplink, UplinkData, UplinkState } from './Uplink';
 import '../styles/interfaces/ContractorUplink.scss';
 
+enum EXTRACTION_TYPE {
+  Safe = 'safe',
+  Unsafe = 'unsafe',
+  Dangerous = 'dangerous',
+}
+
 type ContractorUplinkData = UplinkData & {
   bounty_targets: BountyTargets[];
   // low of high-to-low range for bounty payouts
   high_bounty: number;
   low_bounty: number;
   allCategories: string[];
-  contract_refresh_time: number;
+  refresh_time: number;
 };
 
 type TabViewProps = ContractorUplinkData & {
@@ -48,9 +54,15 @@ type PrimaryObjectiveMenuProps = {
 
 type BountyTargets = {
   name: string;
-  location: string;
-  bounty_reward: number;
+  is_head: boolean;
+  status: string;
+  target_rank: string;
+  tc_reward: number;
+  credit_reward: number;
+  payout_bonus: number;
+  wanted_message: string;
   mugshot_icon: string;
+  contract_ref: string;
 };
 
 type Tab = {
@@ -119,7 +131,7 @@ function TabView(props: TabViewProps) {
     bounty_targets,
     high_bounty,
     low_bounty,
-    contract_refresh_time,
+    refresh_time,
   } = props;
 
   const tabs: Tab[] = [
@@ -134,7 +146,7 @@ function TabView(props: TabViewProps) {
           bounty_targets={bounty_targets}
           high_bounty={high_bounty}
           low_bounty={low_bounty}
-          refresh_time={contract_refresh_time}
+          refresh_time={refresh_time}
         />
       ),
       onSelect: () => act('show_mugshots'),
@@ -197,6 +209,7 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
     high_bounty = 30,
     refresh_time = 0,
   } = props;
+  const { act } = useBackend();
   const targetsElements =
     bounty_targets?.map((target, index) => (
       <Box
@@ -220,11 +233,11 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
               {target.name}
             </Box>
             <Box style={{ display: 'flex', alignItems: 'center' }}>
-              Reward: {target.bounty_reward}{' '}
+              Reward: {target.tc_reward} And {target.credit_reward} Credits
               <Image
                 height="32px"
                 src={resolveAsset(
-                  `coin${BountyRange(target.bounty_reward, low_bounty, high_bounty)}.png`,
+                  `coin${BountyRange(target.tc_reward, low_bounty, high_bounty)}.png`,
                 )}
               />
             </Box>
@@ -234,6 +247,12 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
             <Button
               mb={1}
               style={{ backgroundColor: 'green' }}
+              onClick={() => {
+                act('call_extraction', {
+                  type: EXTRACTION_TYPE.Safe,
+                  target: target.name,
+                });
+              }}
               tooltip="Static location that doesn't provide additional rewards, bring your target to arrivals, departures, solar arrays or lavaland to extract your target."
             >
               Safe
@@ -241,6 +260,12 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
             <Button
               mb={1}
               style={{ color: 'black', backgroundColor: 'yellow' }}
+              onClick={() => {
+                act('call_extraction', {
+                  type: EXTRACTION_TYPE.Unsafe,
+                  target: target.name,
+                });
+              }}
               tooltip="RNG, any non secure area on the station, grants a small bonus of coins."
             >
               Unsafe
@@ -248,6 +273,12 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
             <Button
               mb={1}
               style={{ backgroundColor: 'red' }}
+              onClick={() => {
+                act('call_extraction', {
+                  type: EXTRACTION_TYPE.Dangerous,
+                  target: target.name,
+                });
+              }}
               tooltip="Usually a highly restricted area, provides the biggest reward."
             >
               Dangerous
@@ -262,6 +293,7 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
       <Box fontSize={1.5} fontWeight="bold" mb={1}>
         Bounty Targets
       </Box>
+      {`${refresh_time > 0 ? 'Next refresh in: ' : 'No active refresh timer.'} `}
       <TimeDisplay value={refresh_time}></TimeDisplay>
 
       {targetsElements.length > 0 ? (

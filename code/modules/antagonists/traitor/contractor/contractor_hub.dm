@@ -21,6 +21,7 @@
 	if(!length(assigned_contracts))
 		create_contracts()
 		get_highest_lowest()
+		wait_for_refresh()
 
 /datum/contractor_hub/proc/remove_uplink(datum/component/uplink/contractor/uplink)
 	linked_uplinks -= WEAKREF(uplink)

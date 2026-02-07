@@ -28,11 +28,13 @@
 		"is_head" = is_head,
 		"status" = status,
 		"target_rank" = target_rank,
-		"bounty_reward" = contract.payout,
+		"tc_reward" = contract.payout,
+		"credit_reward" = ransom,
 		"payout_bonus" = contract.payout_bonus,
-		"ransom" = ransom,
 		"wanted_message" = wanted_message,
+		"dropoff_location" = contract.dropoff_location,
 		"mugshot_icon" = cached_image,
+		"contract_ref" = REF(src)
 	)
 
 /datum/syndicate_contract/New(blacklist, type=CONTRACT_PAYOUT_SMALL)
@@ -40,7 +42,7 @@
 	payout_type = type
 
 	generate(blacklist)
-	var/mob/target_mob = contract?.target.current
+	var/mob/target_mob = contract?.target?.current
 	if(!isnull(target_mob))
 		INVOKE_ASYNC(src, PROC_REF(cache_image), target_mob)
 
@@ -116,8 +118,8 @@
 		return
 	var/mob/living/person_sent = sent_mob
 	var/mob/living/pod_owner = pod.contractor_owner?.resolve()
+	var/datum/antagonist/traitor/traitor_data = pod_owner?.mind?.has_antag_datum(/datum/antagonist/traitor)
 	if(person_sent == contract.target.current)
-		var/datum/antagonist/traitor/traitor_data = pod_owner?.mind?.has_antag_datum(/datum/antagonist/traitor)
 		if(!isnull(traitor_data))
 			traitor_data.uplink_handler.contractor_state.contract_TC_to_redeem += contract.payout
 			traitor_data.uplink_handler.contractor_state.contracts_completed++

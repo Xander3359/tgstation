@@ -82,6 +82,15 @@
 	. = ..()
 	.["allow_dangerous_extract"] = allow_dangerous_extract()
 
+/datum/component/uplink/contractor/ui_data(mob/user)
+	. = ..()
+	.["error"] = error
+	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
+	var/datum/contractor_state/contract_state = traitor?.uplink_handler?.contractor_state
+
+	.["redeemable_tc"] = contract_state?.contract_TC_to_redeem || 0
+	.["refresh_time"] = timeleft(handler.contract_refresh_timer)
+
 /datum/component/uplink/contractor/ui_static_data(mob/user)
 	. = ..()
 	var/list/bounty_data = list()
@@ -94,13 +103,6 @@
 	.["bounty_targets"] = bounty_data
 	.["high_bounty"] = handler.highest_payout
 	.["low_bounty"] = handler.lowest_payout
-	.["refresh_time"] = timeleft(handler.contract_refresh_timer)
-	.["error"] = error
-
-	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
-	var/datum/contractor_state/contract_state = traitor?.uplink_handler?.contractor_state
-
-	.["redeemable_tc"] = contract_state?.contract_TC_to_redeem || 0
 
 /datum/component/uplink/contractor/proc/allow_dangerous_extract()
 	if(length(GLOB.joined_player_list) < handler.dangerous_extract_pop)
