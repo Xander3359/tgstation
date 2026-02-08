@@ -57,6 +57,7 @@
 /datum/component/uplink/contractor
 	name = "contractor uplink"
 	ui_name = "ContractorUplink"
+	ui_autoupdate = TRUE
 	var/static/datum/contractor_hub/handler
 	var/error = ""
 

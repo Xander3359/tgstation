@@ -1008,10 +1008,34 @@ GLOBAL_LIST_EMPTY(possible_items)
 			continue
 		GLOB.admin_objective_list[initial(goal.name)] = goal
 
+GLOBAL_LIST_INIT(dangerous_dropoff_areas, list(
+	/area/station/security,
+	/area/station/command,
+	/area/station/tcommsat,
+	/area/station/ai
+))
+
+GLOBAL_LIST_INIT(safe_dropoff_areas, list(
+	/area/station/maintenance/solars,
+	/area/station/hallway/secondary/entry,
+	/area/station/hallway/secondary/exit/departure_lounge,
+	/area/station/solars,
+	/area/station/commons/toilet/auxiliary,
+	/area/station/commons/toilet/restrooms,
+	/area/station/commons/toilet/shower,
+	/area/lavaland,
+	/area/mine
+))
+
+GLOBAL_LIST_INIT(unsafe_dropoff_areas, subtypesof(/area/station) - dangerous_dropoff_areas)
+
+
 /datum/objective/contract
 	var/payout = 0
 	var/payout_bonus = 0
-	var/area/dropoff = null
+	var/area/safe_dropoff
+	var/area/normal_dropoff
+	var/area/dangerous_dropoff
 
 /datum/objective/contract/is_valid_target(datum/mind/possible_target)
 	if(HAS_TRAIT(possible_target, TRAIT_HAS_BEEN_KIDNAPPED))
