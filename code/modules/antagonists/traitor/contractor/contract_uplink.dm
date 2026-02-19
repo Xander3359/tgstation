@@ -126,13 +126,18 @@
 
 /datum/component/uplink/contractor/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
-	if(.)
+	if(!.)
 		return
 	var/mob/living/user = usr
 	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
-	var/datum/contractor_state/contract_state = traitor?.uplink_handler?.contractor_state
-	if(isnull(contract_state))
+	if(isnull(traitor))
 		return
+	var/datum/contractor_state/contract_state = traitor.uplink_handler?.contractor_state
+	if(isnull(traitor.uplink_handler))
+		return
+
+	if(isnull(traitor.uplink_handler.contractor_state))
+		traitor.uplink_handler.contractor_state = new()
 
 	switch(action)
 		if("contract_accept")
@@ -141,6 +146,7 @@
 			contract_state.current_contract = handler.assigned_contracts[contract_id]
 			// program_open_overlay = "contractor-contract"
 			return TRUE
+
 		// if("PRG_login")
 		// 	var/datum/antagonist/traitor/traitor_user = user.mind.has_antag_datum(/datum/antagonist/traitor)
 		// 	if(!traitor_user)
@@ -153,11 +159,24 @@
 		// 		user.playsound_local(user, 'sound/music/antag/contractstartup.ogg', 100, FALSE)
 		// 		program_open_overlay = "contractor-contractlist"
 		// 	return TRUE
+
 		if("call_extraction")
-			if (contract_state.current_contract.status != CONTRACT_STATUS_EXTRACTING)
-				if (contract_state.current_contract.handle_extraction(user))
+			var/extraction_type = params["extraction_type"]
+			var/contract_id = text2num(params["contract_id"])
+			var/datum/syndicate_contract/contract_holder = handler.assigned_contracts[contract_id]
+			if(isnull(contract_holder))
+				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
+				error = "Contract not found. It may have been removed or expired."
+				return TRUE
+			var/area/dropoff_area = contract_holder.contract.dropoffs[extraction_type]
+			if(isnull(dropoff_area))
+				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
+				error = "Invalid dropoff location, request IT support."
+				return TRUE
+			if (contract_holder.status != CONTRACT_STATUS_EXTRACTING)
+				if (contract_holder.handle_extraction(user, dropoff_area))
 					user.playsound_local(user, 'sound/effects/confirmdropoff.ogg', 100, TRUE)
-					contract_state.current_contract.status = CONTRACT_STATUS_EXTRACTING
+					contract_holder.status = CONTRACT_STATUS_EXTRACTING
 					// program_open_overlay = "contractor-extracted"
 				else
 					user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
@@ -166,12 +185,14 @@
 				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
 				error = "Already extracting... Place the target into the pod. If the pod was destroyed, this contract is no longer possible."
 			return TRUE
+
 		if("contract_abort")
-			var/contract_id = contract_state.current_contract.id
-			contract_state.current_contract = null
-			handler.assigned_contracts[contract_id].status = CONTRACT_STATUS_ABORTED
+			var/contract_id = text2num(params["contract_id"])
+			var/datum/syndicate_contract/contract_holder = handler.assigned_contracts[contract_id]
+			contract_holder.status = CONTRACT_STATUS_ABORTED
 			// program_open_overlay = "contractor-contractlist"
 			return TRUE
+
 		if("redeem_tc")
 			if (contract_state.contract_TC_to_redeem)
 				var/obj/item/stack/telecrystal/crystals = new /obj/item/stack/telecrystal(get_turf(user), contract_state.contract_TC_to_redeem)
@@ -187,9 +208,11 @@
 			else
 				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
 			return TRUE
+
 		if ("clear_error")
 			error = ""
 			return TRUE
+
 		// if("PRG_set_first_load_finished")
 		// 	first_load = FALSE
 		// 	return TRUE

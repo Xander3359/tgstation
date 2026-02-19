@@ -23,6 +23,9 @@
 	var/is_head = FALSE
 
 /datum/syndicate_contract/proc/to_ui_data()
+	var/area/safe_dropoff = contract.dropoffs["safe"]
+	var/area/normal_dropoff = contract.dropoffs["normal"]
+	var/area/dangerous_dropoff = contract.dropoffs["dangerous"]
 	return list(
 		"name" = contract.target?.name || "Unknown Target",
 		"is_head" = is_head,
@@ -32,9 +35,11 @@
 		"credit_reward" = ransom,
 		"payout_bonus" = contract.payout_bonus,
 		"wanted_message" = wanted_message,
-		"dropoff_location" = contract.dropoff_location,
+		"dropoff_location_safe" = safe_dropoff?.name,
+		"dropoff_location_normal" = normal_dropoff?.name,
+		"dropoff_location_dangerous" = dangerous_dropoff?.name,
 		"mugshot_icon" = cached_image,
-		"contract_ref" = REF(src)
+		"contract_id" = id,
 	)
 
 /datum/syndicate_contract/New(blacklist, type=CONTRACT_PAYOUT_SMALL)
@@ -85,10 +90,10 @@
 	var/location = pick_list_weighted(WANTED_FILE, "location")
 	wanted_message = "[base] [verb_string] [noun] [location]."
 
-/datum/syndicate_contract/proc/handle_extraction(mob/living/user)
+/datum/syndicate_contract/proc/handle_extraction(mob/living/user, turf/target_turf)
 	if (contract.target && contract.dropoff_check(user, contract.target.current))
 
-		var/turf/free_location = find_obstruction_free_location(3, user, contract.dropoff)
+		var/turf/free_location = find_obstruction_free_location(3, user, target_turf)
 
 		if (free_location)
 			// We've got a valid location, launch.
@@ -119,6 +124,7 @@
 	var/mob/living/person_sent = sent_mob
 	var/mob/living/pod_owner = pod.contractor_owner?.resolve()
 	var/datum/antagonist/traitor/traitor_data = pod_owner?.mind?.has_antag_datum(/datum/antagonist/traitor)
+	contract.dropoff_used = get_area(person_sent)
 	if(person_sent == contract.target.current)
 		if(!isnull(traitor_data))
 			traitor_data.uplink_handler.contractor_state.contract_TC_to_redeem += contract.payout
@@ -243,7 +249,8 @@
 /// We're returning the victim to the station
 /datum/syndicate_contract/proc/return_victim(mob/living/victim)
 	var/list/possible_drop_loc = list()
-	for(var/turf/possible_drop in shuffle(contract.dropoff.contents))
+	var/area/previous_dropoff = contract.get_previous_dropoff()
+	for(var/turf/possible_drop in shuffle(previous_dropoff.contents))
 		if(!isspaceturf(possible_drop) && !isclosedturf(possible_drop))
 			if(!possible_drop.is_blocked_turf())
 				possible_drop_loc.Add(possible_drop)

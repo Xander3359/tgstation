@@ -1033,27 +1033,55 @@ GLOBAL_LIST_INIT(unsafe_dropoff_areas, subtypesof(/area/station) - dangerous_dro
 /datum/objective/contract
 	var/payout = 0
 	var/payout_bonus = 0
-	var/area/safe_dropoff
-	var/area/normal_dropoff
-	var/area/dangerous_dropoff
+	var/list/dropoffs = list(
+		"safe" = null,
+		"unsafe" = null,
+		"dangerous" = null
+	)
+	var/area/dropoff_used
 
 /datum/objective/contract/is_valid_target(datum/mind/possible_target)
 	if(HAS_TRAIT(possible_target, TRAIT_HAS_BEEN_KIDNAPPED))
 		return FALSE
 	return ..()
 
+/datum/objective/contract/proc/get_previous_dropoff()
+	if(!isnull(dropoff_used))
+		return dropoff_used
+	return dropoffs["normal"]
+
 // Generate a random valid area on the station that the dropoff will happen.
 /datum/objective/contract/proc/generate_dropoff()
-	var/found = FALSE
-	while (!found)
-		var/area/dropoff_area = pick(GLOB.areas)
-		if(dropoff_area && (dropoff_area.type in GLOB.the_station_areas) && !dropoff_area.outdoors)
-			dropoff = dropoff_area
-			found = TRUE
+	dropoffs["safe"] = pick_dropoff(GLOB.safe_dropoff_areas, TRUE)
+	dropoffs["unsafe"] = pick_dropoff(GLOB.unsafe_dropoff_areas)
+	dropoffs["dangerous"] = pick_dropoff(GLOB.dangerous_dropoff_areas)
+
+/datum/objective/contract/proc/pick_dropoff(list/possible_areas = list(), allow_outdoors = FALSE)
+	var/area/dropoff_area
+	var/list/area/pickable_areas = list()
+	for(var/area/area as anything in possible_areas)
+		pickable_areas += typesof(area)
+
+	while (!dropoff_area && length(pickable_areas))
+		var/area/candidate_area = pick(pickable_areas)
+		pickable_areas -= candidate_area
+		if(is_type_in_list(candidate_area, GLOB.the_station_areas))
+			continue
+		if((allow_outdoors || (candidate_area::type in GLOB.the_station_areas && !candidate_area::outdoors)))
+			dropoff_area = candidate_area
+	return dropoff_area
 
 // Check if both the contractor and contract target are at the dropoff point.
 /datum/objective/contract/proc/dropoff_check(mob/user, mob/target)
 	var/area/user_area = get_area(user)
 	var/area/target_area = get_area(target)
+	var/list/area/valid_dropoff_areas = list()
+	valid_dropoff_areas += assoc_to_values(dropoffs)
 
-	return (istype(user_area, dropoff) && istype(target_area, dropoff))
+	for(var/area/valid_area as anything in valid_dropoff_areas)
+		if(isnull(valid_area))
+			continue
+		if(istype(user_area, valid_area) && istype(target_area, valid_area))
+			return TRUE
+	return FALSE
+

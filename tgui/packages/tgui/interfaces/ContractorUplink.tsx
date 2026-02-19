@@ -20,7 +20,7 @@ import { resolveAsset } from '../assets';
 import { useBackend } from '../backend';
 
 import { Window } from '../layouts';
-import { GenericUplink, Item } from './Uplink/GenericUplink';
+import { GenericUplink } from './Uplink/GenericUplink';
 import { ItemExtraData, Uplink, UplinkData, UplinkState } from './Uplink';
 import '../styles/interfaces/ContractorUplink.scss';
 
@@ -31,12 +31,12 @@ enum EXTRACTION_TYPE {
 }
 
 type ContractorUplinkData = UplinkData & {
-  bounty_targets: BountyTargets[];
+  bounty_targets?: BountyTargets[];
   // low of high-to-low range for bounty payouts
-  high_bounty: number;
-  low_bounty: number;
-  allCategories: string[];
-  refresh_time: number;
+  high_bounty?: number;
+  low_bounty?: number;
+  allCategories?: string[];
+  refresh_time?: number;
 };
 
 type TabViewProps = ContractorUplinkData & {
@@ -45,24 +45,22 @@ type TabViewProps = ContractorUplinkData & {
   setTab: (tab: number) => void;
 };
 
-type PrimaryObjectiveMenuProps = {
-  bounty_targets: BountyTargets[];
-  high_bounty: number;
-  low_bounty: number;
-  refresh_time: number;
-};
+type PrimaryObjectiveMenuProps = Partial<ContractorUplinkData> & {};
 
 type BountyTargets = {
-  name: string;
-  is_head: boolean;
-  status: string;
-  target_rank: string;
-  tc_reward: number;
-  credit_reward: number;
-  payout_bonus: number;
-  wanted_message: string;
-  mugshot_icon: string;
-  contract_ref: string;
+  name?: string;
+  is_head?: boolean;
+  status?: string;
+  target_rank?: string;
+  tc_reward?: number;
+  credit_reward?: number;
+  payout_bonus?: number;
+  wanted_message?: string;
+  dropoff_location_safe?: string;
+  dropoff_location_unsafe?: string;
+  dropoff_location_dangerous?: string;
+  mugshot_icon?: string;
+  contract_id?: string;
 };
 
 type Tab = {
@@ -73,7 +71,7 @@ type Tab = {
 
 export class ContractorUplink extends Uplink {
   render() {
-    const { data } = useBackend<ContractorUplinkData>();
+    const { data } = useBackend<ContractorUplinkData & UplinkData>();
     const { shop_locked } = data;
     const { allCategories, currentTab } = this.state as UplinkState;
     const setTab = (tab: number) => {
@@ -156,7 +154,7 @@ function TabView(props: TabViewProps) {
       content: (
         <GenericUplink
           currency={`${telecrystals} Coins`}
-          categories={allCategories}
+          categories={allCategories ?? []}
           items={items}
           handleBuy={(item: ItemExtraData) => {
             if (!item.extraData?.ref) {
@@ -210,6 +208,37 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
     refresh_time = 0,
   } = props;
   const { act } = useBackend();
+
+  const extractionInfo = [
+    {
+      type: EXTRACTION_TYPE.Safe,
+      description:
+        "Static location that doesn't provide additional rewards, bring your target to arrivals, departures, solar arrays or lavaland to extract your target.",
+      color: 'green',
+    },
+    {
+      type: EXTRACTION_TYPE.Unsafe,
+      description:
+        'RNG, any non secure area on the station, grants a small bonus of coins.',
+      color: 'yellow',
+    },
+    {
+      type: EXTRACTION_TYPE.Dangerous,
+      description:
+        'Usually a highly restricted area, provides the biggest reward.',
+      color: 'red',
+    },
+  ];
+
+  const dropoffLocationMessage = (
+    target: BountyTargets,
+    type: EXTRACTION_TYPE,
+  ) => {
+    const location = target[`dropoff_location_${type}` as keyof BountyTargets];
+    if (!location) return 'Location: Unknown';
+    return `Location: ${location}`;
+  };
+
   const targetsElements =
     bounty_targets?.map((target, index) => (
       <Box
@@ -232,57 +261,38 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
             <Box fontWeight="bold" fontSize={1.2} mb={0.5}>
               {target.name}
             </Box>
-            <Box style={{ display: 'flex', alignItems: 'center' }}>
-              Reward: {target.tc_reward} And {target.credit_reward} Credits
-              <Image
-                height="32px"
-                src={resolveAsset(
-                  `coin${BountyRange(target.tc_reward, low_bounty, high_bounty)}.png`,
-                )}
-              />
-            </Box>
+            {!!target.tc_reward && (
+              <Box style={{ display: 'flex', alignItems: 'center' }}>
+                Reward: {target.tc_reward}
+                <Image
+                  height="32px"
+                  src={resolveAsset(
+                    `coin${BountyRange(target.tc_reward, low_bounty, high_bounty)}.png`,
+                  )}
+                />{' '}
+                and {target.credit_reward} Credits
+              </Box>
+            )}
           </Box>
           <Box>
             <h2>Choose Extraction Type</h2>
-            <Button
-              mb={1}
-              style={{ backgroundColor: 'green' }}
-              onClick={() => {
-                act('call_extraction', {
-                  type: EXTRACTION_TYPE.Safe,
-                  target: target.name,
-                });
-              }}
-              tooltip="Static location that doesn't provide additional rewards, bring your target to arrivals, departures, solar arrays or lavaland to extract your target."
-            >
-              Safe
-            </Button>
-            <Button
-              mb={1}
-              style={{ color: 'black', backgroundColor: 'yellow' }}
-              onClick={() => {
-                act('call_extraction', {
-                  type: EXTRACTION_TYPE.Unsafe,
-                  target: target.name,
-                });
-              }}
-              tooltip="RNG, any non secure area on the station, grants a small bonus of coins."
-            >
-              Unsafe
-            </Button>
-            <Button
-              mb={1}
-              style={{ backgroundColor: 'red' }}
-              onClick={() => {
-                act('call_extraction', {
-                  type: EXTRACTION_TYPE.Dangerous,
-                  target: target.name,
-                });
-              }}
-              tooltip="Usually a highly restricted area, provides the biggest reward."
-            >
-              Dangerous
-            </Button>
+            {extractionInfo.map((info) => (
+              <Box key={info.type} mb={1}>
+                <Button
+                  style={{ backgroundColor: info.color }}
+                  onClick={() => {
+                    act('call_extraction', {
+                      extraction_type: info.type,
+                      contract_id: target.contract_id,
+                      target: target.name,
+                    });
+                  }}
+                  tooltip={`${info.description}\n\n ${dropoffLocationMessage(target, info.type as EXTRACTION_TYPE)}`}
+                >
+                  {info.type.charAt(0).toUpperCase() + info.type.slice(1)}
+                </Button>
+              </Box>
+            ))}
           </Box>
         </Stack>
       </Box>
