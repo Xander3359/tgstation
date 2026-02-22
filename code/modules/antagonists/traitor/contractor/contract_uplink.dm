@@ -131,9 +131,11 @@
 	var/mob/living/user = usr
 	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
 	if(isnull(traitor))
+		error = "Unauthorized user."
 		return
 	var/datum/contractor_state/contract_state = traitor.uplink_handler?.contractor_state
 	if(isnull(traitor.uplink_handler))
+		error = "Criticial error #521."
 		return
 
 	if(isnull(traitor.uplink_handler.contractor_state))
@@ -174,7 +176,7 @@
 				error = "Invalid dropoff location, request IT support."
 				return TRUE
 			if (contract_holder.status != CONTRACT_STATUS_EXTRACTING)
-				if (contract_holder.handle_extraction(user, dropoff_area))
+				if (contract_holder.handle_extraction(user, dropoff_area, extraction_type))
 					user.playsound_local(user, 'sound/effects/confirmdropoff.ogg', 100, TRUE)
 					contract_holder.status = CONTRACT_STATUS_EXTRACTING
 					// program_open_overlay = "contractor-extracted"

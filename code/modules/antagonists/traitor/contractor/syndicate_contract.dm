@@ -23,9 +23,11 @@
 	var/is_head = FALSE
 
 /datum/syndicate_contract/proc/to_ui_data()
-	var/area/safe_dropoff = contract.dropoffs["safe"]
-	var/area/normal_dropoff = contract.dropoffs["normal"]
-	var/area/dangerous_dropoff = contract.dropoffs["dangerous"]
+	var/area/safe_dropoffs = list()
+	for(var/area/area as anything in GLOB.safe_dropoff_areas)
+		safe_dropoffs += area::name
+	var/area/normal_dropoff = contract.dropoffs[CONTRACTOR_DROPOFF_UNSAFE]
+	var/area/dangerous_dropoff = contract.dropoffs[CONTRACTOR_DROPOFF_DANGEROUS]
 	return list(
 		"name" = contract.target?.name || "Unknown Target",
 		"is_head" = is_head,
@@ -35,14 +37,14 @@
 		"credit_reward" = ransom,
 		"payout_bonus" = contract.payout_bonus,
 		"wanted_message" = wanted_message,
-		"dropoff_location_safe" = safe_dropoff?.name,
-		"dropoff_location_normal" = normal_dropoff?.name,
+		"dropoff_location_safe" = safe_dropoffs,
+		"dropoff_location_unsafe" = normal_dropoff?.name,
 		"dropoff_location_dangerous" = dangerous_dropoff?.name,
 		"mugshot_icon" = cached_image,
 		"contract_id" = id,
 	)
 
-/datum/syndicate_contract/New(blacklist, type=CONTRACT_PAYOUT_SMALL)
+/datum/syndicate_contract/New(blacklist, type = CONTRACT_PAYOUT_SMALL)
 	contract = new(src)
 	payout_type = type
 
@@ -90,8 +92,8 @@
 	var/location = pick_list_weighted(WANTED_FILE, "location")
 	wanted_message = "[base] [verb_string] [noun] [location]."
 
-/datum/syndicate_contract/proc/handle_extraction(mob/living/user, turf/target_turf)
-	if (contract.target && contract.dropoff_check(user, contract.target.current))
+/datum/syndicate_contract/proc/handle_extraction(mob/living/user, turf/target_turf, extraction_type = CONTRACTOR_DROPOFF_SAFE)
+	if (contract.target && contract.dropoff_check(user, contract.target.current, extraction_type))
 
 		var/turf/free_location = find_obstruction_free_location(3, user, target_turf)
 

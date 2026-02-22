@@ -1034,7 +1034,6 @@ GLOBAL_LIST_INIT(unsafe_dropoff_areas, subtypesof(/area/station) - dangerous_dro
 	var/payout = 0
 	var/payout_bonus = 0
 	var/list/dropoffs = list(
-		"safe" = null,
 		"unsafe" = null,
 		"dangerous" = null
 	)
@@ -1048,13 +1047,12 @@ GLOBAL_LIST_INIT(unsafe_dropoff_areas, subtypesof(/area/station) - dangerous_dro
 /datum/objective/contract/proc/get_previous_dropoff()
 	if(!isnull(dropoff_used))
 		return dropoff_used
-	return dropoffs["normal"]
+	return dropoffs[CONTRACTOR_DROPOFF_UNSAFE]
 
 // Generate a random valid area on the station that the dropoff will happen.
 /datum/objective/contract/proc/generate_dropoff()
-	dropoffs["safe"] = pick_dropoff(GLOB.safe_dropoff_areas, TRUE)
-	dropoffs["unsafe"] = pick_dropoff(GLOB.unsafe_dropoff_areas)
-	dropoffs["dangerous"] = pick_dropoff(GLOB.dangerous_dropoff_areas)
+	dropoffs[CONTRACTOR_DROPOFF_UNSAFE] = pick_dropoff(GLOB.unsafe_dropoff_areas)
+	dropoffs[CONTRACTOR_DROPOFF_DANGEROUS] = pick_dropoff(GLOB.dangerous_dropoff_areas)
 
 /datum/objective/contract/proc/pick_dropoff(list/possible_areas = list(), allow_outdoors = FALSE)
 	var/area/dropoff_area
@@ -1067,21 +1065,27 @@ GLOBAL_LIST_INIT(unsafe_dropoff_areas, subtypesof(/area/station) - dangerous_dro
 		pickable_areas -= candidate_area
 		if(is_type_in_list(candidate_area, GLOB.the_station_areas))
 			continue
-		if((allow_outdoors || (candidate_area::type in GLOB.the_station_areas && !candidate_area::outdoors)))
+		if((allow_outdoors || (is_path_in_list(candidate_area, GLOB.the_station_areas) && !candidate_area::outdoors)))
 			dropoff_area = candidate_area
 	return dropoff_area
 
 // Check if both the contractor and contract target are at the dropoff point.
-/datum/objective/contract/proc/dropoff_check(mob/user, mob/target)
+/datum/objective/contract/proc/dropoff_check(mob/user, mob/target, dropoff_type = CONTRACTOR_DROPOFF_SAFE)
 	var/area/user_area = get_area(user)
 	var/area/target_area = get_area(target)
+	if(dropoff_type == CONTRACTOR_DROPOFF_SAFE)
+		if(is_path_in_list(user_area, GLOB.safe_dropoff_areas) && is_path_in_list(target_area, GLOB.safe_dropoff_areas))
+			return TRUE
+		return FALSE
+	if(dropoff_type != CONTRACTOR_DROPOFF_DANGEROUS && dropoff_type != CONTRACTOR_DROPOFF_UNSAFE)
+		CRASH("Invalid dropoff type passed to dropoff_check: " + dropoff_type)
 	var/list/area/valid_dropoff_areas = list()
 	valid_dropoff_areas += assoc_to_values(dropoffs)
 
 	for(var/area/valid_area as anything in valid_dropoff_areas)
 		if(isnull(valid_area))
 			continue
-		if(istype(user_area, valid_area) && istype(target_area, valid_area))
+		if(ispath(user_area, valid_area) && ispath(target_area, valid_area))
 			return TRUE
 	return FALSE
 

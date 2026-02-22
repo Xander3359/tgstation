@@ -504,3 +504,7 @@ GLOBAL_LIST_INIT(human_invader_antagonists, list(
 #define UPLINK_RADIO "Radio"
 #define UPLINK_PEN "Pen" //like a real spy!
 #define UPLINK_IMPLANT "Implant"
+
+#define CONTRACTOR_DROPOFF_SAFE "safe"
+#define CONTRACTOR_DROPOFF_UNSAFE "unsafe"
+#define CONTRACTOR_DROPOFF_DANGEROUS "dangerous"

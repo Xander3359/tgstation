@@ -56,7 +56,7 @@ type BountyTargets = {
   credit_reward?: number;
   payout_bonus?: number;
   wanted_message?: string;
-  dropoff_location_safe?: string;
+  dropoff_location_safe?: string[];
   dropoff_location_unsafe?: string;
   dropoff_location_dangerous?: string;
   mugshot_icon?: string;
@@ -234,9 +234,12 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
     target: BountyTargets,
     type: EXTRACTION_TYPE,
   ) => {
-    const location = target[`dropoff_location_${type}` as keyof BountyTargets];
+    const location = target[`dropoff_location_${type}`];
     if (!location) return 'Location: Unknown';
-    return `Location: ${location}`;
+    const locationString = Array.isArray(location)
+      ? location.join(', ')
+      : location;
+    return `Location: ${locationString}`;
   };
 
   const targetsElements =
