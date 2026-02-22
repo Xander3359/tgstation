@@ -170,13 +170,13 @@
 				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
 				error = "Contract not found. It may have been removed or expired."
 				return TRUE
-			var/area/dropoff_area = contract_holder.contract.dropoffs[extraction_type]
+			var/area/dropoff_area = get_turf(user)
 			if(isnull(dropoff_area))
 				user.playsound_local(user, 'sound/machines/uplink/uplinkerror.ogg', 50)
 				error = "Invalid dropoff location, request IT support."
 				return TRUE
 			if (contract_holder.status != CONTRACT_STATUS_EXTRACTING)
-				if (contract_holder.handle_extraction(user, dropoff_area, extraction_type))
+				if (contract_holder.handle_extraction(user, extraction_type))
 					user.playsound_local(user, 'sound/effects/confirmdropoff.ogg', 100, TRUE)
 					contract_holder.status = CONTRACT_STATUS_EXTRACTING
 					// program_open_overlay = "contractor-extracted"

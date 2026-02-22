@@ -214,19 +214,20 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
       type: EXTRACTION_TYPE.Safe,
       description:
         "Static location that doesn't provide additional rewards, bring your target to arrivals, departures, solar arrays or lavaland to extract your target.",
-      color: 'green',
+      backgroundColor: 'green',
     },
     {
       type: EXTRACTION_TYPE.Unsafe,
       description:
         'RNG, any non secure area on the station, grants a small bonus of coins.',
-      color: 'yellow',
+      backgroundColor: 'yellow',
+      color: 'black',
     },
     {
       type: EXTRACTION_TYPE.Dangerous,
       description:
         'Usually a highly restricted area, provides the biggest reward.',
-      color: 'red',
+      backgroundColor: 'red',
     },
   ];
 
@@ -282,7 +283,10 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
             {extractionInfo.map((info) => (
               <Box key={info.type} mb={1}>
                 <Button
-                  style={{ backgroundColor: info.color }}
+                  style={{
+                    backgroundColor: info.backgroundColor,
+                    color: info.color ?? 'white',
+                  }}
                   onClick={() => {
                     act('call_extraction', {
                       extraction_type: info.type,

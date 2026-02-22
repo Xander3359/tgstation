@@ -92,10 +92,11 @@
 	var/location = pick_list_weighted(WANTED_FILE, "location")
 	wanted_message = "[base] [verb_string] [noun] [location]."
 
-/datum/syndicate_contract/proc/handle_extraction(mob/living/user, turf/target_turf, extraction_type = CONTRACTOR_DROPOFF_SAFE)
-	if (contract.target && contract.dropoff_check(user, contract.target.current, extraction_type))
+/datum/syndicate_contract/proc/handle_extraction(mob/living/user, extraction_type = CONTRACTOR_DROPOFF_SAFE)
+	var/area/dropoff_area = get_area(user)
+	if (contract?.target?.current && contract.dropoff_check(user, contract.target.current, extraction_type))
 
-		var/turf/free_location = find_obstruction_free_location(3, user, target_turf)
+		var/turf/free_location = find_obstruction_free_location(3, user, dropoff_area)
 
 		if (free_location)
 			// We've got a valid location, launch.

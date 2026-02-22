@@ -1074,18 +1074,15 @@ GLOBAL_LIST_INIT(unsafe_dropoff_areas, subtypesof(/area/station) - dangerous_dro
 	var/area/user_area = get_area(user)
 	var/area/target_area = get_area(target)
 	if(dropoff_type == CONTRACTOR_DROPOFF_SAFE)
-		if(is_path_in_list(user_area, GLOB.safe_dropoff_areas) && is_path_in_list(target_area, GLOB.safe_dropoff_areas))
+		if(is_path_in_list(user_area.type, GLOB.safe_dropoff_areas) && is_path_in_list(target_area.type, GLOB.safe_dropoff_areas))
 			return TRUE
 		return FALSE
+
 	if(dropoff_type != CONTRACTOR_DROPOFF_DANGEROUS && dropoff_type != CONTRACTOR_DROPOFF_UNSAFE)
 		CRASH("Invalid dropoff type passed to dropoff_check: " + dropoff_type)
-	var/list/area/valid_dropoff_areas = list()
-	valid_dropoff_areas += assoc_to_values(dropoffs)
 
-	for(var/area/valid_area as anything in valid_dropoff_areas)
-		if(isnull(valid_area))
-			continue
-		if(ispath(user_area, valid_area) && ispath(target_area, valid_area))
-			return TRUE
+	var/list/valid_dropoff_area = dropoffs[dropoff_type]
+	if(ispath(user_area.type, valid_dropoff_area) && ispath(target_area.type, valid_dropoff_area))
+		return TRUE
 	return FALSE
 
