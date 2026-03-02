@@ -321,6 +321,7 @@
 	required_slots = list(ITEM_SLOT_GLOVES)
 	/// List of all energy nets this module made.
 	var/list/energy_nets = list()
+	var/projectile_type = /obj/projectile/energy_net
 
 /obj/item/mod/module/energy_net/on_part_deactivation(deleting)
 	for(var/obj/structure/energy_net/net as anything in energy_nets)
@@ -332,7 +333,7 @@
 		return
 	if(IS_SPACE_NINJA(mod.wearer) && isliving(target))
 		mod.wearer.say("Get over here!", forced = type)
-	var/obj/projectile/net = new /obj/projectile/energy_net(mod.wearer.loc, src)
+	var/obj/projectile/net = new projectile_type(mod.wearer.loc, src)
 	net.aim_projectile(target, mod.wearer)
 	net.firer = mod.wearer
 	playsound(src, 'sound/items/weapons/punchmiss.ogg', 25, TRUE)

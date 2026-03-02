@@ -11,40 +11,65 @@
 	accepted_magazine_type = /obj/item/ammo_box/magazine/gauss
 	w_class = WEIGHT_CLASS_BULKY
 	bolt_type = BOLT_TYPE_NO_BOLT
+	var/fire_mode_switch_sound = 'sound/items/weapons/mode_switch.ogg'
 	SET_BASE_PIXEL(-16, 0)
-	var/current_mode = "standard"
-	var/static/list/modes = list(
-		"standard",
-		"emp",
-		"gyro",
-		"antimatter",
-		"thermite",
-		"nopower"
+	var/ammo_mode = 0
+	var/ammo_type = list(
+		/obj/item/ammo_casing/gauss,
+		/obj/item/ammo_casing/gauss/emp,
+		/obj/item/ammo_casing/gauss/gyro,
+		/obj/item/ammo_casing/gauss/antimatter,
+		/obj/item/ammo_casing/gauss/thermite,
+		/obj/item/ammo_casing/gauss/nopower
 	)
 
 /obj/item/gun/ballistic/gauss_rifle/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/update_icon_updates_onmob)
 
-/obj/item/gun/ballistic/gauss_rifle/click_alt(mob/user)
+/obj/item/gun/ballistic/gauss_rifle/attack_self(mob/living/user as mob)
 	. = ..()
-	var/current_index = modes.Find(current_mode)
-	current_index++
-	if(current_index > length(modes))
-		current_index = 1
-	current_mode = modes[current_index]
-	update_appearance(UPDATE_ICON)
-
-/obj/item/gun/ballistic/gauss_rifle/update_icon_state()
-	. = ..()
-	if(current_mode == "standard")
-		icon_state = initial(icon_state)
-		inhand_icon_state = initial(inhand_icon_state)
+	if(.)
 		return
-	if(current_mode in modes)
-		var/new_icon = "[base_icon_state]_[current_mode]"
-		icon_state = new_icon
-		inhand_icon_state = new_icon
+
+	if(length(ammo_type) > 1 && can_select)
+		select_fire(user)
+
+// /obj/item/gun/ballistic/gauss_rifle/click_alt(mob/user)
+// 	. = ..()
+// 	current_index++
+// 	if(current_index > length(modes))
+// 		current_index = 1
+// 	current_mode = modes[current_index]
+// 	update_appearance(UPDATE_ICON)
+
+/obj/item/gun/ballistic/gauss_rifle/proc/select_fire(mob/living/user)
+	ammo_mode++
+	if (ammo_mode > length(ammo_type))
+		ammo_mode = 1
+	var/obj/item/ammo_casing/gauss/shot = ammo_type[ammo_mode]
+	if(!isnull(shot) && !istype(shot))
+		CRASH("Invalid ammo type in gauss rifle: " + shot.type)
+	fire_sound = shot.fire_sound
+	fire_delay = shot.delay
+	if (shot.select_name && user)
+		balloon_alert(user, "set to [shot.select_name]")
+	chambered = null
+	recharge_newshot(TRUE)
+	update_appearance()
+	if(fire_mode_switch_sound)
+		playsound(src, fire_mode_switch_sound, 50, TRUE)
+
+// /obj/item/gun/ballistic/gauss_rifle/update_icon_state()
+// 	. = ..()
+// 	if(current_mode == "standard")
+// 		icon_state = initial(icon_state)
+// 		inhand_icon_state = initial(inhand_icon_state)
+// 		return
+// 	if(current_mode in modes)
+// 		var/new_icon = "[base_icon_state]_[current_mode]"
+// 		icon_state = new_icon
+// 		inhand_icon_state = new_icon
 
 /obj/item/ammo_box/magazine/gauss
 	name = "Raijin Horizon Gauss Magazine"
@@ -79,26 +104,31 @@
 	icon_state = "standard"
 	caliber = CALIBER_GAUSS
 	projectile_type = /obj/projectile/bullet/gauss
+	var/select_name = "gauss"
 
 /obj/item/ammo_casing/gauss/emp
 	name = "EMP gauss round"
 	icon_state = "emp"
 	projectile_type = /obj/projectile/bullet/gauss/emp
+	select_name = "emp"
 
 /obj/item/ammo_casing/gauss/gyro
 	name = "gyro-stabilized gauss round"
 	icon_state = "gyro"
 	projectile_type = /obj/projectile/bullet/gauss/gyro
+	select_name = "gyro"
 
 /obj/item/ammo_casing/gauss/antimatter
 	name = "antimatter gauss round"
 	icon_state = "antimatter"
 	projectile_type = /obj/projectile/bullet/gauss/antimatter
+	select_name = "antimatter"
 
 /obj/item/ammo_casing/gauss/thermite
 	name = "thermite gauss round"
 	icon_state = "thermite"
 	projectile_type = /obj/projectile/bullet/gauss/thermite
+	select_name = "thermite"
 
 /obj/projectile/bullet/gauss
 	name = "standard gauss round"
