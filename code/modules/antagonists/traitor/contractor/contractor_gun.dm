@@ -11,8 +11,8 @@
 	accepted_magazine_type = /obj/item/ammo_box/magazine/gauss
 	w_class = WEIGHT_CLASS_BULKY
 	bolt_type = BOLT_TYPE_NO_BOLT
-	var/fire_mode_switch_sound = 'sound/items/weapons/mode_switch.ogg'
 	SET_BASE_PIXEL(-16, 0)
+	var/fire_mode_switch_sound = SFX_FIRE_MODE_SWITCH
 	var/ammo_mode = 0
 	var/ammo_type = list(
 		/obj/item/ammo_casing/gauss,
@@ -20,7 +20,6 @@
 		/obj/item/ammo_casing/gauss/gyro,
 		/obj/item/ammo_casing/gauss/antimatter,
 		/obj/item/ammo_casing/gauss/thermite,
-		/obj/item/ammo_casing/gauss/nopower
 	)
 
 /obj/item/gun/ballistic/gauss_rifle/Initialize(mapload)
@@ -32,7 +31,7 @@
 	if(.)
 		return
 
-	if(length(ammo_type) > 1 && can_select)
+	if(length(ammo_type) > 1)
 		select_fire(user)
 
 // /obj/item/gun/ballistic/gauss_rifle/click_alt(mob/user)
