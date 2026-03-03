@@ -57,7 +57,6 @@
 	victim = target
 	RegisterSignal(target, COMSIG_QDELETING, PROC_REF(delete_self))
 	tracker = new(target, CALLBACK(src, PROC_REF(move_react)))
-	glide_size = target.glide_size
 	addtimer(CALLBACK(src, PROC_REF(shock_victim), target), shock_delay)
 
 /obj/snatcher_net/Destroy(force)
@@ -70,7 +69,7 @@
 /obj/snatcher_net/proc/shock_victim(mob/target)
 	if(QDELETED(src) || cell.charge <= 0 || !istype(target))
 		return
-	icon_state = "spicy_net"
+	flick("spicy_net", src)
 	// target.Stun(stun_time * cell.charge / cell.max_charge)
 	electrocute_mob(target, cell, src, 1)
 	do_sparks(5, TRUE, src)
@@ -82,6 +81,7 @@
 
 /obj/snatcher_net/proc/move_react(atom/movable/master, atom/mover, atom/oldloc, direction)
 	SIGNAL_HANDLER
+	glide_size = target.glide_size
 	abstract_move(get_turf(master))
 
 /obj/projectile/hook/scorpion
