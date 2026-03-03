@@ -22,15 +22,16 @@
 	incompatible_modules = list(/obj/item/mod/module/energy_net, /obj/item/mod/module/energy_net/snatcher)
 	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_modules.dmi'
 	icon_state = "net"
-	cooldown_time = 15 SECONDS
+	cooldown_time = 2 SECONDS
 	removable = FALSE
 	projectile_type = /obj/projectile/snatcher
 
 /obj/projectile/snatcher
 	name = "hardlight net"
+	icon = 'code/modules/antagonists/traitor/contractor/icons/net_proj.dmi'
+	icon_state = "net"
 	hitsound = 'sound/items/fulton/fultext_deploy.ogg'
 	hitsound_wall = 'sound/items/fulton/fultext_deploy.ogg'
-	icon = 'icons/obj/clothing/modsuit/mod_modules.dmi'
 
 /obj/projectile/snatcher/on_hit(atom/target, blocked, pierce_hit)
 	. = ..()
@@ -41,51 +42,77 @@
 	name = "snatcher net"
 	icon = 'code/modules/antagonists/traitor/contractor/icons/net_obj.dmi'
 	icon_state = "net"
-	max_integrity = 25
-	var/shock_delay = 2 SECONDS
+	max_integrity = 50
+	layer = ABOVE_MOB_LAYER
+	var/shock_delay = 5 SECONDS
 	// var/stun_time = 5 SECONDS
-	var/datum/movement_detector/tracker
-	var/obj/item/stock_parts/power_store/cell
-	var/mob/victim
+	// var/datum/movement_detector/tracker
+	var/mob/living/victim
+	var/shock_timer
 
-/obj/snatcher_net/Initialize(mapload, mob/target)
+/obj/snatcher_net/Initialize(mapload, mob/living/carbon/target)
 	. = ..()
-	if(!istype(target))
+	ADD_TRAIT(src, TRAIT_INVERTED_DEMOLITION, INNATE_TRAIT)
+	QDEL_IN(src, 1 MINUTES)
+	if(!istype(target) || target.has_movespeed_modifier(/datum/movespeed_modifier/net_slowdown))
 		return
-	cell = new(src)
+	forceMove(target)
+	target.overlays_standing[HIGHEST_LAYER] = appearance
+	target.apply_overlay(HIGHEST_LAYER)
 	target.add_movespeed_modifier(/datum/movespeed_modifier/net_slowdown)
 	victim = target
 	RegisterSignal(target, COMSIG_QDELETING, PROC_REF(delete_self))
-	tracker = new(target, CALLBACK(src, PROC_REF(move_react)))
-	addtimer(CALLBACK(src, PROC_REF(shock_victim), target), shock_delay)
+	// tracker = new(target, CALLBACK(src, PROC_REF(move_react)))
+	delayed_shock(target)
 
 /obj/snatcher_net/Destroy(force)
 	. = ..()
 	victim.remove_movespeed_modifier(/datum/movespeed_modifier/net_slowdown)
 	victim = null
-	QDEL_NULL(tracker)
-	QDEL_NULL(cell)
+	// QDEL_NULL(tracker)
 
-/obj/snatcher_net/proc/shock_victim(mob/target)
-	if(QDELETED(src) || cell.charge <= 0 || !istype(target))
+/obj/snatcher_net/proc/delayed_shock(mob/living/carbon/target)
+	shock_timer = addtimer(CALLBACK(src, PROC_REF(shock_victim), target), shock_delay, TIMER_STOPPABLE)
+
+/obj/snatcher_net/emp_act(severity)
+	. = ..()
+	if(. & EMP_PROTECT_SELF)
+		return
+	deltimer(shock_timer)
+	alpha = 150
+
+/obj/snatcher_net/proc/shock_victim(mob/living/carbon/target)
+	if(QDELETED(src) || !istype(target))
 		return
 	flick("spicy_net", src)
 	// target.Stun(stun_time * cell.charge / cell.max_charge)
-	electrocute_mob(target, cell, src, 1)
-	do_sparks(5, TRUE, src)
+	target.electrocute_act(shock_damage = 15, source = src, siemens_coeff = 1, flags = SHOCK_KNOCKDOWN)
+	do_sparks(number = 5, cardinal_only = TRUE, source = src)
 	target.visible_message(span_danger("[src] glows and shocks [target]!"), span_userdanger("[src] glows and shocks you!"))
+	delayed_shock(target)
 
 /obj/snatcher_net/proc/delete_self()
 	SIGNAL_HANDLER
 	qdel(src)
 
-/obj/snatcher_net/proc/move_react(atom/movable/master, atom/mover, atom/oldloc, direction)
-	SIGNAL_HANDLER
-	glide_size = target.glide_size
-	abstract_move(get_turf(master))
+// /obj/snatcher_net/proc/move_react(atom/movable/master, atom/mover, atom/oldloc, direction)
+// 	SIGNAL_HANDLER
+// 	glide_size = master.glide_size
+// 	abstract_move(get_turf(master))
 
+/// special variant of the butcher hook that forces the firer to hit the target with their active weapon
 /obj/projectile/hook/scorpion
 	name = "scorpion hook"
+
+/obj/projectile/hook/scorpion/finish_callback(atom/movable/firer, atom/movable/victim)
+	var/mob/firer_mob = firer
+	if(!firer.Adjacent(victim) || !istype(firer_mob))
+		return
+	var/obj/item/weapon = firer_mob.get_active_held_item()
+	if(isnull(weapon))
+		return
+	weapon.melee_attack_chain(firer_mob, victim)
+	// firer_mob.do_attack_animation(victim)
 
 /datum/movespeed_modifier/net_slowdown
 	multiplicative_slowdown = 4

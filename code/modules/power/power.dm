@@ -475,8 +475,9 @@
 //source is an object caused electrocuting (airlock, grille, etc)
 //siemens_coeff - layman's terms, conductivity
 //dist_check - set to only shock mobs within 1 of source (vendors, airlocks, etc.)
+//bypass_gloves - set to ignore shockproof gloves, used for things like contractor net
 //No animations will be performed by this proc.
-/proc/electrocute_mob(mob/living/carbon/victim, power_source, obj/source, siemens_coeff = 1, dist_check = FALSE)
+/proc/electrocute_mob(mob/living/carbon/victim, power_source, obj/source, siemens_coeff = 1, dist_check = FALSE, bypass_gloves = FALSE)
 	if(!istype(victim) || ismecha(victim.loc))
 		return FALSE //feckin mechs are dumb
 
@@ -484,7 +485,7 @@
 		if(!in_range(source, victim))
 			return FALSE
 
-	if(victim.wearing_shock_proof_gloves())
+	if(!bypass_gloves && victim.wearing_shock_proof_gloves())
 		SEND_SIGNAL(victim, COMSIG_LIVING_SHOCK_PREVENTED, power_source, source, siemens_coeff, dist_check)
 		return FALSE //to avoid spamming with insulated gloves on
 

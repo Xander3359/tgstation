@@ -80,8 +80,11 @@
 	victim.visible_message(span_danger("[victim] is snagged by [firer]'s hook!"))
 
 	var/datum/hook_and_move/puller = new
-	puller.begin_pulling(firer, victim, get_turf(firer))
+	puller.begin_pulling(firer, victim, get_turf(firer), finish_callback())
 	REMOVE_TRAIT(firer, TRAIT_IMMOBILIZED, REF(src))
+
+/obj/projectile/hook/proc/finish_callback(atom/movable/firer, atom/movable/victim)
+	return null
 
 /obj/projectile/hook/Destroy(force)
 	QDEL_NULL(initial_chain)
@@ -114,6 +117,8 @@
 		TRAIT_IMMOBILIZED,
 		TRAIT_UI_BLOCKED,
 	)
+	/// calls this CALLBACK when this datum stops pulling, either by it failing or succeeding
+	var/datum/callback/finish_callback
 
 /datum/hook_and_move/Destroy(force)
 	STOP_PROCESSING(SSfastprocess, src)
@@ -121,8 +126,9 @@
 	return ..()
 
 /// Uses fastprocessing to move our victim to the destination at a rather fast speed.
-/datum/hook_and_move/proc/begin_pulling(atom/movable/firer, atom/movable/victim, atom/destination)
+/datum/hook_and_move/proc/begin_pulling(atom/movable/firer, atom/movable/victim, atom/destination, datum/callback/callback)
 	return_chain = firer.Beam(victim, icon_state = "chain", emissive = FALSE)
+	src.finish_callback = callback
 
 	firer_ref_string = REF(firer)
 	ADD_TRAIT(victim, TRAIT_HOOKED, firer_ref_string)
@@ -148,6 +154,8 @@
 		REMOVE_TRAIT(victim, TRAIT_HOOKED, firer_ref_string)
 
 	qdel(src)
+	if(finish_callback)
+		finish_callback.Invoke(firer, victim)
 
 /datum/hook_and_move/process(seconds_per_tick)
 	var/atom/movable/victim = victim_ref?.resolve()
