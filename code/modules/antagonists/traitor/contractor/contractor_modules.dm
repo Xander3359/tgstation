@@ -32,6 +32,8 @@
 	icon_state = "net"
 	hitsound = 'sound/items/fulton/fultext_deploy.ogg'
 	hitsound_wall = 'sound/items/fulton/fultext_deploy.ogg'
+	damage = 20
+	damage_type = STAMINA
 
 /obj/projectile/snatcher/on_hit(atom/target, blocked, pierce_hit)
 	. = ..()
@@ -44,7 +46,8 @@
 	icon_state = "net"
 	max_integrity = 50
 	layer = ABOVE_MOB_LAYER
-	var/shock_delay = 5 SECONDS
+	appearance_flags = KEEP_APART|RESET_COLOR
+	var/shock_delay = 7 SECONDS
 	// var/stun_time = 5 SECONDS
 	// var/datum/movement_detector/tracker
 	var/mob/living/victim
@@ -57,8 +60,8 @@
 	if(!istype(target) || target.has_movespeed_modifier(/datum/movespeed_modifier/net_slowdown))
 		return
 	forceMove(target)
-	target.overlays_standing[HIGHEST_LAYER] = appearance
-	target.apply_overlay(HIGHEST_LAYER)
+	// var/mutable_appearance/new_halo_overlay = mutable_appeDarance(src.appearance, appearance_flags)
+	target.add_overlay(src)
 	target.add_movespeed_modifier(/datum/movespeed_modifier/net_slowdown)
 	victim = target
 	RegisterSignal(target, COMSIG_QDELETING, PROC_REF(delete_self))
@@ -67,6 +70,7 @@
 
 /obj/snatcher_net/Destroy(force)
 	. = ..()
+	victim.cut_overlay(src)
 	victim.remove_movespeed_modifier(/datum/movespeed_modifier/net_slowdown)
 	victim = null
 	// QDEL_NULL(tracker)
@@ -86,7 +90,7 @@
 		return
 	flick("spicy_net", src)
 	// target.Stun(stun_time * cell.charge / cell.max_charge)
-	target.electrocute_act(shock_damage = 15, source = src, siemens_coeff = 1, flags = SHOCK_KNOCKDOWN)
+	target.electrocute_act(shock_damage = 5, source = src, siemens_coeff = 1, flags = SHOCK_KNOCKDOWN)
 	do_sparks(number = 5, cardinal_only = TRUE, source = src)
 	target.visible_message(span_danger("[src] glows and shocks [target]!"), span_userdanger("[src] glows and shocks you!"))
 	delayed_shock(target)
