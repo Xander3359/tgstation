@@ -49,3 +49,8 @@
 		/obj/item/mod/module/energy_net/scorpion_hook,
 		/obj/item/mod/module/laughing_gas,
 	)
+	default_pins = list(
+		/obj/item/mod/module/energy_net/snatcher,
+		/obj/item/mod/module/energy_net/scorpion_hook,
+		/obj/item/mod/module/laughing_gas,
+	)
