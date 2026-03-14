@@ -471,7 +471,7 @@
 	environ = APC_CHANNEL_OFF
 	update_appearance()
 	update()
-	addtimer(CALLBACK(src, PROC_REF(reset), APC_RESET_EMP), 60 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(reset), APC_RESET_EMP), 60 SECONDS, TIMER_UNIQUE|TIMER_OVERRIDE|TIMER_NO_HASH_WAIT)
 
 /obj/machinery/power/apc/proc/togglelock(mob/living/user)
 	if(obj_flags & EMAGGED)

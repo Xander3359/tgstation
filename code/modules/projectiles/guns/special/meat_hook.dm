@@ -58,12 +58,21 @@
 	armour_penetration = 60
 	damage_type = BRUTE
 	hitsound = 'sound/effects/splat.ogg'
+	speed = 1.5
 	/// The chain we send out while we are in motion, referred to as "initial" to not get confused with the chain we use to reel the victim in.
 	var/datum/beam/initial_chain
+	/// icon state to use for the hook beam
+	var/hook_icon_state = "chain"
+	/// icon state to use for the pulling in part of hooking something
+	var/pull_in_hook_icon_state = "chain"
+	/// how many iconstates you have for your hook sprite
+	var/icon_state_variants = 0
+	/// whether or not to randomly cycle through icon_state_variants for the beam or to go in order
+	var/random_beam_icons = FALSE
 
 /obj/projectile/hook/fire(setAngle)
 	if(firer)
-		initial_chain = firer.Beam(src, icon_state = "chain", emissive = FALSE)
+		initial_chain = firer.Beam(src, icon_state = hook_icon_state, emissive = FALSE, icon_state_variants = icon_state_variants, random_icon_state = random_beam_icons)
 		ADD_TRAIT(firer, TRAIT_IMMOBILIZED, REF(src))
 		addtimer(TRAIT_CALLBACK_REMOVE(firer, TRAIT_IMMOBILIZED, REF(src)), IMMOBILIZATION_TIMER) // safety if we miss, if we get a hit we stay immobilized
 	return ..()
@@ -79,7 +88,7 @@
 
 	victim.visible_message(span_danger("[victim] is snagged by [firer]'s hook!"))
 
-	var/datum/hook_and_move/puller = new
+	var/datum/hook_and_move/puller = new(hook_icon_state = pull_in_hook_icon_state)
 	puller.begin_pulling(firer, victim, get_turf(firer))
 	REMOVE_TRAIT(firer, TRAIT_IMMOBILIZED, REF(src))
 
@@ -116,6 +125,13 @@
 	)
 	/// calls this CALLBACK when this datum stops pulling, either by it failing or succeeding
 	var/datum/callback/finish_callback
+	/// the icon_state used for the beam
+	var/hook_icon_state = "chain"
+
+/datum/hook_and_move/New(hook_icon_state)
+	. = ..()
+	if(hook_icon_state)
+		src.hook_icon_state = hook_icon_state
 
 /datum/hook_and_move/Destroy(force)
 	STOP_PROCESSING(SSfastprocess, src)
@@ -124,7 +140,7 @@
 
 /// Uses fastprocessing to move our victim to the destination at a rather fast speed.
 /datum/hook_and_move/proc/begin_pulling(atom/movable/firer, atom/movable/victim, atom/destination)
-	return_chain = firer.Beam(victim, icon_state = "chain", emissive = FALSE)
+	return_chain = firer.Beam(victim, icon_state = hook_icon_state, emissive = FALSE)
 
 	firer_ref_string = REF(firer)
 	ADD_TRAIT(victim, TRAIT_HOOKED, firer_ref_string)

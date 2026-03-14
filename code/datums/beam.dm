@@ -193,8 +193,11 @@
 
 //for when you don't want each segment to look identital
 /datum/beam/varied
-	//how many variants do we have in addition to the unnumbered state we use as a base icon state and terminal segment
+	///how many variants do we have in addition to the unnumbered state we use as a base icon state and terminal segment
 	var/icon_state_variants = 1
+	var/current_icon_index = 1
+	/// whether or not to randomly cycle through icon_state_variants for the beam or to go in order
+	var/random_icon_state = FALSE
 
 /datum/beam/varied/New(
 	origin,
@@ -211,15 +214,20 @@
 	override_target_pixel_x = null,
 	override_target_pixel_y = null,
 	beam_layer = ABOVE_ALL_MOB_LAYER,
-	icon_state_variants = 1
-	)
+	icon_state_variants = 1,
+	random_icon_state = TRUE
+)
 	. = ..()
-
 	src.icon_state_variants = icon_state_variants
+	src.random_icon_state = random_icon_state
 
 /datum/beam/varied/set_subsegment_appearance(obj/effect/ebeam/segment)
 	//we use reall ass icon states here.
-	set_up_effect(segment, "[icon_state][rand(1, icon_state_variants)]")
+	if(random_icon_state)
+		set_up_effect(segment, "[icon_state][rand(1, icon_state_variants)]")
+	else
+		set_up_effect(segment, "[icon_state][current_icon_index]")
+		current_icon_index = min(current_icon_index + 1, icon_state_variants)
 
 /obj/effect/ebeam
 	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
@@ -324,11 +332,13 @@
  * icon: What the beam's icon file is. Don't change this, man. All beam icons should be in beam.dmi anyways.
  * maxdistance: how far the beam will go before stopping itself. Used mainly for two things: preventing lag if the beam may go in that direction and setting a range to abilities that use beams.
  * beam_type: The type of your custom beam. This is for adding other wacky stuff for your beam only. Most likely, you won't (and shouldn't) change it.
+ * icon_state_variants: The number of icon state variants in format iconstate1 and etc, is randomized or indexed based on random_icon_state boolean. Starts from 1, ignores non-numbered icon_states
  */
 /atom/proc/Beam(atom/BeamTarget,
 	icon_state="b_beam",
 	icon='icons/effects/beam.dmi',
-	time=INFINITY,maxdistance=INFINITY,
+	time=INFINITY,
+	maxdistance=INFINITY,
 	beam_type=/obj/effect/ebeam,
 	beam_color = null, emissive = TRUE,
 	override_origin_pixel_x = null,
@@ -337,12 +347,15 @@
 	override_target_pixel_y = null,
 	layer = ABOVE_ALL_MOB_LAYER,
 	icon_state_variants = 0,
+	random_icon_state = TRUE,
 )
 	var/datum/beam/newbeam
-
+	var/list/arguments = list(src, BeamTarget, icon, icon_state, time, maxdistance, beam_type, beam_color, emissive, override_origin_pixel_x, override_origin_pixel_y, override_target_pixel_x, override_target_pixel_y, layer)
 	if(icon_state_variants <= 0)
-		newbeam = new(src,BeamTarget,icon,icon_state,time,maxdistance,beam_type, beam_color, emissive, override_origin_pixel_x, override_origin_pixel_y, override_target_pixel_x, override_target_pixel_y, layer)
+		newbeam = new(arglist(arguments))
 	else
-		newbeam = new /datum/beam/varied(src,BeamTarget,icon,icon_state,time,maxdistance,beam_type, beam_color, emissive, override_origin_pixel_x, override_origin_pixel_y, override_target_pixel_x, override_target_pixel_y, layer, icon_state_variants)
+		arguments += icon_state_variants
+		arguments += random_icon_state
+		newbeam = new /datum/beam/varied(arglist(arguments))
 	INVOKE_ASYNC(newbeam, TYPE_PROC_REF(/datum/beam/, Start))
 	return newbeam

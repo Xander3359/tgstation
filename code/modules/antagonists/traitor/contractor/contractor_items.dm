@@ -42,3 +42,9 @@
 		from where you sent them off from in several minutes time. Don't worry, we give you a cut of what we get paid. We pay this into whatever \
 		ID card you have equipped, on top of the TC payment we give.</p>\
 		<p>Good luck agent. You can burn this document with the supplied lighter.</p>"}
+
+/obj/item/restraints/handcuffs/contractor
+	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_handcuffs.dmi'
+	icon_state = "handcuffs"
+	worn_icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_handcuffs.dmi'
+	worn_icon_state = "handcuffs"

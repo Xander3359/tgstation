@@ -91,6 +91,9 @@
 /atom/proc/forget_balloon_alert(image/balloon_alert)
 	LAZYREMOVE(update_on_z, balloon_alert)
 
+/atom/proc/balloon_alert_pixel_y_offset()
+	return base_pixel_x
+
 #undef BALLOON_TEXT_CHAR_LIFETIME_INCREASE_MIN
 #undef BALLOON_TEXT_CHAR_LIFETIME_INCREASE_MULT
 #undef BALLOON_TEXT_FADE_TIME

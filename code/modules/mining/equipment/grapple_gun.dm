@@ -134,8 +134,14 @@
 	var/datum/looping_sound/zipline/zipline_sound
 	/// The user's original transform matrix
 	var/matrix/initial_matrix
+	/// Delay before the user is launched towards the target
+	var/launch_delay = 1.5 SECONDS
 	/// Timer ID for the launch delay
 	var/grapple_timer_id
+	/// How fast to throw the user towards the target
+	var/throw_speed = 1
+	/// maximum range we throw up to/render beam for
+	var/range = 9
 	/// Callback invoked when the zipline ends
 	var/datum/callback/on_end
 	/// Traits applied to the user during zipline
@@ -145,20 +151,31 @@
 		TRAIT_FORCED_STANDING,
 	)
 
+/datum/zipline_and_move/New(launch_delay, throw_speed, range)
+	. = ..()
+	if(!isnull(launch_delay))
+		src.launch_delay = launch_delay
+	if(!isnull(throw_speed))
+		src.throw_speed = throw_speed
+	if(!isnull(range))
+		src.range = range
+
 /datum/zipline_and_move/Destroy(force)
 	end_zipline()
 	return ..()
 
 /// Sets up the zipline beam, signals, and launch timer.
-/datum/zipline_and_move/proc/begin_zipline(mob/living/user, atom/target, datum/callback/on_end_callback)
+/datum/zipline_and_move/proc/begin_zipline(mob/living/user, atom/target)
 	user_ref = WEAKREF(user)
 	target_ref = WEAKREF(target)
-	on_end = on_end_callback
 	zipline_sound = new(user)
-	zipline = user.Beam(target, icon_state = "zipline_hook", maxdistance = 9, layer = BELOW_MOB_LAYER)
+	zipline = user.Beam(target, icon_state = "zipline_hook", maxdistance = range, layer = BELOW_MOB_LAYER)
 	RegisterSignal(user, COMSIG_MOVABLE_MOVED, PROC_REF(determine_distance))
 	RegisterSignal(user, COMSIG_MOVABLE_PRE_THROW, PROC_REF(apply_throw_traits))
-	grapple_timer_id = addtimer(CALLBACK(src, PROC_REF(launch_user)), 1.5 SECONDS, TIMER_STOPPABLE)
+	if(launch_delay)
+		grapple_timer_id = addtimer(CALLBACK(src, PROC_REF(launch_user)), launch_delay, TIMER_STOPPABLE)
+	else
+		INVOKE_ASYNC(src, PROC_REF(launch_user))
 
 /datum/zipline_and_move/proc/determine_distance(atom/movable/source)
 	SIGNAL_HANDLER
@@ -192,7 +209,7 @@
 	zipline_sound.start()
 	new /obj/effect/temp_visual/mook_dust(user.drop_location())
 	RegisterSignal(user, COMSIG_MOVABLE_IMPACT, PROC_REF(strike_target))
-	user.throw_at(target = target_atom, range = 9, speed = 1, spin = FALSE, gentle = TRUE, callback = CALLBACK(src, PROC_REF(post_land)))
+	user.throw_at(target = target_atom, range = range, speed = throw_speed, spin = FALSE, gentle = TRUE, callback = CALLBACK(src, PROC_REF(post_land)))
 
 /datum/zipline_and_move/proc/strike_target(mob/living/source, mob/living/victim, datum/thrownthing/throwingdatum)
 	SIGNAL_HANDLER
@@ -229,8 +246,5 @@
 	zipline_sound?.stop()
 	QDEL_NULL(zipline_sound)
 	initial_matrix = null
-	var/datum/callback/cb = on_end
-	on_end = null
-	cb?.Invoke()
 
 #undef DAMAGE_ON_IMPACT
