@@ -66,6 +66,7 @@
 		/obj/item/mod/module/magnetic_harness,
 		/obj/item/mod/module/hat_stabilizer/syndicate,
 		/obj/item/mod/module/visor/thermal,
+		/obj/item/mod/module/criminalcapture,
 	)
 
 /obj/item/mod/control/pre_equipped/contractor/Initialize(mapload, new_theme, new_skin, new_core)
