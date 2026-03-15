@@ -1,3 +1,28 @@
+/obj/item/mod/module/infiltrator/contractor
+	name = "Cybersun combat module"
+	desc = "XANTODO Combat module description"
+	traits_to_add = list(TRAIT_SILENT_FOOTSTEPS, TRAIT_UNKNOWN_APPEARANCE, TRAIT_UNKNOWN_VOICE, TRAIT_HEAD_INJURY_BLOCKED, TRAIT_FASTMED, TRAIT_QUICK_CARRY, TRAIT_FAST_CUFFING)
+	required_slots = list(ITEM_SLOT_FEET, ITEM_SLOT_HEAD, ITEM_SLOT_OCLOTHING, ITEM_SLOT_GLOVES)
+
+/obj/item/mod/module/contractor_uplink
+	name = "Contractor Uplink"
+	desc = "XANTODO Con uplink description"
+	required_slots = list(ITEM_SLOT_GLOVES)
+
+/obj/item/mod/module/contractor_uplink/Initialize(mapload)
+	. = ..()
+	AddComponent(\
+		/datum/component/uplink/contractor, \
+		lockable = FALSE, \
+		enabled = TRUE, \
+		uplink_flag = UPLINK_CONTRACTOR, \
+		starting_tc = 0,
+	)
+
+/obj/item/mod/module/contractor_uplink/on_use(mob/activator)
+	. = ..()
+
+
 /obj/item/mod/module/energy_net/scorpion_hook
 	name = "Scorpion Hook module"
 	desc = "A module that launches a hook that allows the user to launch a hardlight hook towards a target and reel them in. \n\

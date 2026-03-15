@@ -852,13 +852,12 @@
 /obj/item/storage/box/syndicate/contract_kit
 	name = "Contract Kit"
 	desc = "Supplied to Syndicate contractors."
-	icon_state = "syndiebox"
-	illustration = "writing_syndie"
+	icon_state = "contractor_box"
+	illustration = null
 
 /obj/item/storage/box/syndicate/contract_kit/PopulateContents()
-	new /obj/item/modular_computer/pda/syndicate_contract_uplink(src)
+	new /obj/item/uplink/contractor(src)
 	new /obj/item/storage/box/syndicate/contractor_loadout(src)
-	new /obj/item/melee/baton/telescopic/contractor_baton(src)
 	// Paper guide is always last.
 	new /obj/item/paper/contractor_guide(src)
 
@@ -869,7 +868,8 @@
 	illustration = "writing_syndie"
 
 /obj/item/storage/box/syndicate/contractor_loadout/PopulateContents()
-	new /obj/item/mod/control/pre_equipped/infiltrator(src)
+	new /obj/item/mod/control/pre_equipped/contractor(src)
+
 	new /obj/item/clothing/head/helmet/space/syndicate/contract(src)
 	new /obj/item/clothing/suit/space/syndicate/contract(src)
 	new /obj/item/clothing/under/chameleon(src)
