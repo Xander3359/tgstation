@@ -856,30 +856,14 @@
 	illustration = null
 
 /obj/item/storage/box/syndicate/contract_kit/PopulateContents()
-	new /obj/item/uplink/contractor(src)
-	new /obj/item/storage/box/syndicate/contractor_loadout(src)
-	// Paper guide is always last.
-	new /obj/item/paper/contractor_guide(src)
-
-/obj/item/storage/box/syndicate/contractor_loadout
-	name = "Standard Loadout"
-	desc = "Supplied to Syndicate contractors, providing their specialised space suit and chameleon uniform."
-	icon_state = "syndiebox"
-	illustration = "writing_syndie"
-
-/obj/item/storage/box/syndicate/contractor_loadout/PopulateContents()
 	new /obj/item/mod/control/pre_equipped/contractor(src)
-
-	new /obj/item/clothing/head/helmet/space/syndicate/contract(src)
-	new /obj/item/clothing/suit/space/syndicate/contract(src)
 	new /obj/item/clothing/under/chameleon(src)
 	new /obj/item/clothing/mask/chameleon(src)
-	new /obj/item/card/id/advanced/chameleon/elite(src)
-	new /obj/item/clothing/glasses/thermal/syndi(src)
+	new /obj/item/card/id/advanced/chameleon/elite/contractor(src)
 	new /obj/item/storage/toolbox/syndicate(src)
 	new /obj/item/jammer(src)
-	new /obj/item/storage/fancy/cigarettes/cigpack_syndicate(src)
-	new /obj/item/lighter(src)
+	new /obj/item/restraints/handcuffs/contractor(src)
+	new /obj/item/restraints/handcuffs/contractor(src)
 
 /obj/item/storage/box/syndicate/horse_box
 	name = "A pony box"

@@ -2006,6 +2006,9 @@
 	icon_state = "card_black"
 	assigned_icon_state = "assigned_syndicate"
 
+/obj/item/card/id/advanced/chameleon/elite/contractor
+	icon_state = "card_contractor" // XANTODO: Default card should give digital camo
+
 /obj/item/card/id/advanced/engioutpost
 	registered_name = "George 'Plastic' Miller"
 	desc = "A card used to provide ID and determine access across the station. There's blood dripping from the corner. Ew."

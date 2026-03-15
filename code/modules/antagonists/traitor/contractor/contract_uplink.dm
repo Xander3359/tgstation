@@ -66,6 +66,12 @@
 	if(isnull(handler))
 		handler = new()
 	handler.add_uplink(src)
+	RegisterSignal(parent, COMSIG_MODULE_USED, PROC_REF(relay_ui))
+
+/// Opens the UI for the mob that activated the mod module
+/datum/component/uplink/contractor/proc/relay_ui(datum/source, mob/activator)
+	SIGNAL_HANDLER
+	INVOKE_ASYNC(src, PROC_REF(ui_interact), activator)
 
 // TODO: move this to a login act
 /datum/component/uplink/contractor/ui_interact(mob/user, datum/tgui/ui)

@@ -8,20 +8,17 @@
 	name = "Contractor Uplink"
 	desc = "XANTODO Con uplink description"
 	required_slots = list(ITEM_SLOT_GLOVES)
+	module_type = MODULE_USABLE
 
 /obj/item/mod/module/contractor_uplink/Initialize(mapload)
 	. = ..()
-	AddComponent(\
+	AddComponent(
 		/datum/component/uplink/contractor, \
 		lockable = FALSE, \
 		enabled = TRUE, \
 		uplink_flag = UPLINK_CONTRACTOR, \
-		starting_tc = 0,
+		starting_tc = 0, \
 	)
-
-/obj/item/mod/module/contractor_uplink/on_use(mob/activator)
-	. = ..()
-
 
 /obj/item/mod/module/energy_net/scorpion_hook
 	name = "Scorpion Hook module"
@@ -57,6 +54,7 @@
 	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_modules.dmi'
 	icon_state = "gas"
 	removable = FALSE
+	module_type = MODULE_USABLE
 
 /obj/item/mod/module/energy_net/snatcher
 	name = "SNATCHER module"

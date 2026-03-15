@@ -173,7 +173,7 @@
 			update_signal(used_button)
 			balloon_alert(mod.wearer, "[src] activated, [used_button]-click to use") // As of now, only wearers can "use" mods
 	active = TRUE
-	SEND_SIGNAL(src, COMSIG_MODULE_ACTIVATED)
+	SEND_SIGNAL(src, COMSIG_MODULE_ACTIVATED, activator)
 	SEND_SIGNAL(mod, COMSIG_MOD_MODULE_ACTIVATED, src)
 	on_activation(activator)
 	update_clothing_slots()

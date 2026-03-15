@@ -30,7 +30,7 @@
 #define COMSIG_MODULE_TRIGGERED "mod_module_triggered"
 	/// Cancels activation, with no message. Include feedback on your cancel.
 	#define MOD_ABORT_USE (1<<0)
-/// Called when a module activates, after all checks have passed and cooldown started.
+/// Called when a module activates, after all checks have passed and cooldown started. (mob/activator)
 #define COMSIG_MODULE_ACTIVATED "mod_module_activated"
 /// Called when a module successfully activates on the MODsuit itself
 #define COMSIG_MOD_MODULE_ACTIVATED "mod_core_module_activated"

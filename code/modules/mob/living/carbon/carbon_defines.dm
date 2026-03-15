@@ -21,7 +21,7 @@
 	var/list/organs_slot = list()
 
 	///Whether or not the mob is handcuffed
-	var/obj/item/handcuffed = null
+	var/obj/item/restraints/handcuffed = null
 	///Same as handcuffs but for legs. Bear traps use this.
 	var/obj/item/legcuffed = null
 
