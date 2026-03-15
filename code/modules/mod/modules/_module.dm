@@ -231,7 +231,7 @@
 	if(mod.wearer)
 		addtimer(CALLBACK(mod.wearer, TYPE_PROC_REF(/mob, update_clothing), mod.slot_flags), cooldown_time+1) //need to run it a bit after the cooldown starts to avoid conflicts
 	update_clothing_slots()
-	SEND_SIGNAL(src, COMSIG_MODULE_USED)
+	SEND_SIGNAL(src, COMSIG_MODULE_USED, activator)
 	on_use(activator)
 	return TRUE
 

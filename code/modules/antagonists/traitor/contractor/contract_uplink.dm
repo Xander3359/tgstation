@@ -81,6 +81,9 @@
 		traitor_user.uplink_handler.contractor_state = new()
 		user.playsound_local(user, 'sound/music/antag/contractstartup.ogg', 100, FALSE)
 
+/datum/component/uplink/contractor/ui_state(mob/user)
+	return GLOB.conscious_state
+
 /datum/component/uplink/contractor/Destroy()
 	. = ..()
 	handler.remove_uplink(src)

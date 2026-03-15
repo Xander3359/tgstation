@@ -40,7 +40,7 @@
 #define COMSIG_MODULE_DEACTIVATED "mod_module_deactivated"
 /// Called when a module successfully deactivates on the mod itself
 #define COMSIG_MOD_MODULE_DEACTIVATED "mod_core_module_deactivated"
-/// Called when a module is used, after all checks have passed and cooldown started.
+/// Called when a module is used, after all checks have passed and cooldown started. (mob/activator)
 #define COMSIG_MODULE_USED "mod_module_used"
 /// Called when the MODsuit wearer is set.
 #define COMSIG_MOD_WEARER_SET "mod_wearer_set"

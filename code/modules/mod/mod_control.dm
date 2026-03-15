@@ -539,7 +539,7 @@
 	var/obj/item/mod/module/picked_module = locate(module_reference) in modules
 	if(!istype(picked_module))
 		return
-	picked_module.on_select()
+	picked_module.on_select(user)
 
 /obj/item/mod/control/proc/shock(mob/living/user)
 	if(!istype(user) || get_charge() < 1)

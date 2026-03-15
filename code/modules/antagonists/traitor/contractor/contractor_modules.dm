@@ -3,6 +3,25 @@
 	desc = "XANTODO Combat module description"
 	traits_to_add = list(TRAIT_SILENT_FOOTSTEPS, TRAIT_UNKNOWN_APPEARANCE, TRAIT_UNKNOWN_VOICE, TRAIT_HEAD_INJURY_BLOCKED, TRAIT_FASTMED, TRAIT_QUICK_CARRY, TRAIT_FAST_CUFFING)
 	required_slots = list(ITEM_SLOT_FEET, ITEM_SLOT_HEAD, ITEM_SLOT_OCLOTHING, ITEM_SLOT_GLOVES)
+	/// Reference to the strong pull component
+	var/datum/weakref/pull_component_weakref
+
+/obj/item/mod/module/infiltrator/contractor/on_part_activation()
+	. = ..()
+	var/datum/component/strong_pull/pull_component = pull_component_weakref?.resolve()
+	if(pull_component)
+		stack_trace("[mod.wearer] already has a pull component.")
+		QDEL_NULL(pull_component_weakref)
+	to_chat(mod.wearer, span_notice("You feel the gauntlets activate as soon as you fit them on, making your pulls stronger!"))
+	pull_component_weakref = WEAKREF(mod.wearer.AddComponent(/datum/component/strong_pull))
+
+/obj/item/mod/module/infiltrator/contractor/on_part_deactivation(deleting)
+	. = ..()
+	var/datum/component/strong_pull/pull_component = pull_component_weakref?.resolve()
+	if(!pull_component)
+		return
+	to_chat(pull_component.parent, span_warning("You have lost the grip power of [src.name]!"))
+	QDEL_NULL(pull_component_weakref)
 
 /obj/item/mod/module/contractor_uplink
 	name = "Contractor Uplink"
