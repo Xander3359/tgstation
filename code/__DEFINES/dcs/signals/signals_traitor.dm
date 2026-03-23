@@ -12,3 +12,6 @@
 
 /// Called by an battle royale implanter when successfully implanting someone. Passes the implanted mob.
 #define COMSIG_ROYALE_IMPLANTED "royale_implanted"
+
+/// Called when the gauss rifle's ammo state changes (on shot fired or fire mode switch). Passes shots_left (remaining shots) and max_shots (shots at full charge).
+#define COMSIG_GAUSS_RIFLE_AMMO_CHANGED "gauss_rifle_ammo_changed"

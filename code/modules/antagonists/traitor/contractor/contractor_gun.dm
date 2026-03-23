@@ -14,6 +14,8 @@
 	// SET_BASE_PIXEL(-16, 0)
 	fire_mode_switch_sound = SFX_FIRE_MODE_SWITCH
 	automatic_charge_overlays = FALSE
+	/// Dedicated HUD element that displays remaining gauss shots.
+	var/atom/movable/screen/gauss_ammo_display/ammo_display
 	ammo_type = list(
 		/obj/item/ammo_casing/energy/gauss,
 		/obj/item/ammo_casing/energy/gauss/emp,
@@ -24,9 +26,42 @@
 
 /obj/item/gun/energy/gauss_rifle/Initialize(mapload)
 	. = ..()
+	ammo_display = new()
+	ammo_display.RegisterSignal(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, TYPE_PROC_REF(/atom/movable/screen/gauss_ammo_display, on_gun_ammo_changed))
 	var/matrix/offset = matrix()
 	offset.Translate(-16, 0)
 	transform = offset
+
+/obj/item/gun/energy/gauss_rifle/Destroy()
+	// ammo_display?.hide_from_owner()
+	QDEL_NULL(ammo_display)
+	return ..()
+
+/obj/item/gun/energy/gauss_rifle/pickup(mob/user)
+	. = ..()
+	ammo_display?.show_for(user)
+	emit_ammo_signal()
+
+/obj/item/gun/energy/gauss_rifle/dropped(mob/user, silent = FALSE)
+	ammo_display?.hide_from_owner()
+	return ..()
+
+/obj/item/gun/energy/gauss_rifle/handle_chamber()
+	. = ..()
+	emit_ammo_signal()
+
+/obj/item/gun/energy/gauss_rifle/select_fire(mob/living/user)
+	. = ..()
+	emit_ammo_signal()
+
+/obj/item/gun/energy/gauss_rifle/proc/emit_ammo_signal()
+	var/obj/item/ammo_casing/energy/current_ammo = ammo_type[select]
+	if(!cell || !current_ammo || current_ammo.e_cost <= 0)
+		SEND_SIGNAL(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, 0, 0)
+		return
+	SEND_SIGNAL(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, \
+		clamp(FLOOR(cell.charge / current_ammo.e_cost, 1), 0, 9), \
+		clamp(FLOOR(cell.maxcharge / current_ammo.e_cost, 1), 0, 9))
 
 /obj/item/gun/energy/gauss_rifle/examine_more(mob/user)
 	. = ..()
