@@ -275,7 +275,7 @@
 	. = ..()
 	var/turf/hit_turf = get_turf(target)
 	if(hit_turf)
-		hit_turf.AddComponent(/datum/component/thermite, 50)
+		hit_turf.AddComponent(/datum/component/thermite, 25)
 		hit_turf.fire_act(2000)
 
 /datum/embedding/gauss_thermite
