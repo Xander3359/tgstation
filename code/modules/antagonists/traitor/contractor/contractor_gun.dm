@@ -237,7 +237,7 @@
 
 /obj/projectile/bullet/gauss/gyro/reduce_range()
 	. = ..()
-	damage = min(damage + 5, 70)
+	damage = min(damage + 5, 50)
 
 /// TODO: flash_act on 3x3 on hit, rare chance to remove organs if has severe wound
 /obj/projectile/bullet/gauss/antimatter
@@ -255,7 +255,7 @@
 
 	for(var/mob/living/living_mob in get_hearers_in_view(3, get_turf(target)))
 		to_chat(living_mob, span_userdanger("A flash of light erupts from the impact of the round, blinding you!"), MSG_AUDIBLE)
-		living_mob.flash_act(2)
+		living_mob.flash_act(1)
 		living_mob.soundbang_act(1 SECONDS)
 
 /// todo make this DOT on borgs/mechs
