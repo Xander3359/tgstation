@@ -217,7 +217,7 @@
 //TODO: guarantee malfunctions on mechs
 /obj/projectile/bullet/gauss/emp/on_hit(atom/target, blocked = 0, pierce_hit)
 	. = ..()
-	empulse(target, 3, 5, emp_source = src)
+	empulse(target, 3, 0, emp_source = src)
 	// Gauss EMP rounds are designed to keep APCs disabled for extended periods
 	for(var/obj/machinery/power/apc/apc in range(2, target))
 		addtimer(CALLBACK(apc, TYPE_PROC_REF(/obj/machinery/power/apc, reset), APC_RESET_EMP), 5 MINUTES, TIMER_UNIQUE|TIMER_OVERRIDE|TIMER_NO_HASH_WAIT)
