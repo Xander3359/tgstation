@@ -237,7 +237,7 @@
 
 /obj/projectile/bullet/gauss/gyro/reduce_range()
 	. = ..()
-	damage++
+	damage = min(damage + 5, 70)
 
 /// TODO: flash_act on 3x3 on hit, rare chance to remove organs if has severe wound
 /obj/projectile/bullet/gauss/antimatter
@@ -251,7 +251,7 @@
 
 /obj/projectile/bullet/gauss/antimatter/on_hit(atom/target, blocked, pierce_hit)
 	. = ..()
-	var/already_wounded = FALSE
+	// var/already_wounded = FALSE
 
 	for(var/mob/living/living_mob in get_hearers_in_view(3, get_turf(target)))
 		to_chat(living_mob, span_userdanger("A flash of light erupts from the impact of the round, blinding you!"), MSG_AUDIBLE)
