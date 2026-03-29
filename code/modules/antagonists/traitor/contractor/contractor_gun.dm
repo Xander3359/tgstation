@@ -235,9 +235,9 @@
 	sharpness = NONE
 	embed_type = null
 
-/obj/projectile/bullet/gauss/gyro/reduce_range()
-	. = ..()
-	damage = min(damage + 5, 50)
+// /obj/projectile/bullet/gauss/gyro/reduce_range()
+// 	. = ..()
+// 	damage = min(damage + 5, 50)
 
 /// TODO: flash_act on 3x3 on hit, rare chance to remove organs if has severe wound
 /obj/projectile/bullet/gauss/antimatter
