@@ -227,3 +227,5 @@
 
 /// The filter name for the hover outline
 #define HOVER_OUTLINE_FILTER "hover_outline"
+
+#define ui_contractor_gun_hud "BOTTOM+2.5,RIGHT-0.2"

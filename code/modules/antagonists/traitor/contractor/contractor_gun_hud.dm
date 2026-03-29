@@ -3,7 +3,7 @@
 	name = "gauss ammo display"
 	icon_state = "gunhud"
 	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_hud.dmi'
-	screen_loc = ui_ai_godownup
+	screen_loc = ui_contractor_gun_hud
 	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	plane = ABOVE_HUD_PLANE
 	/// Current mob this display is shown for.

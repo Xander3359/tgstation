@@ -11,6 +11,7 @@
 	inhand_icon_state = "contractor_gun_standard"
 	weapon_weight = WEAPON_HEAVY
 	w_class = WEIGHT_CLASS_BULKY
+	fire_delay = 10
 	// SET_BASE_PIXEL(-16, 0)
 	fire_mode_switch_sound = SFX_FIRE_MODE_SWITCH
 	automatic_charge_overlays = FALSE
@@ -26,6 +27,7 @@
 
 /obj/item/gun/energy/gauss_rifle/Initialize(mapload)
 	. = ..()
+	AddElement(/datum/element/empprotection, EMP_PROTECT_ALL)
 	ammo_display = new()
 	ammo_display.RegisterSignal(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, TYPE_PROC_REF(/atom/movable/screen/gauss_ammo_display, on_gun_ammo_changed))
 	var/matrix/offset = matrix()
@@ -235,14 +237,7 @@
 
 /obj/projectile/bullet/gauss/gyro/reduce_range()
 	. = ..()
-	damage = min(damage, 50)
-
-/obj/projectile/bullet/gauss/gyro/on_hit(atom/target, blocked = 0, pierce_hit)
-	. = ..()
-	if(isliving(target))
-		var/mob/living/victim = target
-		victim.electrocute_act(stamina * 0.2, src, flags = SHOCK_KNOCKDOWN|SHOCK_DELAY_STUN|SHOCK_NOGLOVES)
-		do_sparks(5, TRUE, target)
+	damage++
 
 /// TODO: flash_act on 3x3 on hit, rare chance to remove organs if has severe wound
 /obj/projectile/bullet/gauss/antimatter
@@ -256,11 +251,14 @@
 
 /obj/projectile/bullet/gauss/antimatter/on_hit(atom/target, blocked, pierce_hit)
 	. = ..()
+	var/already_wounded = FALSE
+
 	for(var/mob/living/living_mob in get_hearers_in_view(3, get_turf(target)))
 		to_chat(living_mob, span_userdanger("A flash of light erupts from the impact of the round, blinding you!"), MSG_AUDIBLE)
 		living_mob.flash_act(2)
 		living_mob.soundbang_act(1 SECONDS)
 
+/// todo make this DOT on borgs/mechs
 /obj/projectile/bullet/gauss/thermite
 	name = "red sun gauss round"
 	icon_state = "thermite_projectile"
@@ -271,6 +269,7 @@
 	wound_bonus = -10
 	embed_type = /datum/embedding/gauss_thermite
 
+// TODO should not work on mobs
 /obj/projectile/bullet/gauss/thermite/on_hit(atom/target, blocked = 0, pierce_hit)
 	. = ..()
 	var/turf/hit_turf = get_turf(target)
@@ -298,5 +297,5 @@
 
 /// Applies ongoing burn damage from the microfusion cascade while embedded
 /datum/embedding/gauss_thermite/process_effect(seconds_per_tick)
-	owner_limb.take_damage(overtime_damage * seconds_per_tick, BURN, src)
+	owner_limb.receive_damage(burn = overtime_damage * seconds_per_tick)
 	return FALSE
