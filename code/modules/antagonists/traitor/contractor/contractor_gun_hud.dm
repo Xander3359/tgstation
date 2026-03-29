@@ -1,8 +1,8 @@
 
 /atom/movable/screen/gauss_ammo_display
 	name = "gauss ammo display"
-	icon_state = "ammo_hud"
-	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_hud.dmi'
+	icon_state = "gunhud"
+	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_hud.dmi'
 	screen_loc = ui_ai_godownup
 	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	plane = ABOVE_HUD_PLANE
