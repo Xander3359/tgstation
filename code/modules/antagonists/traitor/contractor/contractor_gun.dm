@@ -15,6 +15,7 @@
 	// SET_BASE_PIXEL(-16, 0)
 	fire_mode_switch_sound = SFX_FIRE_MODE_SWITCH
 	automatic_charge_overlays = FALSE
+	cell_type = /obj/item/stock_parts/power_store/gauss_nanites
 	/// Dedicated HUD element that displays remaining gauss shots.
 	var/atom/movable/screen/gauss_ammo_display/ammo_display
 	ammo_type = list(
@@ -99,8 +100,49 @@
 		return "empty"
 	return gauss_chamber.select_name
 
-// /obj/item/gun/energy/gauss_rifle/balloon_alert_pixel_y_offset()
-// 	return 0
+
+/obj/item/stock_parts/power_store/gauss_nanites
+	name = "gauss nanite power store"
+	desc = "A power storage unit containing self-replicating nanites that flash-fabricate microcartridge assemblies for gauss weaponry."
+	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_hud.dmi'
+	icon_state = "ammo_hud"
+	maxcharge = STANDARD_CELL_CHARGE
+	w_class = WEIGHT_CLASS_NORMAL
+
+/obj/item/stock_parts/power_store/gauss_nanites/Initialize(mapload, override_maxcharge)
+	. = ..()
+	AddElement(/datum/element/empprotection, EMP_PROTECT_ALL)
+
+/obj/item/stock_parts/power_store/gauss_nanites/pre_attack(atom/target, mob/living/user, list/modifiers, list/attack_modifiers)
+	if(!istype(target, /obj/item/gun/energy/gauss_rifle))
+		return ..()
+
+	var/obj/item/gun/energy/gauss_rifle/target_gun = target
+	if(!target_gun.cell)
+		balloon_alert(user, "no cell inserted!")
+		return TRUE
+
+	if(target_gun.cell.charge >= target_gun.cell.maxcharge)
+		balloon_alert(user, "already fully charged!")
+		return TRUE
+
+	if(!charge)
+		balloon_alert(user, "power store empty!")
+		return TRUE
+
+	var/transfer_amount = min(charge, target_gun.cell.maxcharge - target_gun.cell.charge)
+	if(!transfer_amount)
+		return TRUE
+
+	use(transfer_amount)
+	target_gun.cell.give(transfer_amount)
+	target_gun.recharge_newshot(TRUE)
+	target_gun.update_appearance()
+	update_appearance()
+	target_gun.emit_ammo_signal()
+	playsound(target_gun, 'sound/items/weapons/kinetic_reload.ogg', 60, TRUE)
+	balloon_alert(user, "cell recharged")
+	return TRUE
 
 /obj/item/ammo_box/magazine/gauss
 	name = "Raijin Horizon Gauss Magazine"
@@ -229,15 +271,16 @@
 	armor_flag = ENERGY
 	armour_penetration = 35
 	speed = 1.5
-	damage_falloff_tile = -5
+	damage_falloff_tile = 0
+	damage = 10
 	range = 20
 	wound_bonus = CANT_WOUND
 	sharpness = NONE
 	embed_type = null
 
-// /obj/projectile/bullet/gauss/gyro/reduce_range()
-// 	. = ..()
-// 	damage = min(damage + 5, 50)
+/obj/projectile/bullet/gauss/gyro/reduce_range()
+	. = ..()
+	damage = min(damage + 5, 50)
 
 /// TODO: flash_act on 3x3 on hit, rare chance to remove organs if has severe wound
 /obj/projectile/bullet/gauss/antimatter
@@ -251,12 +294,34 @@
 
 /obj/projectile/bullet/gauss/antimatter/on_hit(atom/target, blocked, pierce_hit)
 	. = ..()
-	// var/already_wounded = FALSE
+	try_bonus_delimb(target)
 
 	for(var/mob/living/living_mob in get_hearers_in_view(3, get_turf(target)))
 		to_chat(living_mob, span_userdanger("A flash of light erupts from the impact of the round, blinding you!"), MSG_AUDIBLE)
 		living_mob.flash_act(1)
 		living_mob.soundbang_act(1 SECONDS)
+
+/obj/projectile/bullet/gauss/antimatter/proc/try_bonus_delimb(atom/target)
+	if(!iscarbon(target))
+		return
+
+	var/mob/living/carbon/carbon_target = target
+	var/obj/item/bodypart/hit_bodypart = carbon_target.get_bodypart(carbon_target.check_hit_limb_zone_name(def_zone))
+	if(!hit_bodypart || !hit_bodypart.can_dismember() || !length(hit_bodypart.wounds))
+		return
+
+	var/highest_wound_tier = WOUND_SEVERITY_TRIVIAL
+	for(var/datum/wound/existing_wound as anything in hit_bodypart.wounds)
+		highest_wound_tier = max(highest_wound_tier, existing_wound.severity)
+
+	if(highest_wound_tier <= WOUND_SEVERITY_TRIVIAL)
+		return
+
+	// Additional dismember chance scales with the highest pre-existing wound tier on the struck limb.
+	var/additional_delimb_chance = 4 * highest_wound_tier
+	if(prob(additional_delimb_chance))
+		carbon_target.balloon_alert("extra risk of limb loss! chance increased by [additional_delimb_chance]%, highest wound tier: [highest_wound_tier]]")
+		hit_bodypart.dismember(BRUTE, wounding_type = WOUND_PIERCE)
 
 /// todo make this DOT on borgs/mechs
 /obj/projectile/bullet/gauss/thermite
