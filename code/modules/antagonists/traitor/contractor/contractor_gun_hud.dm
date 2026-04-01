@@ -1,4 +1,3 @@
-
 /atom/movable/screen/gauss_ammo_display
 	name = "gauss ammo display"
 	icon_state = "gunhud"

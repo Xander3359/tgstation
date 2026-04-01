@@ -114,5 +114,3 @@
 
 /datum/movespeed_modifier/net_slowdown
 	multiplicative_slowdown = 4
-
-

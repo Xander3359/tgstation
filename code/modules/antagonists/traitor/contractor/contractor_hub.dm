@@ -1,4 +1,3 @@
-
 /datum/contractor_hub
 	///List of all available syndicate contracts that can be taken.
 	var/list/datum/syndicate_contract/assigned_contracts = list()

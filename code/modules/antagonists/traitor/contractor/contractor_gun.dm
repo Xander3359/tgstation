@@ -1,4 +1,3 @@
-
 /obj/item/gun/energy/gauss_rifle
 	name = "Raijin Horizon Gauss Rifle"
 	desc = "The Raijin is a gauss type weapon designed more for utility and subterfuge rather than protracted combat engagements. \n\

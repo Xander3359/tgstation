@@ -1,4 +1,3 @@
-
 /datum/contractor_state
 	///The current contract in progress, and can be null if no contract is in progress.
 	var/datum/syndicate_contract/current_contract
