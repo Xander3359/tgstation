@@ -7,6 +7,7 @@
 	default_skin = "contractor"
 	complexity_max = 25
 	armor_type = /datum/armor/mod_theme_contractor
+	hearing_protection = EAR_PROTECTION_NORMAL
 	variants = list(
 		"contractor" = list(
 			/obj/item/clothing/head/mod = list(
@@ -42,7 +43,7 @@
 			),
 		),
 		)
-	inbuilt_modules = list(/obj/item/mod/module/infiltrator/contractor, /obj/item/mod/module/hearing_protection, /obj/item/mod/module/contractor_uplink)
+	inbuilt_modules = list(/obj/item/mod/module/infiltrator/contractor, /obj/item/mod/module/contractor_uplink)
 
 /datum/armor/mod_theme_contractor
 	melee = 30
