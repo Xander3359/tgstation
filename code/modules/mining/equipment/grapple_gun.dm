@@ -81,6 +81,8 @@
 
 	UnregisterSignal(source, list(COMSIG_PROJECTILE_ON_HIT, COMSIG_PREQDELETED))
 	QDEL_NULL(projectile_beam)
+	UnregisterSignal(source, list(COMSIG_PROJECTILE_SELF_ON_HIT, COMSIG_PREQDELETED))
+	QDEL_NULL(zipline)
 	var/mob/living/user = zipliner?.resolve()
 	if(isnull(user) || isnull(target))
 		cancel_hook()
