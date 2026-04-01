@@ -288,10 +288,9 @@
 			for(var/i in 1 to 4)
 				new /obj/item/clothing/neck/collar_bomb(src) // These let you remotely kill people with a signaler, though you have to get them first.
 			new /obj/item/storage/box/syndie_kit/signaler(src)
-			new /obj/item/mod/control/pre_equipped/responsory/inquisitory/syndie(src) // basically a snowflake yet better elite modsuit, so like, 8 + 5 tc.
+			new /obj/item/mod/control/pre_equipped/responsory/inquisitory/syndie(src) // basically a snowflake yet better elite modsuit, so like, 8 + 5 tc. + 7 TC for the baton module in the suit
 			new /obj/item/card/id/advanced/chameleon/elite(src) // 2 tc
 			new /obj/item/clothing/mask/chameleon(src)
-			new /obj/item/melee/baton/telescopic/contractor_baton(src) // 7 tc
 			new /obj/item/jammer(src) // 5 tc
 			new /obj/item/pinpointer/crew(src) //priceless
 

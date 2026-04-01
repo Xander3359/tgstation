@@ -102,7 +102,10 @@
 /// List of signals sent when you receive any kind of damage at all
 #define COMSIG_LIVING_ADJUST_ALL_DAMAGE_TYPES (COMSIG_LIVING_ADJUST_STANDARD_DAMAGE_TYPES + COMSIG_LIVING_ADJUST_STAMINA_DAMAGE)
 
-
+/// from base of /mob/living/succumb()
+#define COMSIG_LIVING_TRY_SUCCUMB "living_try_succumb"
+	/// return value to prevent succumbing
+	#define SUCCUMB_PREVENTED (1<<0)
 /// from base of mob/living/updatehealth()
 #define COMSIG_LIVING_HEALTH_UPDATE "living_health_update"
 /// from base of mob/living/updatestamina()

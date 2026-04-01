@@ -548,6 +548,9 @@
 
 /mob/living/verb/succumb(whispered as num|null)
 	set hidden = TRUE
+	if(SEND_SIGNAL(src, COMSIG_LIVING_TRY_SUCCUMB) & SUCCUMB_PREVENTED)
+		to_chat(src, "You don't feel like giving up!") // ANNETODO
+		return
 	if (!CAN_SUCCUMB(src))
 		if(HAS_TRAIT(src, TRAIT_SUCCUMB_OVERRIDE))
 			if(whispered)

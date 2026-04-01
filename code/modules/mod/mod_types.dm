@@ -538,6 +538,7 @@
 	insignia_type = /obj/item/mod/module/insignia/syndie
 	theme = /datum/mod_theme/responsory/traitor
 	applied_modules = list(
+		/obj/item/mod/module/contractor_baton,
 		/obj/item/mod/module/storage/syndicate,
 		/obj/item/mod/module/emp_shield,
 		/obj/item/mod/module/magnetic_harness,
@@ -549,6 +550,7 @@
 		/obj/item/mod/module/shove_blocker,
 		/obj/item/mod/module/noslip,
 	)
+	default_pins = list(/obj/item/mod/module/contractor_baton)
 
 /obj/item/mod/control/pre_equipped/responsory/inquisitory/commander
 	insignia_type = /obj/item/mod/module/insignia/commander

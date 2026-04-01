@@ -39,6 +39,69 @@
 		starting_tc = 0, \
 	)
 
+/obj/item/mod/module/contractor_baton
+	name = "Contractor Baton module"
+	desc = "Has a baton, very cool" // ANNETODO
+	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_modules.dmi'
+	icon_state = "baton"
+	removable = FALSE
+	module_type = MODULE_TOGGLE
+	/// Ref to the baton that is held inside the suit
+	var/obj/item/melee/baton/contractor_baton/contractor_baton
+
+/obj/item/mod/module/contractor_baton/on_install()
+	. = ..()
+	if(!contractor_baton)
+		contractor_baton = new(src)
+
+/obj/item/mod/module/contractor_baton/on_uninstall(deleting)
+	QDEL_NULL(contractor_baton)
+	return ..()
+
+/obj/item/mod/module/contractor_baton/Destroy()
+	QDEL_NULL(contractor_baton)
+	return ..()
+
+/obj/item/mod/module/contractor_baton/on_activation(mob/activator)
+	. = ..()
+	activator.put_in_active_hand(contractor_baton)
+
+/obj/item/mod/module/contractor_baton/on_deactivation(mob/activator, display_message, deleting)
+	. = ..()
+	contractor_baton.forceMove(src)
+
+/obj/item/melee/baton/contractor_baton
+	name = "contractor baton"
+	desc = "A high tech telescopic stun baton, as developed by Cybersun Industries. Delivers a precise shock to a target's central nervous system to incapacitate them."
+	icon = 'icons/obj/weapons/baton.dmi'
+	icon_state = "contractor_baton"
+	inhand_icon_state = "contractor_baton"
+	worn_icon_state = "contractor_baton"
+	icon_angle = -45
+	lefthand_file = 'icons/mob/inhands/weapons/melee_lefthand.dmi'
+	righthand_file = 'icons/mob/inhands/weapons/melee_righthand.dmi'
+	slot_flags = ITEM_SLOT_BELT
+	w_class = WEIGHT_CLASS_SMALL
+	item_flags = NONE
+	force = 5
+	cooldown = 2.5 SECONDS
+	force_say_chance = 80 //very high force say chance because it's funny
+	stamina_damage = 85
+	stun_armour_penetration = 30 // strong enough to pen sec armor
+	clumsy_knockdown_time = 24 SECONDS
+	affect_cyborg = TRUE
+	wait_desc = "still charging!"
+	on_stun_sound = 'sound/items/weapons/contractor_baton/contractorbatonhit.ogg'
+
+/obj/item/melee/baton/contractor_baton/additional_effects_non_cyborg(mob/living/target, mob/living/user)
+	. = ..()
+	target.set_jitter_if_lower(40 SECONDS * (HAS_TRAIT(target, TRAIT_BATON_RESISTANCE) ? 0.5 : 1))
+	target.set_stutter_if_lower(40 SECONDS * (HAS_TRAIT(target, TRAIT_BATON_RESISTANCE) ? 0.5 : 1))
+
+/obj/item/melee/baton/contractor_baton/Initialize(mapload)
+	. = ..()
+	ADD_TRAIT(src, TRAIT_NODROP, CONTRACTOR_BATON_TRAIT)
+
 /obj/item/mod/module/energy_net/scorpion_hook
 	name = "Scorpion Hook module"
 	desc = "A module that launches a hook that allows the user to launch a hardlight hook towards a target and reel them in. \n\

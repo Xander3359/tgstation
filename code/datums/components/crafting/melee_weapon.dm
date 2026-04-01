@@ -71,7 +71,7 @@
 	result = /obj/item/melee/baton/security/stunsword
 	reqs = list(
 		/obj/item/melee/sabre = 1,
-		/obj/item/melee/baton/telescopic/contractor_baton = 1,
+		// ANNETODO / XANTODO - Figure out an item to replace the contractor baton in the stunsword recipe
 	)
 	tool_behaviors = list(TOOL_WELDER)
 	crafting_flags = parent_type::crafting_flags | CRAFT_SKIP_MATERIALS_PARITY

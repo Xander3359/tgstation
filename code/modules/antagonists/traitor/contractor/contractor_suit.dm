@@ -7,6 +7,7 @@
 	default_skin = "contractor"
 	complexity_max = 25
 	armor_type = /datum/armor/mod_theme_contractor
+	slowdown_deployed = 0
 	hearing_protection = EAR_PROTECTION_NORMAL
 	variants = list(
 		"contractor" = list(
@@ -60,6 +61,7 @@
 	theme = /datum/mod_theme/contractor
 	applied_cell = /obj/item/stock_parts/power_store/cell/super
 	applied_modules = list(
+		/obj/item/mod/module/contractor_baton,
 		/obj/item/mod/module/storage/syndicate,
 		/obj/item/mod/module/chameleon,
 		/obj/item/mod/module/shock_absorber,
@@ -69,6 +71,7 @@
 		/obj/item/mod/module/visor/thermal,
 		/obj/item/mod/module/criminalcapture,
 	)
+	default_pins = list(/obj/item/mod/module/contractor_baton)
 
 /obj/item/mod/control/pre_equipped/contractor/Initialize(mapload, new_theme, new_skin, new_core)
 	. = ..()
