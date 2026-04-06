@@ -79,7 +79,7 @@
 	incompatible_modules = list(/obj/item/mod/module/laughing_gas)
 
 /obj/item/mod/module/laughing_gas/on_use(mob/activator)
-	do_smoke(3, src, get_turf(mod.wearer), smoke_type = /datum/effect_system/fluid_spread/smoke/laughing, effect_type = /obj/effect/particle_effect/fluid/smoke/laughing)
+	do_smoke(5, src, get_turf(mod.wearer), smoke_type = /datum/effect_system/fluid_spread/smoke/laughing, effect_type = /obj/effect/particle_effect/fluid/smoke/laughing)
 	playsound(mod.wearer, 'sound/effects/spray.ogg', 50, TRUE)
 	drain_power(use_energy_cost)
 
