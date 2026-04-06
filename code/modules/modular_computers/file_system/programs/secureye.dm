@@ -115,6 +115,7 @@
 /datum/computer_file/program/secureye/ui_data()
 	var/list/data = list()
 	data["activeCamera"] = null
+	data["hearingLog"] = list()
 	var/obj/machinery/camera/active_camera = camera_ref?.resolve()
 	if(active_camera)
 		data["activeCamera"] = list(
@@ -122,6 +123,8 @@
 			ref = REF(active_camera),
 			status = active_camera.camera_enabled,
 		)
+	if(spying && isliving(usr))
+		data["hearingLog"] = get_camera_dart_audio_log(usr)
 	return data
 
 /datum/computer_file/program/secureye/ui_static_data(mob/user)

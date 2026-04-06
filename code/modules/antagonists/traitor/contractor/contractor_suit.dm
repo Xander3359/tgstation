@@ -82,11 +82,13 @@
 		/obj/item/mod/module/magnetic_harness,
 		/obj/item/mod/module/hat_stabilizer/syndicate,
 		/obj/item/mod/module/visor/thermal,
+		/obj/item/mod/module/dart_gun
 		/obj/item/mod/module/energy_net/snatcher,
 		/obj/item/mod/module/energy_net/scorpion_hook,
 		/obj/item/mod/module/laughing_gas,
 	)
 	default_pins = list(
+		/obj/item/mod/module/dart_gun
 		/obj/item/mod/module/energy_net/snatcher,
 		/obj/item/mod/module/energy_net/scorpion_hook,
 		/obj/item/mod/module/laughing_gas,

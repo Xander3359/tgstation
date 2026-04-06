@@ -69,11 +69,19 @@
 
 /obj/item/mod/module/laughing_gas
 	name = "Laughing Gas module"
-	desc = "A module that releases a cloud of of smoke that causes victims that inhale the gas it to roll on the ground and laugh hysterically for a few seconds, blinding them."
+	desc = "A module that releases a cloud of smoke that causes victims that inhale the gas to roll on the ground and laugh hysterically for a few seconds, blinding them."
 	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_modules.dmi'
 	icon_state = "gas"
 	removable = FALSE
 	module_type = MODULE_USABLE
+	cooldown_time = 20 SECONDS
+	use_energy_cost = DEFAULT_CHARGE_DRAIN * 5
+	incompatible_modules = list(/obj/item/mod/module/laughing_gas)
+
+/obj/item/mod/module/laughing_gas/on_use(mob/activator)
+	do_smoke(3, src, get_turf(mod.wearer), smoke_type = /datum/effect_system/fluid_spread/smoke/laughing, effect_type = /obj/effect/particle_effect/fluid/smoke/laughing)
+	playsound(mod.wearer, 'sound/effects/spray.ogg', 50, TRUE)
+	drain_power(use_energy_cost)
 
 /obj/item/mod/module/energy_net/snatcher
 	name = "SNATCHER module"

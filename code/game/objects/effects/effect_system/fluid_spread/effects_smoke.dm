@@ -356,6 +356,28 @@
 	effect_type = /obj/effect/particle_effect/fluid/smoke/sleeping
 
 /////////////////////////////////////////////
+// Laughing smoke
+/////////////////////////////////////////////
+
+/// Smoke which causes uncontrollable laughter, blinding the victim and knocking them down briefly.
+/obj/effect/particle_effect/fluid/smoke/laughing
+	color = "#C8FF00"
+	lifetime = 12 SECONDS
+	opacity = FALSE
+
+/obj/effect/particle_effect/fluid/smoke/laughing/smoke_mob(mob/living/carbon/smoker, seconds_per_tick)
+	. = ..()
+	if(!.)
+		return FALSE
+	smoker.emote("laugh")
+	smoker.Knockdown(3 SECONDS)
+	smoker.adjust_eye_blur(6 SECONDS)
+
+/// A factory which produces laughing gas smoke.
+/datum/effect_system/fluid_spread/smoke/laughing
+	effect_type = /obj/effect/particle_effect/fluid/smoke/laughing
+
+/////////////////////////////////////////////
 // Chem smoke
 /////////////////////////////////////////////
 
