@@ -19,6 +19,7 @@ type Data = {
   activeCamera: Camera & { status: BooleanLike };
   cameras: Camera[];
   can_spy: BooleanLike;
+  hearingLog: string[];
   mapRef: string;
   network: string[];
 };
@@ -158,7 +159,7 @@ const CameraSelector = (props) => {
 
 const CameraControls = (props: { searchText: string }) => {
   const { act, data } = useBackend<Data>();
-  const { activeCamera, can_spy, mapRef } = data;
+  const { activeCamera, can_spy, hearingLog, mapRef } = data;
   const { searchText } = props;
 
   const cameras = selectCameras(data.cameras, searchText);
@@ -223,6 +224,21 @@ const CameraControls = (props: { searchText: string }) => {
             }}
           />
         </Stack.Item>
+        {!!can_spy && (
+          <Stack.Item>
+            <Section title="Live Audio" fill>
+              {!hearingLog?.length ? (
+                <NoticeBox>No camera-dart audio captured.</NoticeBox>
+              ) : (
+                hearingLog
+                  .slice(-8)
+                  .map((line, index) => (
+                    <div key={`${index}-${line}`}>{line}</div>
+                  ))
+              )}
+            </Section>
+          </Stack.Item>
+        )}
       </Stack>
     </Section>
   );
