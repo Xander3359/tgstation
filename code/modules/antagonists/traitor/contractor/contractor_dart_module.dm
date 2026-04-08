@@ -48,6 +48,9 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 /datum/contractor_dart_type/proc/is_on_cooldown()
 	return cooldown_duration && !COOLDOWN_FINISHED(src, cooldown)
 
+/datum/contractor_dart_type/proc/cooldown_timeleft()
+	return COOLDOWN_TIMELEFT(src, cooldown)
+
 /datum/contractor_dart_type/proc/get_radial_choice(obj/item/mod/module/dart_gun/module)
 	var/datum/radial_menu_choice/choice = new
 	choice.image = image(icon = radial_icon, icon_state = radial_icon_state)
@@ -66,6 +69,9 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 /datum/contractor_dart_type/proc/on_fire(obj/item/mod/module/dart_gun/module)
 	if(cooldown_duration)
 		COOLDOWN_START(src, cooldown, cooldown_duration)
+
+/datum/contractor_dart_type/proc/on_shot(obj/item/mod/module/dart_gun/module, mob/activator)
+	return
 
 /datum/contractor_dart_type/camera
 	id = DART_TYPE_CAMERA
@@ -89,6 +95,9 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	projectile_path = /obj/projectile/dart/tripwire
 	radial_icon_state = "tripwire"
 
+/datum/contractor_dart_type/tripwire/on_shot(obj/item/mod/module/dart_gun/module, mob/activator)
+	module.expire_tripwires_for_shot()
+
 /// Dart gun MOD module. Fires specialized darts with unique effects.
 /// Right-click on the action button to select dart type via radial menu.
 /obj/item/mod/module/dart_gun
@@ -102,6 +111,7 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	use_energy_cost = DEFAULT_CHARGE_DRAIN * 3
 	incompatible_modules = list(/obj/item/mod/module/dart_gun)
 	required_slots = list(ITEM_SLOT_GLOVES)
+	pinned_action_type = /datum/action/item_action/mod/pinnable/module/dart_gun
 	/// Currently selected dart type
 	var/selected_dart = DART_TYPE_CAMERA
 	/// Maximum number of active tripwire traps
@@ -142,6 +152,9 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 		REMOVE_TRAIT(mod.wearer, DART_MODULE_IMMUNITY_TRAIT, REF(src))
 	return ..()
 
+/obj/item/mod/module/dart_gun/get_activation_message(used_button)
+	return "[src] activated, [used_button]-click to use, right-click action to choose dart"
+
 /obj/item/mod/module/dart_gun/proc/show_dart_radial(mob/user)
 	var/list/choices = list()
 	for(var/dart_type in get_dart_types())
@@ -152,6 +165,7 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	if(!selected)
 		return
 	selected_dart = selected
+	sync_selected_dart_cooldown_display()
 	var/datum/contractor_dart_type/selected_type = get_dart_type(selected_dart)
 	balloon_alert(user, "[selected_type.name] selected")
 
@@ -159,10 +173,9 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	var/datum/contractor_dart_type/dart = get_dart_type(selected_dart)
 	if(!dart)
 		return
-	if(!dart.can_fire(src, activator))
-		return
+	dart.on_shot(src, activator)
 
-	var/obj/projectile/dart/new_dart = new dart.projectile_path(mod.wearer.loc, src)
+	var/obj/projectile/dart/new_dart = new dart.projectile_path(mod.wearer.loc)
 	new_dart.firer = mod.wearer
 	new_dart.fired_from = src
 	new_dart.aim_projectile(get_ranged_target_turf(mod.wearer, mod.wearer.dir, new_dart.range), mod.wearer)
@@ -170,10 +183,38 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	INVOKE_ASYNC(new_dart, TYPE_PROC_REF(/obj/projectile, fire))
 	drain_power(use_energy_cost)
 	dart.on_fire(src)
+	sync_selected_dart_cooldown_display()
 
 /obj/item/mod/module/dart_gun/proc/remove_tripwire(datum/source)
 	SIGNAL_HANDLER
 	active_tripwires -= source
+
+/obj/item/mod/module/dart_gun/is_off_cooldown(mob/activator, for_activation = FALSE)
+	if(for_activation)
+		return TRUE
+	var/datum/contractor_dart_type/dart = get_dart_type(selected_dart)
+	if(!dart)
+		return FALSE
+	return dart.can_fire(src, activator)
+
+/obj/item/mod/module/dart_gun/proc/sync_selected_dart_cooldown_display()
+	var/datum/contractor_dart_type/dart = get_dart_type(selected_dart)
+	if(!dart)
+		COOLDOWN_RESET(src, cooldown_timer)
+		SEND_SIGNAL(src, COMSIG_MODULE_COOLDOWN_STARTED, 0)
+		return
+	var/time_left = dart.cooldown_timeleft()
+	if(time_left <= 0)
+		COOLDOWN_RESET(src, cooldown_timer)
+		SEND_SIGNAL(src, COMSIG_MODULE_COOLDOWN_STARTED, 0)
+		return
+	start_cooldown(time_left)
+
+/obj/item/mod/module/dart_gun/proc/expire_tripwires_for_shot()
+	while(length(active_tripwires) >= max_tripwires)
+		var/obj/structure/contractor_tripwire_mine/oldest = active_tripwires[1]
+		active_tripwires.Cut(1, 2)
+		qdel(oldest)
 
 /datum/action/item_action/mod/pinnable/module/dart_gun
 
@@ -388,18 +429,8 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	// Can only attach to walls and windows
 	var/turf/target_turf = get_turf(target)
 	if(!isclosedturf(target_turf) && !locate(/obj/structure/window) in target_turf)
-		if(firer)
-			to_chat(firer, span_warning("The tripwire dart can only attach to walls or windows!"))
+		target_turf?.visible_message(span_warning("[src] fails to attach!"))
 		return
-
-	var/obj/item/mod/module/dart_gun/dart_mod = dart_module?.resolve()
-	if(!dart_mod)
-		return
-
-	// Expire oldest mine if we're at the limit
-	while(length(dart_mod.active_tripwires) >= dart_mod.max_tripwires)
-		var/obj/structure/contractor_tripwire_mine/oldest = dart_mod.active_tripwires[1]
-		qdel(oldest)
 
 	// Determine beam direction: from wall toward the firer (into open space)
 	var/beam_dir = SOUTH
@@ -414,16 +445,18 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 		else
 			beam_dir = WEST
 
-	// Mine is placed on the first open turf adjacent to the wall
-	var/turf/mine_turf = get_step(target_turf, beam_dir)
-	if(!mine_turf || !istype(mine_turf, /turf/open))
-		if(firer)
-			to_chat(firer, span_warning("No room to place the tripwire mine!"))
+	// Mine is anchored directly on the struck wall/window turf.
+	var/turf/mine_turf = target_turf
+	if(locate(/obj/structure/contractor_tripwire_mine) in mine_turf)
+		mine_turf.visible_message(span_warning("[src] is bumped off by another mine!"))
 		return
 
 	var/obj/structure/contractor_tripwire_mine/mine = new(mine_turf, beam_dir)
-	dart_mod.active_tripwires += mine
+	var/obj/item/mod/module/dart_gun/dart_mod = fired_from
+	if(!isnull(dart_mod))
+		dart_mod.active_tripwires += mine
 	RegisterSignal(mine, COMSIG_QDELETING, TYPE_PROC_REF(/obj/item/mod/module/dart_gun, remove_tripwire))
+
 
 /// The mine body that anchors the tripwire beam to a wall face.
 /// Screwdriver opens the cover; empty hand on an open mine disarms it.
@@ -447,14 +480,16 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	beam_dir = in_beam_dir
 	// Face the mine toward the wall (opposite of beam direction)
 	dir = REVERSE_DIR(beam_dir)
-	// Find the furthest open turf up to 3 tiles out for the beam endpoint.
+	// Find the endpoint up to 3 tiles out. If we hit a wall/window, end on that surface.
 	var/turf/current_turf = get_turf(src)
 	var/turf/end_turf
 	for(var/i in 1 to 3)
 		current_turf = get_step(current_turf, beam_dir)
-		if(!current_turf || !istype(current_turf, /turf/open))
+		if(!current_turf)
 			break
 		end_turf = current_turf
+		if(isclosedturf(current_turf) || locate(/obj/structure/window) in current_turf)
+			break
 
 	if(end_turf)
 		tripwire_beam = Beam(
@@ -468,6 +503,7 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 			layer = BELOW_OBJ_LAYER,
 		)
 		RegisterSignal(tripwire_beam, COMSIG_BEAM_ENTERED, PROC_REF(on_beam_entered))
+		apply_beam_endcaps()
 
 	// Fade the mine and beam to near-invisible together.
 	animate(src, alpha = 30, time = 10 SECONDS)
@@ -475,6 +511,18 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 		animate(tripwire_beam.visuals, alpha = 30, time = 10 SECONDS)
 	for(var/obj/effect/ebeam/seg as anything in tripwire_beam?.elements)
 		animate(seg, alpha = 30, time = 10 SECONDS)
+
+/obj/structure/contractor_tripwire_mine/proc/apply_beam_endcaps()
+	if(!tripwire_beam || !length(tripwire_beam.elements))
+		return
+	var/start_cap_state = (beam_dir == NORTH || beam_dir == EAST) ? "down" : "up"
+	var/end_cap_state = (start_cap_state == "up") ? "down" : "up"
+	var/obj/effect/ebeam/start_segment = tripwire_beam.elements[1]
+	start_segment.icon_state = start_cap_state
+	if(length(tripwire_beam.elements) == 1)
+		return
+	var/obj/effect/ebeam/end_segment = tripwire_beam.elements[length(tripwire_beam.elements)]
+	end_segment.icon_state = end_cap_state
 
 /obj/structure/contractor_tripwire_mine/Destroy()
 	if(tripwire_beam)

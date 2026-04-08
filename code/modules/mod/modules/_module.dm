@@ -53,6 +53,8 @@
 	var/part_process = TRUE
 	/// List of REF()s mobs we are pinned to, linked with their action buttons
 	var/list/pinned_to = list()
+	/// Action path used when creating a pinned action button for this module.
+	var/pinned_action_type = /datum/action/item_action/mod/pinnable/module
 	/// flags that let the module ability be used in odd circumstances
 	var/allow_flags = NONE
 	/// A list of slots required in the suit to work. Formatted like list(x|y, z, ...) where either x or y are required and z is required.
@@ -147,8 +149,7 @@
 
 /// Called when the module is activated
 /obj/item/mod/module/proc/activate(mob/activator)
-	if(!COOLDOWN_FINISHED(src, cooldown_timer))
-		balloon_alert(activator, "on cooldown!")
+	if(!is_off_cooldown(activator, for_activation = TRUE))
 		return FALSE
 	if(!mod.active || mod.activating || !mod.get_charge())
 		balloon_alert(activator, "unpowered!")
@@ -175,7 +176,7 @@
 		else
 			var/used_button = mod.wearer.client?.prefs.read_preference(/datum/preference/choiced/mod_select) || MIDDLE_CLICK
 			update_signal(used_button)
-			balloon_alert(mod.wearer, "[src] activated, [used_button]-click to use") // As of now, only wearers can "use" mods
+			balloon_alert(mod.wearer, get_activation_message(used_button)) // As of now, only wearers can "use" mods
 	active = TRUE
 	SEND_SIGNAL(src, COMSIG_MODULE_ACTIVATED, activator)
 	SEND_SIGNAL(mod, COMSIG_MOD_MODULE_ACTIVATED, src)
@@ -219,8 +220,7 @@
 
 /// Called when the module is used
 /obj/item/mod/module/proc/used(mob/activator)
-	if(!COOLDOWN_FINISHED(src, cooldown_timer))
-		balloon_alert(activator, "on cooldown!")
+	if(!is_off_cooldown(activator))
 		return FALSE
 	if(!check_power(use_energy_cost))
 		balloon_alert(activator, "not enough charge!")
@@ -237,6 +237,13 @@
 	update_clothing_slots()
 	SEND_SIGNAL(src, COMSIG_MODULE_USED, activator)
 	on_use(activator)
+	return TRUE
+
+/// Checks if the module can currently be used with respect to cooldown rules.
+/obj/item/mod/module/proc/is_off_cooldown(mob/activator, for_activation = FALSE)
+	if(!COOLDOWN_FINISHED(src, cooldown_timer))
+		balloon_alert(activator, "on cooldown!")
+		return FALSE
 	return TRUE
 
 /// Called when an activated module without a device is used
@@ -278,6 +285,10 @@
 /// Called from the module's used()
 /obj/item/mod/module/proc/on_use(mob/activator)
 	return
+
+/// Activation balloon text for active modules without a held device.
+/obj/item/mod/module/proc/get_activation_message(used_button)
+	return "[src] activated, [used_button]-click to use"
 
 /// Called on the MODsuit's process if it is an active module
 /obj/item/mod/module/proc/on_active_process(seconds_per_tick)
@@ -451,7 +462,7 @@
 		mod.remove_item_action(existing_action)
 		return
 
-	var/datum/action/item_action/mod/pinnable/module/new_action = new(mod, user, src)
+	var/datum/action/item_action/mod/pinnable/module/new_action = new pinned_action_type(mod, user, src)
 	mod.add_item_action(new_action)
 
 /// On drop key, concels a device item.
