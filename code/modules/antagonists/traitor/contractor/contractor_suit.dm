@@ -59,12 +59,13 @@
 
 /obj/item/mod/control/pre_equipped/contractor
 	theme = /datum/mod_theme/contractor
-	applied_cell = /obj/item/stock_parts/power_store/cell/super
+	applied_core = /obj/item/mod/core/refillable/gold
 	applied_modules = list(
 		/obj/item/mod/module/contractor_baton,
 		/obj/item/mod/module/storage/syndicate,
 		/obj/item/mod/module/chameleon,
 		/obj/item/mod/module/shock_absorber,
+		/obj/item/mod/module/jetpack/advanced,
 		/obj/item/mod/module/emp_shield,
 		/obj/item/mod/module/magnetic_harness,
 		/obj/item/mod/module/hat_stabilizer/syndicate,
@@ -82,6 +83,7 @@
 		/obj/item/mod/module/storage/syndicate,
 		/obj/item/mod/module/chameleon,
 		/obj/item/mod/module/shock_absorber,
+		/obj/item/mod/module/jetpack/advanced,
 		/obj/item/mod/module/emp_shield,
 		/obj/item/mod/module/magnetic_harness,
 		/obj/item/mod/module/hat_stabilizer/syndicate,

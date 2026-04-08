@@ -1,6 +1,7 @@
 /obj/item/mod/module/infiltrator/contractor
 	name = "Cybersun combat module"
 	desc = "XANTODO Combat module description"
+	complexity = 0
 	traits_to_add = list(TRAIT_SILENT_FOOTSTEPS, TRAIT_UNKNOWN_APPEARANCE, TRAIT_UNKNOWN_VOICE, TRAIT_HEAD_INJURY_BLOCKED, TRAIT_FASTMED, TRAIT_QUICK_CARRY, TRAIT_FAST_CUFFING)
 	required_slots = list(ITEM_SLOT_FEET, ITEM_SLOT_HEAD, ITEM_SLOT_OCLOTHING, ITEM_SLOT_GLOVES)
 	/// Reference to the strong pull component
@@ -25,9 +26,11 @@
 
 /obj/item/mod/module/contractor_uplink
 	name = "Contractor Uplink"
-	desc = "XANTODO Con uplink description"
+	desc = "XANTODO Con uplink description" // ANNETODO
+	complexity = 0
 	required_slots = list(ITEM_SLOT_GLOVES)
 	module_type = MODULE_USABLE
+	removable = FALSE
 
 /obj/item/mod/module/contractor_uplink/Initialize(mapload)
 	. = ..()
@@ -53,6 +56,7 @@
 	. = ..()
 	if(!contractor_baton)
 		contractor_baton = new(src)
+	RegisterSignal(contractor_baton, COMSIG_ITEM_PRE_UNEQUIP, PROC_REF(on_baton_unequip))
 
 /obj/item/mod/module/contractor_baton/on_uninstall(deleting)
 	QDEL_NULL(contractor_baton)
@@ -70,10 +74,20 @@
 	. = ..()
 	contractor_baton.forceMove(src)
 
+/obj/item/mod/module/contractor_baton/proc/on_baton_unequip(obj/item/source, force, atom/newloc, no_move, invdrop, silent)
+	SIGNAL_HANDLER
+	if(newloc == src)
+		return
+	// Means it was not retracted into the module
+	start_cooldown(3 SECONDS)
+	deactivate(get(source, /mob))
+	return COMPONENT_ITEM_BLOCK_UNEQUIP
+
 /obj/item/melee/baton/contractor_baton
 	name = "contractor baton"
 	desc = "A high tech telescopic stun baton, as developed by Cybersun Industries. Delivers a precise shock to a target's central nervous system to incapacitate them."
 	icon = 'icons/obj/weapons/baton.dmi'
+	base_icon_state = "contractor_baton"
 	icon_state = "contractor_baton"
 	inhand_icon_state = "contractor_baton"
 	worn_icon_state = "contractor_baton"
@@ -92,15 +106,118 @@
 	affect_cyborg = TRUE
 	wait_desc = "still charging!"
 	on_stun_sound = 'sound/items/weapons/contractor_baton/contractorbatonhit.ogg'
+	/// Upgrades installed in the baton
+	var/baton_upgrades = NONE
+	/// Baton mode, so that the cuffing module can work when toggled
+	var/baton_mode = CONTRACTOR_BATON_STUN
 
 /obj/item/melee/baton/contractor_baton/additional_effects_non_cyborg(mob/living/target, mob/living/user)
 	. = ..()
 	target.set_jitter_if_lower(40 SECONDS * (HAS_TRAIT(target, TRAIT_BATON_RESISTANCE) ? 0.5 : 1))
 	target.set_stutter_if_lower(40 SECONDS * (HAS_TRAIT(target, TRAIT_BATON_RESISTANCE) ? 0.5 : 1))
 
-/obj/item/melee/baton/contractor_baton/Initialize(mapload)
+/obj/item/melee/baton/contractor_baton/attack_self(mob/user, modifiers)
 	. = ..()
-	ADD_TRAIT(src, TRAIT_NODROP, CONTRACTOR_BATON_TRAIT)
+	toggle_mode(user)
+
+/obj/item/melee/baton/contractor_baton/proc/toggle_mode(mob/user)
+	if(!(baton_upgrades & BATON_UPGRADE_CUFFING))
+		return
+
+	baton_mode = (baton_mode+1)%CONTRACTOR_BATON_MODES
+	var/txt
+	switch(baton_mode)
+		if(CONTRACTOR_BATON_STUN)
+			txt = "stunning"
+		if(CONTRACTOR_BATON_CUFF)
+			txt = "restraining"
+
+	to_chat(user, span_notice("You switch the baton to [txt] mode."))
+	balloon_alert(user, "[txt] mode")
+	update_appearance()
+
+/obj/item/melee/baton/contractor_baton/update_icon_state()
+	var/new_state = base_icon_state
+
+	switch(baton_mode)
+		if(CONTRACTOR_BATON_STUN)
+			new_state = base_icon_state
+		if(CONTRACTOR_BATON_CUFF)
+			new_state = new_state + "_r"
+
+	if(baton_upgrades & BATON_UPGRADE_NODROP)
+		new_state = new_state + "_nodrop"
+
+	icon_state = new_state
+	return ..()
+
+/obj/item/melee/baton/contractor_baton/baton_effect(mob/living/target, mob/living/user, stun_override, clumsy)
+	switch(baton_mode)
+		if(CONTRACTOR_BATON_STUN)
+			return ..()
+		if(CONTRACTOR_BATON_CUFF)
+			return CuffAttack(target, user)
+
+/obj/item/melee/baton/contractor_baton/proc/CuffAttack(mob/living/carbon/carbon_victim, mob/living/user)
+	if(!iscarbon(carbon_victim))
+		return
+	if(carbon_victim.handcuffed)
+		return
+	if(!carbon_victim.canBeHandcuffed())
+		to_chat(user, span_warning("[carbon_victim] doesn't have two hands..."))
+
+	playsound(src, 'sound/items/weapons/cablecuff.ogg', 30, TRUE, -2)
+	carbon_victim.visible_message(span_danger("[user] begins restraining [carbon_victim] with [src]!"), \
+							span_userdanger("[user] begins shaping an energy field around your hands!")) // ANNETODO
+	if(!do_after(user, 3 SECONDS, carbon_victim) && carbon_victim.canBeHandcuffed())
+		to_chat(user, span_warning("You fail to restrain [carbon_victim]."))
+		return
+	if(carbon_victim.handcuffed)
+		return
+
+	carbon_victim.set_handcuffed(new /obj/item/restraints/handcuffs/contractor(carbon_victim))
+	to_chat(user, span_notice("You restrain [carbon_victim]."))
+	log_combat(user, carbon_victim, "handcuffed")
+
+/obj/item/baton_upgrade
+	name = "contractor baton upgrade"
+	desc = "Used to upgrade a contractor baton"
+	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_modules.dmi'
+	icon_state = "baton"
+	/// The flag that we upgrade
+	var/upgrade_flag = NONE
+
+/obj/item/baton_upgrade/interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
+	if(!istype(interacting_with, /obj/item/melee/baton/contractor_baton))
+		to_chat(user, span_warning("[src] can only be installed in a contractor baton!"))
+		return ITEM_INTERACT_BLOCKING
+	var/obj/item/melee/baton/contractor_baton/to_upgrade = interacting_with
+	if(to_upgrade.baton_upgrades & upgrade_flag)
+		to_chat(user, span_warning("[to_upgrade] already has this upgrade!"))
+		return ITEM_INTERACT_BLOCKING
+	// Actually install the module
+	to_upgrade.baton_upgrades |= upgrade_flag
+	playsound(src, 'sound/machines/click.ogg', 15, TRUE, -3)
+	to_upgrade.update_appearance()
+	qdel(src)
+	return ITEM_INTERACT_SUCCESS
+
+/obj/item/baton_upgrade/cuffing
+	name = "baton cuffing upgrade"
+	desc = "Used to allow a contractor baton to hold handcuffs"
+	icon_state = "cuff_upgrade"
+	upgrade_flag = BATON_UPGRADE_CUFFING
+
+/obj/item/baton_upgrade/nodrop
+	name = "baton nodrop upgrade"
+	desc = "Used to ensure you never lose your baton again"
+	icon_state = "nodrop_upgrade"
+	upgrade_flag = BATON_UPGRADE_NODROP
+
+/obj/item/baton_upgrade/nodrop/interact_with_atom(obj/item/melee/baton/contractor_baton/to_upgrade, mob/living/user, list/modifiers)
+	. = ..()
+	if(. == ITEM_INTERACT_SUCCESS)
+		ADD_TRAIT(to_upgrade, TRAIT_NODROP, CONTRACTOR_BATON_TRAIT)
 
 /obj/item/mod/module/energy_net/scorpion_hook
 	name = "Scorpion Hook module"

@@ -134,7 +134,7 @@
 
 /obj/item/mod/control/pre_equipped/mining
 	theme = /datum/mod_theme/mining
-	applied_core = /obj/item/mod/core/plasma
+	applied_core = /obj/item/mod/core/refillable/plasma
 	applied_modules = list(
 		/obj/item/mod/module/storage/large_capacity,
 		/obj/item/mod/module/gps,

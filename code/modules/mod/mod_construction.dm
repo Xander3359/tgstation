@@ -76,7 +76,7 @@
 	if(!weapon.use_tool(src, user, 5 SECONDS, amount = 2, volume = 30))
 		balloon_alert(user, "interrupted!")
 		return
-	new /obj/item/mod/core/plasma/lavaland(drop_location())
+	new /obj/item/mod/core/refillable/plasma/lavaland(drop_location())
 	qdel(src)
 
 /obj/item/mod/construction/plating

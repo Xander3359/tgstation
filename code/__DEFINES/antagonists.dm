@@ -509,3 +509,12 @@ GLOBAL_LIST_INIT(human_invader_antagonists, list(
 #define CONTRACTOR_DROPOFF_SAFE "safe"
 #define CONTRACTOR_DROPOFF_UNSAFE "unsafe"
 #define CONTRACTOR_DROPOFF_DANGEROUS "dangerous"
+
+//Contractor baton upgrades
+#define BATON_UPGRADE_CUFFING (1<<0)
+#define BATON_UPGRADE_NODROP (1<<1)
+
+//Contractor baton modes
+#define CONTRACTOR_BATON_STUN 0
+#define CONTRACTOR_BATON_CUFF 1
+#define CONTRACTOR_BATON_MODES 2

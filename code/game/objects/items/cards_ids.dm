@@ -2021,6 +2021,10 @@
 /obj/item/card/id/advanced/chameleon/elite/contractor
 	icon_state = "card_contractor" // XANTODO: Default card should give digital camo
 
+/obj/item/card/id/advanced/chameleon/elite/contractor/interact_with_atom_secondary(atom/interacting_with, mob/living/user, list/modifiers)
+	. = ..()
+	// XANTODO | JAKETODO -> Make the chameleon ID steal all access instead of opening a UI. Can be snowflaked if needed
+
 /obj/item/card/id/advanced/engioutpost
 	registered_name = "George 'Plastic' Miller"
 	desc = "A card used to provide ID and determine access across the station. There's blood dripping from the corner. Ew."

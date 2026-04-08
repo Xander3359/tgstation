@@ -54,3 +54,42 @@
 	item = /obj/item/antag_spawner/loadout/contractor
 	limited_stock = 1
 	cost = 2
+
+
+// The whole fucking category is TODO | XANTODO | JAKETODO | ANNETODO zzzzzzzzzzzz
+
+/datum/uplink_item/contractor/XANTODO // Oh yeah I'm TODOING the type path :)
+	restricted = FALSE
+	purchasable_from = ALL
+	category = /datum/uplink_category/contractor
+
+/datum/uplink_item/contractor/XANTODO/baton_cuffing
+	name = "Baton cuffing upgrade"
+	desc = "Gives your baton the ability to cuff victims"
+	cost = 0
+	item = /obj/item/baton_upgrade/cuffing
+
+/datum/uplink_item/contractor/XANTODO/baton_nodrop
+	name = "Baton nodrop upgrade"
+	desc = "After many years of advanced RND research, involving a ton of manpower from multiple scientists of all types of branches. \
+			Turns out the best way to not lose a baton is by simply putting a strap on your wrist..."
+	cost = 0
+	item = /obj/item/baton_upgrade/nodrop
+
+/datum/uplink_item/contractor/XANTODO/laughing_gas
+	name = "Laughing gas module"
+	desc = "ANNETODO"
+	cost = 0
+	item = /obj/item/mod/module/laughing_gas
+
+/datum/uplink_item/contractor/XANTODO/snatcher
+	name = "snatcher module"
+	desc = "ANNETODO"
+	cost = 0
+	item = /obj/item/mod/module/energy_net/snatcher
+
+/datum/uplink_item/contractor/XANTODO/scorpion_hook
+	name = "Scorpion hook module"
+	desc = "ANNETODO"
+	cost = 0
+	item = /obj/item/mod/module/energy_net/scorpion_hook

@@ -359,11 +359,9 @@
 #define PLASMA_CORE_ORE_CHARGE (1.5 * STANDARD_CELL_CHARGE)
 #define PLASMA_CORE_SHEET_CHARGE (2 * STANDARD_CELL_CHARGE)
 
-/obj/item/mod/core/plasma
-	name = "MOD plasma core"
-	icon_state = "mod-core-plasma"
-	desc = "Nanotrasen's attempt at capitalizing on their plasma research. These plasma cores are refueled \
-		through plasma fuel, allowing for easy continued use by their mining squads."
+/obj/item/mod/core/refillable // Parent type to unify behaviour
+	name = "MOD refillable core"
+	desc = "Alert coders if you find this"
 	/// How much charge we can store.
 	var/maxcharge = 10 * STANDARD_CELL_CHARGE
 	/// How much charge we are currently storing.
@@ -371,38 +369,38 @@
 	/// Associated list of charge sources and how much they charge, only stacks allowed.
 	var/list/charger_list = list(/obj/item/stack/ore/plasma = PLASMA_CORE_ORE_CHARGE, /obj/item/stack/sheet/mineral/plasma = PLASMA_CORE_SHEET_CHARGE)
 
-/obj/item/mod/core/plasma/install(obj/item/mod/control/mod_unit)
+/obj/item/mod/core/refillable/install(obj/item/mod/control/mod_unit)
 	. = ..()
 	RegisterSignal(mod, COMSIG_ATOM_ITEM_INTERACTION, PROC_REF(on_mod_interaction))
 
-/obj/item/mod/core/plasma/uninstall()
+/obj/item/mod/core/refillable/uninstall()
 	UnregisterSignal(mod, COMSIG_ATOM_ITEM_INTERACTION)
 	return ..()
 
-/obj/item/mod/core/plasma/charge_source()
+/obj/item/mod/core/refillable/charge_source()
 	return src
 
-/obj/item/mod/core/plasma/charge_amount()
+/obj/item/mod/core/refillable/charge_amount()
 	return charge
 
-/obj/item/mod/core/plasma/max_charge_amount()
+/obj/item/mod/core/refillable/max_charge_amount()
 	return maxcharge
 
-/obj/item/mod/core/plasma/add_charge(amount)
+/obj/item/mod/core/refillable/add_charge(amount)
 	charge = min(maxcharge, charge + amount)
 	mod.update_charge_alert()
 	return TRUE
 
-/obj/item/mod/core/plasma/subtract_charge(amount)
+/obj/item/mod/core/refillable/subtract_charge(amount)
 	amount = min(amount, charge)
 	charge -= amount
 	mod.update_charge_alert()
 	return amount
 
-/obj/item/mod/core/plasma/check_charge(amount)
+/obj/item/mod/core/refillable/check_charge(amount)
 	return charge_amount() >= amount
 
-/obj/item/mod/core/plasma/get_charge_icon_state()
+/obj/item/mod/core/refillable/get_charge_icon_state()
 	switch(round(charge_amount() / max_charge_amount(), 0.01))
 		if(0.75 to INFINITY)
 			return SPACESUIT_CELL_HIGH
@@ -415,22 +413,22 @@
 
 	return SPACESUIT_CELL_EMPTY
 
-/obj/item/mod/core/plasma/get_chargebar_color()
+/obj/item/mod/core/refillable/get_chargebar_color()
 	switch(round(charge_amount() / max_charge_amount(), 0.01))
 		if(-INFINITY to 0.33)
 			return "bad"
 		if(0.33 to INFINITY)
 			return "purple"
 
-/obj/item/mod/core/plasma/proc/on_mod_interaction(datum/source, mob/living/user, obj/item/thing)
+/obj/item/mod/core/refillable/proc/on_mod_interaction(datum/source, mob/living/user, obj/item/thing)
 	SIGNAL_HANDLER
 
 	return item_interaction(user, thing)
 
-/obj/item/mod/core/plasma/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+/obj/item/mod/core/refillable/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	return charge_plasma(tool, user) ? ITEM_INTERACT_SUCCESS : NONE
 
-/obj/item/mod/core/plasma/proc/charge_plasma(obj/item/stack/plasma, mob/user)
+/obj/item/mod/core/refillable/proc/charge_plasma(obj/item/stack/plasma, mob/user)
 	var/charge_given = is_type_in_list(plasma, charger_list, zebra = TRUE)
 	if(!charge_given)
 		return FALSE
@@ -441,10 +439,17 @@
 	balloon_alert(user, "core refueled")
 	return TRUE
 
+/obj/item/mod/core/refillable/plasma
+	name = "MOD plasma core"
+	icon_state = "mod-core-plasma"
+	desc = "Nanotrasen's attempt at capitalizing on their plasma research. These plasma cores are refueled \
+		through plasma fuel, allowing for easy continued use by their mining squads."
+	charger_list = list(/obj/item/stack/ore/plasma = PLASMA_CORE_ORE_CHARGE, /obj/item/stack/sheet/mineral/plasma = PLASMA_CORE_SHEET_CHARGE)
+
 #undef PLASMA_CORE_ORE_CHARGE
 #undef PLASMA_CORE_SHEET_CHARGE
 
-/obj/item/mod/core/plasma/lavaland
+/obj/item/mod/core/refillable/plasma/lavaland
 	name = "MOD plasma flower core"
 	icon_state = "mod-core-plasma-flower"
 	desc = "A strange flower from the desolate wastes of lavaland. It pulses with a strange purple glow.  \
@@ -466,20 +471,20 @@
 	/// Particle holder for pollen particles
 	var/obj/effect/abstract/particle_holder/particle_effect
 
-/obj/item/mod/core/plasma/lavaland/Destroy()
+/obj/item/mod/core/refillable/plasma/lavaland/Destroy()
 	QDEL_NULL(particle_effect)
 	QDEL_NULL(mob_spawner)
 	return ..()
 
-/obj/item/mod/core/plasma/lavaland/install(obj/item/mod/control/mod_unit)
+/obj/item/mod/core/refillable/plasma/lavaland/install(obj/item/mod/control/mod_unit)
 	. = ..()
 	RegisterSignal(mod_unit, COMSIG_MOD_TOGGLED, PROC_REF(on_toggle))
 
-/obj/item/mod/core/plasma/lavaland/uninstall(obj/item/mod/control/mod_unit)
+/obj/item/mod/core/refillable/plasma/lavaland/uninstall(obj/item/mod/control/mod_unit)
 	. = ..()
 	UnregisterSignal(mod_unit, COMSIG_MOD_TOGGLED)
 
-/obj/item/mod/core/plasma/lavaland/proc/on_toggle()
+/obj/item/mod/core/refillable/plasma/lavaland/proc/on_toggle()
 	SIGNAL_HANDLER
 	if(mod.active)
 		particle_effect = new(mod.wearer, /particles/pollen, PARTICLE_ATTACH_MOB)
@@ -500,12 +505,12 @@
 		qdel(mob)
 	QDEL_NULL(mob_spawner)
 
-/obj/item/mod/core/plasma/lavaland/proc/new_mob(spawner, mob/living/basic/butterfly/lavaland/temporary/spawned)
+/obj/item/mod/core/refillable/plasma/lavaland/proc/new_mob(spawner, mob/living/basic/butterfly/lavaland/temporary/spawned)
 	SIGNAL_HANDLER
 	if(spawned)
 		spawned.source = src
 
-/obj/item/mod/core/plasma/lavaland/proc/spread_flowers(atom/source, atom/oldloc, dir, forced)
+/obj/item/mod/core/refillable/plasma/lavaland/proc/spread_flowers(atom/source, atom/oldloc, dir, forced)
 	SIGNAL_HANDLER
 	if (!isturf(oldloc))
 		return
@@ -520,6 +525,21 @@
 	var/flower_boots = new chosen_type(oldloc)
 	animate(flower_boots, alpha = 0, 1 SECONDS)
 	QDEL_IN(flower_boots, 1 SECONDS)
+
+/obj/item/mod/core/refillable/gold
+	name = "MOD gold core"
+	icon_state = "mod-core-gold"
+	desc = "ANNETODO"
+	maxcharge = 40 * STANDARD_CELL_CHARGE
+	charge = 40 * STANDARD_CELL_CHARGE
+	charger_list = list(/obj/item/stack/ore/gold = 4 * STANDARD_CELL_CHARGE, /obj/item/stack/sheet/mineral/gold = 8 * STANDARD_CELL_CHARGE)
+
+/obj/item/mod/core/refillable/gold/get_chargebar_color()
+	switch(round(charge_amount() / max_charge_amount(), 0.01))
+		if(-INFINITY to 0.33)
+			return "bad"
+		if(0.33 to INFINITY)
+			return "gold"
 
 /obj/item/mod/core/soul
 	name = "MOD soul shard core"
