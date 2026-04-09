@@ -94,6 +94,8 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	name = "Tripwire Dart"
 	projectile_path = /obj/projectile/dart/tripwire
 	radial_icon_state = "tripwire"
+	cooldown_duration = 10 SECONDS
+	cooldown_alert_name = "tripwire dart"
 
 /datum/contractor_dart_type/tripwire/on_shot(obj/item/mod/module/dart_gun/module, mob/activator)
 	module.expire_tripwires_for_shot()
@@ -432,18 +434,9 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 		target_turf?.visible_message(span_warning("[src] fails to attach!"))
 		return
 
-	// Determine beam direction: from wall toward the firer (into open space)
-	var/beam_dir = SOUTH
-	if(firer)
-		var/raw_dir = get_dir(target_turf, get_turf(firer))
-		if(raw_dir & NORTH)
-			beam_dir = NORTH
-		else if(raw_dir & SOUTH)
-			beam_dir = SOUTH
-		else if(raw_dir & EAST)
-			beam_dir = EAST
-		else
-			beam_dir = WEST
+	// Determine beam direction from projectile travel so movement after firing doesn't skew orientation.
+	var/raw_dir = REVERSE_DIR(dir)
+	var/beam_dir = raw_dir || SOUTH
 
 	// Mine is anchored directly on the struck wall/window turf.
 	var/turf/mine_turf = target_turf
@@ -456,6 +449,13 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	if(!isnull(dart_mod))
 		dart_mod.active_tripwires += mine
 	RegisterSignal(mine, COMSIG_QDELETING, TYPE_PROC_REF(/obj/item/mod/module/dart_gun, remove_tripwire))
+
+/// Tripwire beam variant that renders each segment independently instead of relying on shared visuals.
+/// This makes per-segment icon state, overlays, and masking deterministic.
+/datum/beam/tripwire
+
+/datum/beam/tripwire/set_subsegment_appearance(obj/effect/ebeam/segment)
+	set_up_effect(segment, icon_state)
 
 
 /// The mine body that anchors the tripwire beam to a wall face.
@@ -472,8 +472,12 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	var/beam_dir = SOUTH
 	/// Beam datum handling line rendering and crossed checks.
 	var/datum/beam/tripwire_beam
+	/// Cached turf used as the intended far endpoint for beam masking.
+	var/turf/beam_end_turf
 	/// Whether the cover has been unscrewed
 	var/opened = FALSE
+	/// Target alpha after the mine fades in.
+	var/min_alpha = 100
 
 /obj/structure/contractor_tripwire_mine/Initialize(mapload, in_beam_dir)
 	. = ..()
@@ -492,6 +496,7 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 			break
 
 	if(end_turf)
+		beam_end_turf = end_turf
 		tripwire_beam = Beam(
 			BeamTarget = end_turf,
 			icon_state = "middle",
@@ -501,16 +506,17 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 			beam_type = /obj/effect/ebeam/reacting,
 			emissive = FALSE,
 			layer = BELOW_OBJ_LAYER,
+			beam_datum_type = /datum/beam/tripwire,
 		)
 		RegisterSignal(tripwire_beam, COMSIG_BEAM_ENTERED, PROC_REF(on_beam_entered))
-		apply_beam_endcaps()
+		addtimer(CALLBACK(src, PROC_REF(refresh_beam_visuals)), 0)
 
 	// Fade the mine and beam to near-invisible together.
-	animate(src, alpha = 30, time = 10 SECONDS)
+	animate(src, alpha = min_alpha, time = 10 SECONDS)
 	if(tripwire_beam?.visuals)
-		animate(tripwire_beam.visuals, alpha = 30, time = 10 SECONDS)
+		animate(tripwire_beam.visuals, alpha = min_alpha, time = 10 SECONDS)
 	for(var/obj/effect/ebeam/seg as anything in tripwire_beam?.elements)
-		animate(seg, alpha = 30, time = 10 SECONDS)
+		animate(seg, alpha = min_alpha, time = 10 SECONDS)
 
 /obj/structure/contractor_tripwire_mine/proc/apply_beam_endcaps()
 	if(!tripwire_beam || !length(tripwire_beam.elements))
@@ -524,11 +530,48 @@ GLOBAL_LIST_EMPTY(camera_dart_audio_logs)
 	var/obj/effect/ebeam/end_segment = tripwire_beam.elements[length(tripwire_beam.elements)]
 	end_segment.icon_state = end_cap_state
 
+/obj/structure/contractor_tripwire_mine/proc/refresh_beam_visuals()
+	if(!tripwire_beam)
+		return
+	apply_beam_endcaps()
+	apply_beam_wall_masks()
+
+/obj/structure/contractor_tripwire_mine/proc/apply_beam_wall_masks()
+	if(!tripwire_beam)
+		return
+	var/beam_len = length(tripwire_beam.elements)
+	for(var/obj/effect/ebeam/segment as anything in tripwire_beam.elements)
+		var/segment_index = tripwire_beam.elements.Find(segment)
+		segment.remove_filter("tripwire_wall_mask")
+		// Do not clip the mine-side segment. We only want obstruction trimming away from the mine.
+		if(segment_index == 1)
+			continue
+		var/turf/mask_turf = (segment_index == beam_len && beam_end_turf) ? beam_end_turf : get_turf(segment)
+		if(!mask_turf)
+			continue
+		var/icon/mask_icon = get_beam_obstruction_mask(mask_turf)
+		if(!mask_icon)
+			continue
+		segment.add_filter("tripwire_wall_mask", 1, alpha_mask_filter(icon = mask_icon, flags = MASK_INVERSE))
+
+/obj/structure/contractor_tripwire_mine/proc/get_beam_obstruction_mask(turf/segment_turf)
+	var/icon/mask_icon
+	if(isclosedturf(segment_turf))
+		mask_icon = icon(segment_turf.icon, segment_turf.icon_state, segment_turf.dir)
+	for(var/obj/structure/window/window as anything in segment_turf)
+		var/icon/window_icon = icon(window.icon, window.icon_state, window.dir)
+		if(!mask_icon)
+			mask_icon = window_icon
+		else
+			mask_icon.Blend(window_icon, ICON_OVERLAY)
+	return mask_icon
+
 /obj/structure/contractor_tripwire_mine/Destroy()
 	if(tripwire_beam)
 		UnregisterSignal(tripwire_beam, COMSIG_BEAM_ENTERED)
 		qdel(tripwire_beam)
 		tripwire_beam = null
+	beam_end_turf = null
 	return ..()
 
 /obj/structure/contractor_tripwire_mine/proc/on_beam_entered(datum/source, obj/effect/ebeam/beam_segment, atom/movable/arrived)

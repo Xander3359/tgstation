@@ -330,9 +330,17 @@
  * BeamTarget: Where you're beaming from. Where do you get origin? You didn't read the docs, fuck you.
  * icon_state: What the beam's icon_state is. The datum effect isn't the ebeam object, it doesn't hold any icon and isn't type dependent.
  * icon: What the beam's icon file is. Don't change this, man. All beam icons should be in beam.dmi anyways.
+ * time: Lifetime of the beam datum before auto-qdel. INFINITY means persistent until manually deleted.
  * maxdistance: how far the beam will go before stopping itself. Used mainly for two things: preventing lag if the beam may go in that direction and setting a range to abilities that use beams.
  * beam_type: The type of your custom beam. This is for adding other wacky stuff for your beam only. Most likely, you won't (and shouldn't) change it.
+ * beam_color: Optional color override for the whole beam.
+ * emissive: Whether to add emissive overlays for the beam visuals.
+ * override_origin_pixel_x/y, override_target_pixel_x/y: Optional pixel-offset overrides used for beam draw math.
+ * layer: Render layer used by beam visuals.
  * icon_state_variants: The number of icon state variants in format iconstate1 and etc, is randomized or indexed based on random_icon_state boolean. Starts from 1, ignores non-numbered icon_states
+ * random_icon_state: If TRUE, variant icon states are chosen randomly; otherwise they are used in order.
+ * beam_datum_type: Datum typepath to instantiate instead of /datum/beam. Use this for custom per-segment behavior.
+ * If beam_datum_type is not /datum/beam, icon_state_variants/random_icon_state are ignored and that datum is instantiated directly.
  */
 /atom/proc/Beam(atom/BeamTarget,
 	icon_state="b_beam",
@@ -348,14 +356,30 @@
 	layer = ABOVE_ALL_MOB_LAYER,
 	icon_state_variants = 0,
 	random_icon_state = TRUE,
+	beam_datum_type = /datum/beam,
 )
 	var/datum/beam/newbeam
-	var/list/arguments = list(src, BeamTarget, icon, icon_state, time, maxdistance, beam_type, beam_color, emissive, override_origin_pixel_x, override_origin_pixel_y, override_target_pixel_x, override_target_pixel_y, layer)
-	if(icon_state_variants <= 0)
-		newbeam = new(arglist(arguments))
+	var/list/arguments = list(
+		"origin" = src,
+		"target" = BeamTarget,
+		"icon" = icon,
+		"icon_state" = icon_state,
+		"time" = time,
+		"max_distance" = maxdistance,
+		"beam_type" = beam_type,
+		"beam_color" = beam_color,
+		"emissive" = emissive,
+		"override_origin_pixel_x" = override_origin_pixel_x,
+		"override_origin_pixel_y" = override_origin_pixel_y,
+		"override_target_pixel_x" = override_target_pixel_x,
+		"override_target_pixel_y" = override_target_pixel_y,
+		"beam_layer" = layer,
+	)
+	if(icon_state_variants <= 0 || beam_datum_type != /datum/beam)
+		newbeam = new beam_datum_type(arglist(arguments))
 	else
-		arguments += icon_state_variants
-		arguments += random_icon_state
+		arguments["icon_state_variants"] = icon_state_variants
+		arguments["random_icon_state"] = random_icon_state
 		newbeam = new /datum/beam/varied(arglist(arguments))
 	INVOKE_ASYNC(newbeam, TYPE_PROC_REF(/datum/beam/, Start))
 	return newbeam
