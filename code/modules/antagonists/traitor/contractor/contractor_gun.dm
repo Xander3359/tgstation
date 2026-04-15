@@ -5,18 +5,18 @@
 	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_item.dmi'
 	lefthand_file = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_inhand_left.dmi'
 	righthand_file = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_inhand_right.dmi'
+	worn_icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_back.dmi'
 	base_icon_state = "contractor_gun"
 	icon_state = "contractor_gun_standard"
 	inhand_icon_state = "contractor_gun_standard"
+	worn_icon_state = "contractor_gun_worn_back"
 	weapon_weight = WEAPON_HEAVY
 	w_class = WEIGHT_CLASS_BULKY
 	fire_delay = 10
-	// SET_BASE_PIXEL(-16, 0)
 	fire_mode_switch_sound = SFX_FIRE_MODE_SWITCH
+	slot_flags = ITEM_SLOT_BACK
 	automatic_charge_overlays = FALSE
 	cell_type = /obj/item/stock_parts/power_store/gauss_nanites
-	/// Dedicated HUD element that displays remaining gauss shots.
-	var/atom/movable/screen/gauss_ammo_display/ammo_display
 	ammo_type = list(
 		/obj/item/ammo_casing/energy/gauss,
 		/obj/item/ammo_casing/energy/gauss/emp,
@@ -24,6 +24,8 @@
 		/obj/item/ammo_casing/energy/gauss/antimatter,
 		/obj/item/ammo_casing/energy/gauss/thermite,
 	)
+	force = 11
+	var/atom/movable/screen/gauss_ammo_display/ammo_display
 
 /obj/item/gun/energy/gauss_rifle/Initialize(mapload)
 	. = ..()
