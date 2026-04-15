@@ -186,6 +186,14 @@
 		SEND_SIGNAL(src, COMSIG_CUT_WIRE(wire), wire)
 		on_cut(wire, mend = FALSE, source = source)
 
+/// Cuts a wire, but won't mend it if it's already cut
+/datum/wires/proc/strictly_cut(wire, mob/living/source)
+	if(is_cut(wire))
+		return
+	LAZYADD(cut_wires, wire)
+	SEND_SIGNAL(src, COMSIG_CUT_WIRE(wire), wire)
+	on_cut(wire, mend = FALSE, source = source)
+
 /datum/wires/proc/cut_color(color, mob/living/source)
 	cut(get_wire(color), source)
 

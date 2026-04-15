@@ -28,6 +28,8 @@
 	var/implant_info = "No information available."
 	/// What's the extended lore for this implant that we might not care that much about, e.g. descriptions, flavortext?
 	var/implant_lore = "No information available."
+	/// If the implant cannot be removed via normal means (Only admins can remove it)
+	var/hidden_implant = FALSE
 
 /obj/item/implant/proc/activate()
 	SEND_SIGNAL(src, COMSIG_IMPLANT_ACTIVATED)

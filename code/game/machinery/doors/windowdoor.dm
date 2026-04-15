@@ -366,6 +366,15 @@
 	take_damage(round(exposed_temperature / 200), BURN, 0, 0)
 
 /obj/machinery/door/window/emag_act(mob/user, obj/item/card/emag/emag_card)
+	if(operating || !density)
+		return FALSE
+
+	var/obj/item/card/emag/doorjack/doorjack_card = emag_card
+	if(istype(doorjack_card) && doorjack_card.airlock_breaker == FALSE)
+		doorjack_card.use_charge(user)
+		safely_doorjack(user)
+		return TRUE
+
 	if(!operating && density && !(obj_flags & EMAGGED))
 		obj_flags |= EMAGGED
 		operating = TRUE
@@ -379,6 +388,13 @@
 /obj/machinery/door/window/proc/finish_emag_act()
 	operating = FALSE
 	open(BYPASS_DOOR_CHECKS)
+
+/// Removes restrictions from the door and makes it operable
+/obj/machinery/door/window/proc/safely_doorjack(mob/user)
+	// We don't set obj_flags EMAGGED because this doesn't permanently destroy a door
+	req_access = list()
+	req_one_access = list()
+	user.balloon_alert(user, "hacked")
 
 /obj/machinery/door/window/examine(mob/user)
 	. = ..()

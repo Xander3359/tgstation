@@ -1510,16 +1510,28 @@
 	return !density || (check_access_list(pass_info.access) && !locked && hasPower() && !pass_info.no_id)
 
 /obj/machinery/door/airlock/emag_act(mob/user, obj/item/card/emag/emag_card)
-	if(!operating && density && hasPower() && !(obj_flags & EMAGGED))
-		if(istype(emag_card, /obj/item/card/emag/doorjack))
-			var/obj/item/card/emag/doorjack/doorjack_card = emag_card
-			doorjack_card.use_charge(user)
-		set_machine_stat(machine_stat | MAINT) // flash the airlock lights and display some sparks
-		set_airlock_state(AIRLOCK_CLOSED)
-		operating = TRUE
-		addtimer(CALLBACK(src, PROC_REF(finish_emag_act)), 0.6 SECONDS)
+	if(obj_flags & EMAGGED)
+		balloon_alert(user, "already hacked!")
+		return FALSE
+	if(operating || !density)
+		return FALSE
+
+	var/obj/item/card/emag/doorjack/doorjack_card = emag_card
+	if(istype(doorjack_card) && doorjack_card.airlock_breaker == FALSE)
+		doorjack_card.use_charge(user)
+		safely_doorjack(user)
 		return TRUE
-	return FALSE
+
+	if(!hasPower())
+		return FALSE
+
+	if(istype(doorjack_card))
+		doorjack_card.use_charge(user)
+	set_machine_stat(machine_stat | MAINT) // flash the airlock lights and display some sparks
+	set_airlock_state(AIRLOCK_CLOSED)
+	operating = TRUE
+	addtimer(CALLBACK(src, PROC_REF(finish_emag_act)), 0.6 SECONDS)
+	return TRUE
 
 /// Timer proc, called ~0.6 seconds after [emag_act]. Finishes the emag sequence by breaking the airlock, permanently locking it, and disabling power.
 /obj/machinery/door/airlock/proc/finish_emag_act()
@@ -1534,6 +1546,18 @@
 	locked = TRUE
 	loseMainPower()
 	loseBackupPower()
+
+/// Removes restrictions from the door and makes it operable
+/obj/machinery/door/airlock/proc/safely_doorjack(mob/user)
+	// We don't set obj_flags EMAGGED because this doesn't permanently destroy a door
+	req_access = list()
+	req_one_access = list()
+	regainMainPower()
+	regainBackupPower()
+	set_electrified(MACHINE_NOT_ELECTRIFIED)
+	unbolt()
+	wires.strictly_cut(WIRE_AI)
+	user.balloon_alert(user, "hacked")
 
 /obj/machinery/door/airlock/attack_alien(mob/living/carbon/alien/adult/user, list/modifiers)
 	if(isElectrified() && shock(user, 100)) //Mmm, fried xeno!

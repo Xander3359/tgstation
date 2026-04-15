@@ -79,6 +79,8 @@
 		return
 
 /obj/item/organ/heart/gland/heal/proc/reject_implant(obj/item/implant/implant)
+	if(implant.hidden_implant)
+		return
 	owner.visible_message(span_warning("[owner] vomits up a tiny mangled implant!"), span_userdanger("You suddenly vomit up a tiny mangled implant!"))
 	owner.vomit(REJECTION_VOMIT_FLAGS, lost_nutrition = 0)
 	implant.removed(owner)
