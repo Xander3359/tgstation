@@ -3609,6 +3609,7 @@
 #include "code\modules\antagonists\traitor\components\demoraliser.dm"
 #include "code\modules\antagonists\traitor\contractor\contract_teammate.dm"
 #include "code\modules\antagonists\traitor\contractor\contract_uplink.dm"
+#include "code\modules\antagonists\traitor\contractor\contractor_bomb.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_case.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_dart_module.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_gun.dm"
