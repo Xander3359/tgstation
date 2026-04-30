@@ -6526,6 +6526,7 @@
 #include "code\modules\surgery\operations\operation_asthma.dm"
 #include "code\modules\surgery\operations\operation_autopsy.dm"
 #include "code\modules\surgery\operations\operation_bioware.dm"
+#include "code\modules\surgery\operations\operation_bomb_defuse.dm"
 #include "code\modules\surgery\operations\operation_bone_repair.dm"
 #include "code\modules\surgery\operations\operation_brainwash.dm"
 #include "code\modules\surgery\operations\operation_cavity_implant.dm"
