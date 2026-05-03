@@ -6,8 +6,8 @@
 	lefthand_file = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_inhand_left.dmi'
 	righthand_file = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_inhand_right.dmi'
 	worn_icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_back.dmi'
-	base_icon_state = "contractor_gun"
-	icon_state = "contractor_gun_standard"
+	base_icon_state = "empty"
+	icon_state = "empty"
 	inhand_icon_state = "contractor_gun_standard"
 	worn_icon_state = "contractor_gun_worn_back"
 	weapon_weight = WEAPON_HEAVY
@@ -26,9 +26,11 @@
 	)
 	force = 11
 	var/atom/movable/screen/gauss_ammo_display/ammo_display
+	var/base_inhand_icon_state = "contractor_gun"
 
 /obj/item/gun/energy/gauss_rifle/Initialize(mapload)
 	. = ..()
+	AddComponent(/datum/component/scope)
 	AddElement(/datum/element/empprotection, EMP_PROTECT_ALL)
 	ammo_display = new()
 	ammo_display.RegisterSignal(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, TYPE_PROC_REF(/atom/movable/screen/gauss_ammo_display, on_gun_ammo_changed))
@@ -79,13 +81,13 @@
 
 /obj/item/gun/energy/gauss_rifle/update_icon_state()
 	. = ..()
-	icon_state = "[base_icon_state]_[current_state()]"
-	inhand_icon_state = "[base_icon_state]_[current_state()]"
+	inhand_icon_state = "[base_inhand_icon_state]_[current_state()]"
 
 /obj/item/gun/energy/gauss_rifle/update_overlays()
 	. = ..()
-	var/emissive_icon = "contractor_gun_light_[current_state()]"
-	. += emissive_appearance(icon, emissive_icon, src)
+	if(current_state() != "empty")
+		. += mutable_appearance(icon, current_state())
+	. += emissive_appearance(icon, current_state(), src)
 
 /obj/item/gun/energy/gauss_rifle/worn_overlays(mutable_appearance/standing, isinhands, icon_file)
 	. = ..()
