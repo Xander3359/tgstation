@@ -1,4 +1,4 @@
-/obj/item/gun/energy/gauss_rifle
+ 
 	name = "Raijin Horizon Gauss Rifle"
 	desc = "The Raijin is a gauss type weapon designed more for utility and subterfuge rather than protracted combat engagements. \n\
 		Scoped and suppressed. Chambered in 2mm FM (ferromagnetic)."
@@ -8,7 +8,7 @@
 	worn_icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_gun_back.dmi'
 	base_icon_state = "empty"
 	icon_state = "empty"
-	inhand_icon_state = "contractor_gun_standard"
+	inhand_icon_state = "standard"
 	worn_icon_state = "contractor_gun_worn_back"
 	weapon_weight = WEAPON_HEAVY
 	w_class = WEIGHT_CLASS_BULKY
@@ -26,7 +26,6 @@
 	)
 	force = 11
 	var/atom/movable/screen/gauss_ammo_display/ammo_display
-	var/base_inhand_icon_state = "contractor_gun"
 
 /obj/item/gun/energy/gauss_rifle/Initialize(mapload)
 	. = ..()
@@ -81,7 +80,7 @@
 
 /obj/item/gun/energy/gauss_rifle/update_icon_state()
 	. = ..()
-	inhand_icon_state = "[base_inhand_icon_state]_[current_state()]"
+	inhand_icon_state = current_state()
 
 /obj/item/gun/energy/gauss_rifle/update_overlays()
 	. = ..()
@@ -93,7 +92,7 @@
 	. = ..()
 	if(!isinhands)
 		return
-	var/emissive_icon = "contractor_gun_light_[current_state()]"
+	var/emissive_icon = "emissive_[current_state()]"
 	. += emissive_appearance(icon_file, emissive_icon, src)
 
 /obj/item/gun/energy/gauss_rifle/proc/current_state()
@@ -102,7 +101,6 @@
 	if(ratio == 0 || isnull(gauss_chamber))
 		return "empty"
 	return gauss_chamber.select_name
-
 
 /obj/item/stock_parts/power_store/gauss_nanites
 	name = "gauss nanite power store"
