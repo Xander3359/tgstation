@@ -24,21 +24,57 @@
 	/// Cable icons
 	var/list/cable_icons
 
+	//---- Explosion variables, can be changed by the defusal process
+	var/ex_dev = 1
+	var/ex_heavy = 2
+	var/ex_light = 4
+	var/ex_flame = 2
+	/// If true, will end the round
+	var/is_nuclear = FALSE
+
 /obj/item/contractor_bomb/Initialize(mapload)
 	. = ..()
 	plastic_overlay = mutable_appearance(icon, "Mob bombactivated", HIGH_OBJ_LAYER)
 	for(var/datum/contractor_wire/new_cable as anything in subtypesof(/datum/contractor_wire))
 		cable_icons += list(new_cable.name = image(icon = new_cable.cable_icon, icon_state = new_cable.cable_icon_state))
 		cable_list += list(new_cable.name = new new_cable(src))
+	add_cable_functions()
 
-	// Assign the functions to each cable
+
+/// Assign a function to several cables (Leaving the rest as empty duds)
+/obj/item/contractor_bomb/proc/add_cable_functions()
 	var/list/cable_assignment = cable_list.Copy()
 	var/datum/contractor_wire/modified_cable
+
+	// 2 Explosive cables needed to detonate
 	for(var/loop in 1 to 2)
 		modified_cable = cable_list[pick_n_take(cable_assignment)]
 		modified_cable.explosive_cable = TRUE
+
+		//XANTODO DEBUG
+		to_chat(world, "[modified_cable.name] explosive cable")
+
+	// 1 Cable to defuse the bomb
 	modified_cable = cable_list[pick_n_take(cable_assignment)]
 	modified_cable.defusal_cable = TRUE
+
+	//XANTODO DEBUG
+	to_chat(world, "[modified_cable.name] defusal cable")
+
+	// 2 Cables that add time to the countdown
+	for(var/loop in 1 to 2)
+		modified_cable = cable_list[pick_n_take(cable_assignment)]
+		modified_cable.time_adder = TRUE
+
+		//XANTODO DEBUG
+		to_chat(world, "[modified_cable.name] time adder cable")
+
+	// 1 Cable that removes time from the countdown
+	modified_cable = cable_list[pick_n_take(cable_assignment)]
+	modified_cable.time_remover = TRUE
+
+	//XANTODO DEBUG
+	to_chat(world, "[modified_cable.name] time remover cable")
 
 /obj/item/contractor_bomb/Destroy()
 	cable_list = null
@@ -73,13 +109,14 @@
 			else
 				volume = 5
 		playsound(get_turf(src), beepsound, volume, FALSE)
-		next_beep = world.time + 10
+		next_beep = world.time + 1 SECONDS
 
 	if(active && ((detonation_timer <= world.time)))// || explode_now))
 		active = FALSE
 		update_appearance()
 		try_detonate(TRUE)
 
+// XANTODO : Currently sticking the bomb on someone by stealing C4 code, should be done automatically when the victim is kidnapped
 /obj/item/contractor_bomb/interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
 	if(!ishuman(interacting_with))
 		return ..()
@@ -116,10 +153,26 @@
 	plastic_overlay.layer = FLOAT_LAYER
 	owner.add_overlay(plastic_overlay)
 	to_chat(user, span_notice("You plant the bomb. Timer counting down from [det_time]."))
-	detonation_timer = world.time + (det_time * 10)
+	detonation_timer = world.time + det_time
 	next_beep = world.time
 	START_PROCESSING(SSobj, src)
 	return TRUE
+
+/// Sticking a fork in the bomb has very interesting results
+/obj/item/contractor_bomb/proc/get_forked()
+	bad_defusal = TRUE
+	ex_dev = 5
+	ex_heavy = 10
+	ex_light = 20
+	ex_flame = 20
+	detonation_timer = world.time + 30 SECONDS
+
+/// Sticking a plutonium core will make the bomb end the round
+/obj/item/contractor_bomb/proc/transfer_core(obj/item/nuke_core/core)
+	if(core.type != /obj/item/nuke_core) // No subtypes here
+		return
+	is_nuclear = TRUE
+	qdel(core)
 
 /// The bomb defusal minigame
 /obj/item/contractor_bomb/proc/perform_defusal(mob/surgeon)
@@ -137,15 +190,29 @@
 
 		if(bad_defusal)
 			try_detonate()
-			qdel(src)
 			return
 		else
 			bad_defusal = TRUE
+			ex_dev = 5
+			ex_heavy = 10
+			ex_light = 20
+			ex_flame = 20
+			detonation_timer = world.time + 30 SECONDS // No math here, you can either benefit or suffer from this
 
 	if(chosen_wire.defusal_cable)
 		//XANTODO DEBUG
 		to_chat(world, "defusal cable cut")
 		defuse()
+
+	if(chosen_wire.time_adder)
+		detonation_timer += 2 MINUTES
+		//XANTODO DEBUG
+		to_chat(world, "delay cable cut")
+
+	if(chosen_wire.time_remover)
+		detonation_timer = max((world.time + 30 SECONDS), (detonation_timer - 2 MINUTES)) // Tries to reduce the timer by 2 minutes but minimum 30 second fuse remaining
+		//XANTODO DEBUG
+		to_chat(world, "speedup cable cut")
 
 	chosen_wire.cable_icon_state = initial(chosen_wire.cable_icon_state) + "_cut"
 	chosen_wire.cut = TRUE
@@ -167,8 +234,23 @@
 	forceMove(get_turf(src))
 	update_appearance()
 
+/// Causes an explosion and eradicates our explodee from existence
 /obj/item/contractor_bomb/proc/try_detonate()
-	explosion(src, 10, 10, 10, 10)
+	if(is_nuclear)
+		nuclear_explosion()
+		return FALSE
+
+	var/obj/item/organ/brain/to_delete = locate(/obj/item/organ/brain) in owner.organs
+	if(to_delete)
+		to_delete.Remove(owner)
+		qdel(to_delete)
+
+	var/obj/item/organ/heart/cybernetic/anomalock/funny_organ = locate(/obj/item/organ/heart/cybernetic/anomalock) in owner.organs
+	if(funny_organ?.core)
+		new /obj/energy_ball(src)
+
+	explosion(src, ex_dev, ex_heavy, ex_light, ex_flame)
+	qdel(src)
 
 /obj/item/contractor_bomb/proc/seconds_remaining()
 	if(active)
@@ -176,6 +258,122 @@
 
 	else
 		. = det_time
+
+
+
+// XANTODO CHECK ON NUKING
+
+/**
+ * Begins the process of exploding the bomb.
+ * [proc/nuclear_explosion] -> [proc/actually_explode] -> [proc/really_actually_explode])
+ *
+ * Goes through a few timers and plays a cinematic.
+ */
+/obj/item/contractor_bomb/proc/nuclear_explosion()
+	update_appearance()
+	sound_to_playing_players('sound/announcer/alarm/nuke_alarm.ogg', 70)
+
+	SEND_GLOBAL_SIGNAL(COMSIG_GLOB_NUKE_DEVICE_DETONATING, src)
+
+	if(SSticker.HasRoundStarted())
+		SSticker.roundend_check_paused = TRUE
+	addtimer(CALLBACK(src, PROC_REF(actually_explode)), 10 SECONDS)
+	return TRUE
+
+#define NUKE_RADIUS 127
+
+/obj/item/contractor_bomb/proc/actually_explode()
+	var/detonation_status
+	var/turf/bomb_location = get_turf(src)
+	var/area/nuke_area = get_area(bomb_location)
+
+	// The nuke was on the station zlevel
+	if(bomb_location && is_station_level(bomb_location.z))
+		// Nuke missed, it's in space
+		if(istype(nuke_area, /area/space))
+			detonation_status = DETONATION_NEAR_MISSED_STATION
+
+		// Nuke missed, it'stoo far from the station
+		else if((bomb_location.x < (128 - NUKE_RADIUS)) \
+			|| (bomb_location.x > (128 + NUKE_RADIUS)) \
+			|| (bomb_location.y < (128 - NUKE_RADIUS)) \
+			|| (bomb_location.y > (128 + NUKE_RADIUS)))
+
+			detonation_status = DETONATION_NEAR_MISSED_STATION
+
+		// Confirming good hits, the nuke hit the station
+		else
+			SSlag_switch.set_measure(DISABLE_NON_OBSJOBS, TRUE)
+			detonation_status = DETONATION_HIT_STATION
+			GLOB.station_was_nuked = TRUE
+
+	// The nuke was on the syndicate base
+	else if(bomb_location.onSyndieBase())
+		detonation_status = DETONATION_HIT_SYNDIE_BASE
+
+	// The nuke was somewhere wacky - deep space, mining z, centcom? Whatever
+	else
+		detonation_status = DETONATION_MISSED_STATION
+
+	// Now go play the cinematic
+	GLOB.station_nuke_source = detonation_status
+	really_actually_explode(detonation_status)
+	SSticker.roundend_check_paused = FALSE
+
+	return detonation_status
+
+#undef NUKE_RADIUS
+
+/obj/item/contractor_bomb/proc/really_actually_explode(detonation_status)
+	var/cinematic = get_cinematic_type(detonation_status)
+	if(!isnull(cinematic))
+		play_cinematic(cinematic, world)
+
+	var/drop_level = TRUE
+	switch(detonation_status)
+		if(DETONATION_HIT_STATION)
+			nuke_effects(SSmapping.levels_by_trait(ZTRAIT_STATION))
+			drop_level = FALSE
+
+		if(DETONATION_HIT_SYNDIE_BASE)
+			priority_announce(
+				"Long Range Scanners indicate that the nuclear device has detonated on a previously unknown base, we assume \
+				the base to be of Syndicate Origin. Good work crew.",
+				"Nuclear Operations Command",
+			)
+
+			var/datum/turf_reservation/syndicate_base = SSmapping.lazy_load_template(LAZY_TEMPLATE_KEY_NUKIEBASE)
+			ASYNC
+				for(var/turf/turf as anything in syndicate_base.reserved_turfs)
+					for(var/mob/living/about_to_explode in turf)
+						nuke_gib(about_to_explode, src)
+					CHECK_TICK
+
+		else
+			priority_announce(
+				"Long Range Scanners indicate that the nuclear device has detonated; however seismic activity on the station \
+				is minimal. We anticipate that the device has not detonated on the station itself.",
+				"Nuclear Operations Command",
+			)
+
+	if(drop_level)
+		SSsecurity_level.set_level(SEC_LEVEL_RED)
+	qdel(src)
+	return TRUE
+
+/// Cause nuke effects to the passed z-levels.
+/obj/item/contractor_bomb/proc/nuke_effects(list/affected_z_levels)
+	INVOKE_ASYNC(GLOBAL_PROC, GLOBAL_PROC_REF(callback_on_everyone_on_z), affected_z_levels, CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(nuke_gib)), src)
+
+/// Gets what type of cinematic this nuke showcases depending on where we detonated.
+/obj/item/contractor_bomb/proc/get_cinematic_type(detonation_status)
+	if(isnull(detonation_status))
+		return /datum/cinematic/nuke/self_destruct_miss
+
+	return /datum/cinematic/nuke/self_destruct
+
+// XANTODO CHECK ON NUKING ^^^
+
 
 /datum/contractor_wire
 	var/name = "cable"
@@ -187,6 +385,10 @@
 	var/explosive_cable = FALSE
 	/// Cutting this cable will defuse the bomb
 	var/defusal_cable = FALSE
+	/// Cutting this cable will add time to the countdown
+	var/time_adder = FALSE
+	/// Cutting this cable will remove time from the countdown
+	var/time_remover = FALSE
 
 /datum/contractor_wire/white
 	name = "white cable"
@@ -219,3 +421,23 @@
 /datum/contractor_wire/orange
 	name = "orange cable"
 	cable_icon_state = "orange"
+
+/datum/contractor_wire/pink
+	name = "pink cable"
+	cable_icon_state = "pink"
+
+/datum/contractor_wire/darkblue
+	name = "darkblue cable"
+	cable_icon_state = "darkblue"
+
+
+// XANTODO BOX OF DEBUG AHAHAHAHA
+/obj/item/storage/box/XANDER/PopulateContents()
+	new /obj/item/debug/human_spawner(src)
+	new /obj/item/contractor_bomb(src)
+	new /obj/item/storage/backpack/duffelbag/syndie/surgery(src)
+	new /obj/item/storage/box/syndicate/contract_kit(src)
+	new /obj/item/wirecutters(src)
+	new /obj/item/kitchen/fork(src)
+	new /obj/item/nuke_core(src)
+
