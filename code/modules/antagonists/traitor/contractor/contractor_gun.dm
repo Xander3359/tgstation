@@ -32,7 +32,7 @@
 	AddComponent(/datum/component/scope)
 	AddElement(/datum/element/empprotection, EMP_PROTECT_ALL)
 	ammo_display = new()
-	ammo_display.RegisterSignal(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, TYPE_PROC_REF(/atom/movable/screen/gauss_ammo_display, on_gun_ammo_changed))
+	RegisterSignal(ammo_display, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, TYPE_PROC_REF(/atom/movable/screen/gauss_ammo_display, on_gun_ammo_changed))
 	var/matrix/offset = matrix()
 	offset.Translate(-16, 0)
 	transform = offset
