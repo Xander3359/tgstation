@@ -40,7 +40,6 @@
 		cable_list += list(new_cable.name = new new_cable(src))
 	add_cable_functions()
 
-
 /// Assign a function to several cables (Leaving the rest as empty duds)
 /obj/item/contractor_bomb/proc/add_cable_functions()
 	var/list/cable_assignment = cable_list.Copy()
@@ -237,8 +236,10 @@
 /// Causes an explosion and eradicates our explodee from existence
 /obj/item/contractor_bomb/proc/try_detonate()
 	if(is_nuclear)
-		nuclear_explosion()
-		return FALSE
+		ex_dev = 20
+		ex_heavy = 40
+		ex_light = 60
+		ex_flame = 60
 
 	var/obj/item/organ/brain/to_delete = locate(/obj/item/organ/brain) in owner.organs
 	if(to_delete)
@@ -249,7 +250,7 @@
 	if(funny_organ?.core)
 		new /obj/energy_ball(src)
 
-	explosion(src, ex_dev, ex_heavy, ex_light, ex_flame)
+	explosion(src, ex_dev, ex_heavy, ex_light, ex_flame, ignorecap = is_nuclear)
 	qdel(src)
 
 /obj/item/contractor_bomb/proc/seconds_remaining()
@@ -258,122 +259,6 @@
 
 	else
 		. = det_time
-
-
-
-// XANTODO CHECK ON NUKING
-
-/**
- * Begins the process of exploding the bomb.
- * [proc/nuclear_explosion] -> [proc/actually_explode] -> [proc/really_actually_explode])
- *
- * Goes through a few timers and plays a cinematic.
- */
-/obj/item/contractor_bomb/proc/nuclear_explosion()
-	update_appearance()
-	sound_to_playing_players('sound/announcer/alarm/nuke_alarm.ogg', 70)
-
-	SEND_GLOBAL_SIGNAL(COMSIG_GLOB_NUKE_DEVICE_DETONATING, src)
-
-	if(SSticker.HasRoundStarted())
-		SSticker.roundend_check_paused = TRUE
-	addtimer(CALLBACK(src, PROC_REF(actually_explode)), 10 SECONDS)
-	return TRUE
-
-#define NUKE_RADIUS 127
-
-/obj/item/contractor_bomb/proc/actually_explode()
-	var/detonation_status
-	var/turf/bomb_location = get_turf(src)
-	var/area/nuke_area = get_area(bomb_location)
-
-	// The nuke was on the station zlevel
-	if(bomb_location && is_station_level(bomb_location.z))
-		// Nuke missed, it's in space
-		if(istype(nuke_area, /area/space))
-			detonation_status = DETONATION_NEAR_MISSED_STATION
-
-		// Nuke missed, it'stoo far from the station
-		else if((bomb_location.x < (128 - NUKE_RADIUS)) \
-			|| (bomb_location.x > (128 + NUKE_RADIUS)) \
-			|| (bomb_location.y < (128 - NUKE_RADIUS)) \
-			|| (bomb_location.y > (128 + NUKE_RADIUS)))
-
-			detonation_status = DETONATION_NEAR_MISSED_STATION
-
-		// Confirming good hits, the nuke hit the station
-		else
-			SSlag_switch.set_measure(DISABLE_NON_OBSJOBS, TRUE)
-			detonation_status = DETONATION_HIT_STATION
-			GLOB.station_was_nuked = TRUE
-
-	// The nuke was on the syndicate base
-	else if(bomb_location.onSyndieBase())
-		detonation_status = DETONATION_HIT_SYNDIE_BASE
-
-	// The nuke was somewhere wacky - deep space, mining z, centcom? Whatever
-	else
-		detonation_status = DETONATION_MISSED_STATION
-
-	// Now go play the cinematic
-	GLOB.station_nuke_source = detonation_status
-	really_actually_explode(detonation_status)
-	SSticker.roundend_check_paused = FALSE
-
-	return detonation_status
-
-#undef NUKE_RADIUS
-
-/obj/item/contractor_bomb/proc/really_actually_explode(detonation_status)
-	var/cinematic = get_cinematic_type(detonation_status)
-	if(!isnull(cinematic))
-		play_cinematic(cinematic, world)
-
-	var/drop_level = TRUE
-	switch(detonation_status)
-		if(DETONATION_HIT_STATION)
-			nuke_effects(SSmapping.levels_by_trait(ZTRAIT_STATION))
-			drop_level = FALSE
-
-		if(DETONATION_HIT_SYNDIE_BASE)
-			priority_announce(
-				"Long Range Scanners indicate that the nuclear device has detonated on a previously unknown base, we assume \
-				the base to be of Syndicate Origin. Good work crew.",
-				"Nuclear Operations Command",
-			)
-
-			var/datum/turf_reservation/syndicate_base = SSmapping.lazy_load_template(LAZY_TEMPLATE_KEY_NUKIEBASE)
-			ASYNC
-				for(var/turf/turf as anything in syndicate_base.reserved_turfs)
-					for(var/mob/living/about_to_explode in turf)
-						nuke_gib(about_to_explode, src)
-					CHECK_TICK
-
-		else
-			priority_announce(
-				"Long Range Scanners indicate that the nuclear device has detonated; however seismic activity on the station \
-				is minimal. We anticipate that the device has not detonated on the station itself.",
-				"Nuclear Operations Command",
-			)
-
-	if(drop_level)
-		SSsecurity_level.set_level(SEC_LEVEL_RED)
-	qdel(src)
-	return TRUE
-
-/// Cause nuke effects to the passed z-levels.
-/obj/item/contractor_bomb/proc/nuke_effects(list/affected_z_levels)
-	INVOKE_ASYNC(GLOBAL_PROC, GLOBAL_PROC_REF(callback_on_everyone_on_z), affected_z_levels, CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(nuke_gib)), src)
-
-/// Gets what type of cinematic this nuke showcases depending on where we detonated.
-/obj/item/contractor_bomb/proc/get_cinematic_type(detonation_status)
-	if(isnull(detonation_status))
-		return /datum/cinematic/nuke/self_destruct_miss
-
-	return /datum/cinematic/nuke/self_destruct
-
-// XANTODO CHECK ON NUKING ^^^
-
 
 /datum/contractor_wire
 	var/name = "cable"

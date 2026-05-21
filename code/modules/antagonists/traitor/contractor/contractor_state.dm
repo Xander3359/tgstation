@@ -9,3 +9,5 @@
 	var/contract_TC_to_redeem = 0
 	// ///Reference to a contractor teammate, if one has been purchased.
 	var/datum/antagonist/traitor/contractor_support/contractor_teammate
+	/// List of currently active bombs that exist
+	var/list/bomb_implants = list()

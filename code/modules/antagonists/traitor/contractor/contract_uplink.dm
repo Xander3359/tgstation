@@ -89,20 +89,20 @@
 	handler.remove_uplink(src)
 
 /datum/component/uplink/contractor/ui_data(mob/user)
-	. = ..()
-	.["allow_dangerous_extract"] = allow_dangerous_extract()
+	var/list/data = ..()
+	data["allow_dangerous_extract"] = allow_dangerous_extract()
+	data["error"] = error
 
-/datum/component/uplink/contractor/ui_data(mob/user)
-	. = ..()
-	.["error"] = error
 	var/datum/antagonist/traitor/traitor = user?.mind?.has_antag_datum(/datum/antagonist/traitor)
 	var/datum/contractor_state/contract_state = traitor?.uplink_handler?.contractor_state
+	data["redeemable_tc"] = contract_state?.contract_TC_to_redeem || 0
 
-	.["redeemable_tc"] = contract_state?.contract_TC_to_redeem || 0
-	.["refresh_time"] = timeleft(handler.contract_refresh_timer)
+	data["refresh_time"] = timeleft(handler.contract_refresh_timer)
+
+	return data
 
 /datum/component/uplink/contractor/ui_static_data(mob/user)
-	. = ..()
+	var/list/data = ..()
 	var/list/bounty_data = list()
 	for(var/datum/syndicate_contract/bounty in handler.assigned_contracts)
 		var/mob/target = bounty.contract.target
@@ -110,9 +110,13 @@
 			continue
 		bounty_data += list(bounty.to_ui_data())
 
-	.["bounty_targets"] = bounty_data
-	.["high_bounty"] = handler.highest_payout
-	.["low_bounty"] = handler.lowest_payout
+	data["bounty_targets"] = bounty_data
+	data["high_bounty"] = handler.highest_payout
+	data["low_bounty"] = handler.lowest_payout
+
+	//data["bomb_list"] = handler.contractor_state.bomb_implants // XANTODO Figure out how to handle this?
+
+	return data
 
 /datum/component/uplink/contractor/proc/allow_dangerous_extract()
 	if(length(GLOB.joined_player_list) < handler.dangerous_extract_pop)
