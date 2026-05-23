@@ -75,6 +75,8 @@
 	. = ..()
 	user.revive(HEAL_ALL)
 	for(var/obj/item/implant/to_remove in user.implants)
+		if(to_remove.hidden_implant)
+			continue
 		to_remove.removed(user)
 
 	user.apply_status_effect(/datum/status_effect/eldritch_sleep)

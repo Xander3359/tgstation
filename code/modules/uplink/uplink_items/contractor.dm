@@ -93,3 +93,9 @@
 	desc = "ANNETODO"
 	cost = 0
 	item = /obj/item/mod/module/energy_net/scorpion_hook
+
+/datum/uplink_item/contractor/XANTODO/contractor_emag
+	name = "Cryptographic Sequencer++ Alpha Sigma Sigma" // ANNETODO
+	desc = "ANNETODO"
+	cost = 0
+	item = /obj/item/card/emag/doorjack/contractor

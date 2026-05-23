@@ -31,8 +31,13 @@
 		display_pain(patient, "You feel a serious pain as [surgeon] digs around inside you!")
 
 /datum/surgery_operation/basic/implant_removal/on_success(mob/living/patient, mob/living/surgeon, obj/item/tool, list/operation_args)
-	var/obj/item/implant/implant = LAZYACCESS(patient.implants, 1)
-	if(isnull(implant))
+	var/obj/item/implant/to_remove
+	for(var/obj/item/implant/implanted as anything in patient.implants)
+		if(implanted.hidden_implant)
+			continue
+		to_remove = implanted
+
+	if(isnull(to_remove))
 		display_results(
 			surgeon,
 			patient,
@@ -45,28 +50,28 @@
 	display_results(
 		surgeon,
 		patient,
-		span_notice("You successfully remove [implant] from [patient]."),
-		span_notice("[surgeon] successfully removes [implant] from [patient]!"),
+		span_notice("You successfully remove [to_remove] from [patient]."),
+		span_notice("[surgeon] successfully removes [to_remove] from [patient]!"),
 		span_notice("[surgeon] successfully removes something from [patient]!"),
 	)
-	display_pain(patient, "You can feel your [implant.name] pulled out of you!")
-	implant.removed(patient)
+	display_pain(patient, "You can feel your [to_remove.name] pulled out of you!")
+	to_remove.removed(patient)
 
-	if(QDELETED(implant))
+	if(QDELETED(to_remove))
 		return
 
 	var/obj/item/implantcase/case = get_case(surgeon, patient)
 	if(isnull(case))
 		return
 
-	case.imp = implant
-	implant.forceMove(case)
+	case.imp = to_remove
+	to_remove.forceMove(case)
 	case.update_appearance()
 	display_results(
 		surgeon,
 		patient,
-		span_notice("You place [implant] into [case]."),
-		span_notice("[surgeon] places [implant] into [case]."),
+		span_notice("You place [to_remove] into [case]."),
+		span_notice("[surgeon] places [to_remove] into [case]."),
 		span_notice("[surgeon] places something into [case]."),
 	)
 

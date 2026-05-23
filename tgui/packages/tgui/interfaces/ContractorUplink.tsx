@@ -32,6 +32,7 @@ enum EXTRACTION_TYPE {
 
 type ContractorUplinkData = UplinkData & {
   bounty_targets?: BountyTargets[];
+  bomb_list?: BombList[];
   // low of high-to-low range for bounty payouts
   high_bounty?: number;
   low_bounty?: number;
@@ -61,6 +62,11 @@ type BountyTargets = {
   dropoff_location_dangerous?: string;
   mugshot_icon?: string;
   contract_id?: string;
+};
+
+type BombList = {
+  name?: string;
+  active?: boolean;
 };
 
 type Tab = {
@@ -166,6 +172,10 @@ function TabView(props: TabViewProps) {
         />
       ),
     },
+    {
+      title: 'Bomb Menu',
+      content: <BombMenu />,
+    },
   ];
 
   const onTabSelect = (tab: number) => {
@@ -199,6 +209,16 @@ function TabView(props: TabViewProps) {
 function MissionInfo(props) {
   return <div>Mission Info</div>;
 }
+
+function BombMenu(props: PrimaryObjectiveMenuProps) {
+  const {
+    bounty_targets,
+    low_bounty = 0,
+    high_bounty = 30,
+    refresh_time = 0,
+  } = props;
+  const { act } = useBackend();
+  return <></>
 
 function BountyTargets(props: PrimaryObjectiveMenuProps) {
   const {

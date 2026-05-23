@@ -1,3 +1,4 @@
+// Pinpointer
 /obj/item/pinpointer/crew/contractor
 	name = "contractor pinpointer"
 	desc = "A handheld tracking device that locks onto certain signals. Ignores suit sensors, but is much less accurate."
@@ -36,3 +37,33 @@
 /obj/item/restraints/handcuffs/contractor/proc/on_succumb_attempt()
 	SIGNAL_HANDLER
 	return SUCCUMB_PREVENTED // Can't succumb if you are in cuffs, helps prevent victims griefing the contractor
+
+// Emag
+/obj/item/card/emag/doorjack/contractor
+	name = "contractor emag" // ANNETODO
+	desc = "funny emag for contractors"
+	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_emag.dmi'
+	icon_state = "contractor_emag"
+	charges = 5
+	max_charges = 5
+	airlock_breaker = FALSE
+
+/obj/item/card/emag/doorjack/contractor/use_charge(mob/user)
+	. = ..()
+	flick("contractor_emag_active", src)
+
+/obj/item/card/emag/doorjack/contractor/can_emag(atom/target, mob/user)
+	for(var/list/subtypelist in type_whitelist)
+		if(target.type in subtypelist)
+			if(charges <= 0) // This card only needs charges when used on doors
+				return FALSE
+	return TRUE
+
+// Contractor implant
+/obj/item/implanter/contractor
+	name = "implanter (contractor)"
+	imp_type = /obj/item/implant/explosive/contractor
+
+/obj/item/implant/explosive/contractor
+	actions_types = list(/datum/action/item_action/explosive_implant)
+	hidden_implant = TRUE

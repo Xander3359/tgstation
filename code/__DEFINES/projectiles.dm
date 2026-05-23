@@ -64,6 +64,8 @@
 #define CALIBER_JUNK "junk"
 /// The caliber used by the (gatfruit) peashooter
 #define CALIBER_PEA "pea"
+/// The caliber used in the naval cannon
+#define CALIBER_40MM_SHELL "40MM_shell"
 /// Caliber used by the contractor gaus rifle
 #define CALIBER_GAUSS "2mm FM (ferromagnetic)"
 

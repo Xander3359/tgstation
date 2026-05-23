@@ -28,6 +28,8 @@
 	var/implant_info = "No information available."
 	/// What's the extended lore for this implant that we might not care that much about, e.g. descriptions, flavortext?
 	var/implant_lore = "No information available."
+	/// If the implant cannot be removed via normal means (Only admins can remove it)
+	var/hidden_implant = FALSE
 
 /obj/item/implant/proc/activate()
 	SEND_SIGNAL(src, COMSIG_IMPLANT_ACTIVATED)
@@ -125,7 +127,7 @@
  * * silent - unused here
  * * special - Set to true if removed by admin panel, should bypass any side effects
  */
-/obj/item/implant/proc/removed(mob/living/source, silent = FALSE, special = 0)
+/obj/item/implant/proc/removed(mob/living/source, silent = FALSE, special = FALSE)
 	moveToNullspace()
 	imp_in = null
 	source.implants -= src
@@ -139,9 +141,9 @@
 	GLOB.tracked_implants -= src
 	return TRUE
 
-/obj/item/implant/Destroy()
+/obj/item/implant/Destroy(force)
 	if(imp_in)
-		removed(imp_in)
+		removed(imp_in, silent = TRUE, special = TRUE)
 	return ..()
 
 /**
