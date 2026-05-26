@@ -218,7 +218,7 @@ function BombMenu(props: PrimaryObjectiveMenuProps) {
     refresh_time = 0,
   } = props;
   const { act } = useBackend();
-  return <></>
+  return <></>;
 }
 
 function BountyTargets(props: PrimaryObjectiveMenuProps) {
@@ -356,5 +356,4 @@ function BountyRange(value: number, low: number, high: number): number {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
-}
 }
