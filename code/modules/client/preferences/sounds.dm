@@ -124,6 +124,12 @@
 	savefile_key = "sound_ai_vox"
 	savefile_identifier = PREFERENCE_PLAYER
 
+/// Controls dialogue line volume
+/datum/preference/numeric/volume/sound_dialogue
+	category = PREFERENCE_CATEGORY_GAME_PREFERENCES
+	savefile_key = "sound_dialogue"
+	savefile_identifier = PREFERENCE_PLAYER
+
 /// Choice of which ghost poll prompt to use
 /datum/preference/choiced/sound_ghost_poll_prompt
 	category = PREFERENCE_CATEGORY_GAME_PREFERENCES

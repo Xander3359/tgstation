@@ -13,13 +13,16 @@
 	var/zoom_method = ZOOM_METHOD_RIGHT_CLICK
 	/// if not null, an item action will be added. Redundant if the mode is ZOOM_METHOD_RIGHT_CLICK or ZOOM_METHOD_WIELD.
 	var/item_action_type
+	/// fullscreen icon to use for the scope overlay, defaults to "scope"
+	var/fullscreen_icon = "scope"
 
-/datum/component/scope/Initialize(range_modifier = 1, zoom_method = ZOOM_METHOD_RIGHT_CLICK, item_action_type)
+/datum/component/scope/Initialize(range_modifier = 1, zoom_method = ZOOM_METHOD_RIGHT_CLICK, item_action_type, fullscreen_icon = "scope")
 	if(!isitem(parent))
 		return COMPONENT_INCOMPATIBLE
 	src.range_modifier = range_modifier
 	src.zoom_method = zoom_method
 	src.item_action_type = item_action_type
+	src.fullscreen_icon = fullscreen_icon
 
 /datum/component/scope/Destroy(force)
 	if(tracker)
@@ -165,7 +168,7 @@
 		user.balloon_alert(user, "already zoomed!")
 		return
 	user.playsound_local(parent, 'sound/items/weapons/scope.ogg', 75, TRUE)
-	tracker = user.overlay_fullscreen("scope", /atom/movable/screen/fullscreen/cursor_catcher/scope, isgun(parent))
+	tracker = user.overlay_fullscreen(fullscreen_icon, /atom/movable/screen/fullscreen/cursor_catcher/scope, isgun(parent))
 	tracker.assign_to_mob(user, range_modifier)
 	tracker_owner_ckey = user.ckey
 	if(user.is_holding(parent))
@@ -221,7 +224,7 @@
 	REMOVE_TRAIT(user, TRAIT_USER_SCOPED, REF(src))
 
 	user.playsound_local(parent, 'sound/items/weapons/scope.ogg', 75, TRUE, frequency = -1)
-	user.clear_fullscreen("scope")
+	user.clear_fullscreen(fullscreen_icon)
 
 	// if the client has ended up in another mob, find that mob so we can fix their cursor
 	var/mob/true_user

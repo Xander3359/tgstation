@@ -15,3 +15,6 @@
 
 /// Called when the gauss rifle's ammo state changes (on shot fired or fire mode switch). Passes shots_left (remaining shots) and max_shots (shots at full charge).
 #define COMSIG_GAUSS_RIFLE_AMMO_CHANGED "gauss_rifle_ammo_changed"
+
+/// Fired on a contractor mob when they successfully kidnap a target. Passes (mob/living/victim).
+#define COMSIG_CONTRACTOR_KIDNAPPED "contractor_kidnapped"

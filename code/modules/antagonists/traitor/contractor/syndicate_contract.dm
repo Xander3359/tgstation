@@ -140,6 +140,8 @@
 		status = CONTRACT_STATUS_COMPLETE
 		if(traitor_data.uplink_handler.contractor_state.current_contract == src)
 			traitor_data.uplink_handler.contractor_state.current_contract = null
+		if(pod_owner)
+			SEND_SIGNAL(pod_owner, COMSIG_CONTRACTOR_KIDNAPPED, person_sent)
 	else
 		status = CONTRACT_STATUS_ABORTED // Sending a target that wasn't even yours is as good as just aborting it
 		if(traitor_data.uplink_handler.contractor_state.current_contract == src)

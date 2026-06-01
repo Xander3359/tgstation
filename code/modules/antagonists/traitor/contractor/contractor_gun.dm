@@ -29,7 +29,8 @@
 
 /obj/item/gun/energy/gauss_rifle/Initialize(mapload)
 	. = ..()
-	AddComponent(/datum/component/scope)
+	AddComponent(/datum/component/scope, fullscreen_icon = "contractor_scope")
+	AddComponent(/datum/component/dialogue_system/contractor_gun)
 	AddElement(/datum/element/empprotection, EMP_PROTECT_ALL)
 	ammo_display = new()
 	RegisterSignal(ammo_display, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, TYPE_PROC_REF(/atom/movable/screen/gauss_ammo_display, on_gun_ammo_changed))
