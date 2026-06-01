@@ -6,14 +6,14 @@
 	var/vary = FALSE
 	/// Assigned by the owning dialogue component instance.
 	var/channel = 0
+	/// Estimated end time for the currently playing line on each dialogue channel.
+	var/static/list/channel_busy_until = list()
 	/// Volume preference for dialogue lines.
 	var/datum/preference/numeric/volume/volume_preference = /datum/preference/numeric/volume/sound_dialogue
 	/// Multiplier on sound length to determine line cooldown.
 	var/length_multiplier = 1.5
 	/// Flat delay added after the length-based cooldown.
-	var/bonus_delay = 2 SECONDS
-	/// Cached line length from rust-g/SSsounds.
-	var/cached_sound_length = 1 SECONDS
+	var/bonus_delay = 0
 	COOLDOWN_DECLARE(line_cooldown)
 
 /// Plays sound only to the specified player.
@@ -45,20 +45,14 @@
 	if(!isnull(vary))
 		src.vary = vary
 
-	var/sound_len = SSsounds.get_sound_length(sound_path)
-	if(!sound_len)
-		stack_trace("dialogue_sound failed to get sound length for [sound_path]. Falling back to 1 second.")
-	else
-		cached_sound_length = sound_len
-
 /datum/dialogue_sound/proc/delayed_play(mob/player, atom/location, delay)
 	addtimer(CALLBACK(src, PROC_REF(play), player, location), delay, TIMER_UNIQUE)
 
 /datum/dialogue_sound/proc/get_sound_length()
-	return cached_sound_length
+	return SSsounds.get_sound_length(sound_path)
 
 /datum/dialogue_sound/proc/mark_cooldown()
-	COOLDOWN_START(src, line_cooldown, max(round((cached_sound_length * length_multiplier) + bonus_delay, 1), 1))
+	COOLDOWN_START(src, line_cooldown, max(round((get_sound_length() * length_multiplier) + bonus_delay, 1), 1))
 
 /datum/dialogue_sound/proc/can_play(mob/player, atom/location)
 	if(!location)
@@ -71,6 +65,49 @@
 	if(player && channel)
 		player.stop_sound_channel(channel)
 
+/datum/dialogue_sound/proc/is_channel_busy()
+	if(!channel)
+		return FALSE
+	return world.time < (channel_busy_until["[channel]"] || 0)
+
+/datum/dialogue_sound/proc/mark_channel_busy()
+	if(!channel)
+		return
+	channel_busy_until["[channel]"] = world.time + get_sound_length()
+
+/datum/dialogue_sound/proc/debug_to_chat(mob/player, message, is_warning = FALSE)
+#ifdef TESTING
+	if(!player)
+		return
+	if(is_warning)
+		to_chat(player, span_warning(message))
+	else
+		to_chat(player, span_notice(message))
+#endif
+
+/datum/dialogue_sound/proc/fade_interrupting_line(mob/player)
+	if(!player || !channel)
+		return 0
+
+	var/fade_duration = 1 SECONDS
+	debug_to_chat(player, "[src]: fade start on channel [channel], duration [fade_duration] ticks.")
+	var/fade_steps = 5
+	var/step_delay = max(round(fade_duration / fade_steps, 1), 1)
+	for(var/step in 1 to fade_steps)
+		var/step_volume = round(volume * (1 - (step / fade_steps)), 1)
+		addtimer(CALLBACK(player, TYPE_PROC_REF(/mob, set_sound_channel_volume), channel, step_volume), step * step_delay)
+
+	addtimer(CALLBACK(player, TYPE_PROC_REF(/mob, stop_sound_channel), channel), fade_duration)
+	debug_to_chat(player, "[src]: stop queued for channel [channel] at +[fade_duration] ticks.")
+	return fade_duration
+
+/datum/dialogue_sound/proc/play_after_fade(mob/player, atom/location)
+	debug_to_chat(player, "[src]: play_after_fade fired on channel [channel] at world.time=[world.time].")
+	if(!can_play(player, location))
+		debug_to_chat(player, "[src]: play_after_fade aborted (can_play returned FALSE).", TRUE)
+		return FALSE
+	return execute_playback(player, location)
+
 /datum/dialogue_sound/proc/emit_sound(mob/player, atom/location)
 	playsound(location, sound_path, volume, vary, channel = channel, volume_preference = volume_preference)
 
@@ -82,13 +119,27 @@
 /datum/dialogue_sound/local/emit_sound(mob/player, atom/location)
 	player.playsound_local(location, sound_path, volume, vary, channel = channel, volume_preference = volume_preference)
 
-/datum/dialogue_sound/proc/play(mob/player, atom/location)
-	if(!can_play(player, location))
-		return FALSE
-	prepare_playback(player)
+/datum/dialogue_sound/proc/execute_playback(mob/player, atom/location, should_prepare = TRUE)
+	if(should_prepare)
+		prepare_playback(player)
 	emit_sound(player, location)
 	mark_cooldown()
+	mark_channel_busy()
 	return TRUE
+
+/datum/dialogue_sound/proc/play(mob/player, atom/location)
+	if(!can_play(player, location))
+		debug_to_chat(player, "[src]: play aborted (can_play returned FALSE).", TRUE)
+		return FALSE
+	if(is_channel_busy())
+		var/fade_duration = fade_interrupting_line(player)
+		if(!fade_duration)
+			fade_duration = 1 SECONDS
+		debug_to_chat(player, "[src]: channel busy, scheduling play_after_fade in [fade_duration + 1] ticks.")
+		addtimer(CALLBACK(src, PROC_REF(play_after_fade), player, location), fade_duration + 1, TIMER_UNIQUE)
+		return TRUE
+	debug_to_chat(player, "[src]: channel free, executing playback now.")
+	return execute_playback(player, location)
 
 /datum/component/dialogue_system
 	dupe_mode = COMPONENT_DUPE_UNIQUE
@@ -149,6 +200,12 @@
 	apply_channel_to_sound_list(pickup_sounds)
 	apply_channel_to_sound_list(dropped_sounds)
 
+/datum/component/dialogue_system/proc/get_available_sounds(list/source_sounds, mob/player, atom/location)
+	. = list()
+	for(var/datum/dialogue_sound/sound as anything in source_sounds)
+		if(sound.can_play(player, location))
+			. += sound
+
 /datum/component/dialogue_system/RegisterWithParent()
 	if(length(pickup_sounds))
 		RegisterSignal(parent, COMSIG_ITEM_PICKUP, PROC_REF(on_pickup))
@@ -161,16 +218,14 @@
 /datum/component/dialogue_system/proc/on_pickup(obj/item/source, mob/taker)
 	SIGNAL_HANDLER
 
-	if(length(pickup_sounds))
-		var/datum/dialogue_sound/sound = pick(pickup_sounds)
-		sound.play(taker, get_turf(taker))
+	var/datum/dialogue_sound/sound = pick(get_available_sounds(pickup_sounds, taker, parent))
+	sound?.play(taker, parent)
 
 /datum/component/dialogue_system/proc/on_dropped(obj/item/source, mob/user)
 	SIGNAL_HANDLER
 
-	if(length(dropped_sounds))
-		var/datum/dialogue_sound/sound = pick(dropped_sounds)
-		sound.play(user, get_turf(user))
+	var/datum/dialogue_sound/sound = pick(get_available_sounds(dropped_sounds, user, parent))
+	sound?.play(user, parent)
 
 /// Raijin Horizon Gauss Rifle dialogue component.
 /datum/component/dialogue_system/contractor_gun
@@ -238,8 +293,5 @@
 
 	var/victim_rank = victim?.mind?.assigned_role?.title
 	var/list/sounds_for_rank = kidnapped_sounds_by_rank?[victim_rank]
-	if(!length(sounds_for_rank))
-		return
-
-	var/datum/dialogue_sound/sound = pick(sounds_for_rank)
-	sound.delayed_play(victim, get_turf(victim), 3 SECONDS)
+	var/datum/dialogue_sound/sound = pick(get_available_sounds(sounds_for_rank, victim, parent))
+	sound?.delayed_play(victim, parent, 3 SECONDS)
