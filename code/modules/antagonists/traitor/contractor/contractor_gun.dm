@@ -58,6 +58,8 @@
 
 /obj/item/gun/energy/gauss_rifle/select_fire(mob/living/user)
 	. = ..()
+	var/obj/item/ammo_casing/energy/current_ammo = ammo_type[select]
+	SEND_SIGNAL(src, COMSIG_GAUSS_RIFLE_MODE_CHANGED, user, current_ammo)
 	emit_ammo_signal()
 
 /obj/item/gun/energy/gauss_rifle/proc/emit_ammo_signal()

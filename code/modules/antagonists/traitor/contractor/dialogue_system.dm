@@ -232,6 +232,8 @@
 	dupe_mode = COMPONENT_DUPE_UNIQUE
 	/// Job-title keyed kidnapped sound pools (e.g. JOB_HEAD_OF_PERSONNEL => list(...)).
 	var/list/kidnapped_sounds_by_rank
+	/// Ammo-casing-type keyed mode swap sound pools.
+	var/list/mode_swap_sounds_by_ammo_type
 	/// Weakref to the mob currently holding the parent, used to register/unregister kidnap signals.
 	var/datum/weakref/current_holder_ref
 
@@ -257,11 +259,56 @@
 			new /datum/dialogue_sound/local('sound/items/weapons/contractor_gun/kidnapped/hop/kidnapped_3.ogg'),
 		),
 	)
+	mode_swap_sounds_by_ammo_type = list(
+		/obj/item/ammo_casing/energy/gauss = list(
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 1_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 1_take3.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 2_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 3_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 4_take1.ogg'),
+		),
+		/obj/item/ammo_casing/energy/gauss/emp = list(
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 2_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 3_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 3_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 4_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 4_take2.ogg'),
+		),
+		/obj/item/ammo_casing/energy/gauss/gyro = list(
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 2_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 3_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 4_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 4_take2.ogg'),
+		),
+		/obj/item/ammo_casing/energy/gauss/antimatter = list(
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 2_take4.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 4_take3.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 4_take4.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 4_take5.ogg'),
+		),
+		/obj/item/ammo_casing/energy/gauss/thermite = list(
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 2_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 3_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 3_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 4_take2.ogg'),
+		),
+	)
 
 /datum/component/dialogue_system/contractor_gun/apply_dialogue_channel()
 	. = ..()
 	for(var/list/sounds_for_rank as anything in kidnapped_sounds_by_rank)
 		apply_channel_to_sound_list(sounds_for_rank)
+	for(var/list/sounds_for_mode as anything in mode_swap_sounds_by_ammo_type)
+		apply_channel_to_sound_list(sounds_for_mode)
+
+/datum/component/dialogue_system/contractor_gun/RegisterWithParent()
+	. = ..()
+	RegisterSignal(parent, COMSIG_GAUSS_RIFLE_MODE_CHANGED, PROC_REF(on_mode_changed))
 
 /datum/component/dialogue_system/contractor_gun/Destroy(force)
 	_unregister_holder()
@@ -275,6 +322,7 @@
 
 /datum/component/dialogue_system/contractor_gun/UnregisterFromParent()
 	_unregister_holder()
+	UnregisterSignal(parent, COMSIG_GAUSS_RIFLE_MODE_CHANGED)
 	return ..()
 
 /datum/component/dialogue_system/contractor_gun/on_pickup(obj/item/source, mob/taker)
@@ -295,3 +343,10 @@
 	var/list/sounds_for_rank = kidnapped_sounds_by_rank?[victim_rank]
 	var/datum/dialogue_sound/sound = pick(get_available_sounds(sounds_for_rank, victim, parent))
 	sound?.delayed_play(victim, parent, 3 SECONDS)
+
+/datum/component/dialogue_system/contractor_gun/proc/on_mode_changed(obj/item/gun/energy/gauss_rifle/source, mob/living/user, obj/item/ammo_casing/energy/new_mode)
+	SIGNAL_HANDLER
+
+	var/list/sounds_for_mode = mode_swap_sounds_by_ammo_type?[new_mode.type]
+	var/datum/dialogue_sound/sound = pick(get_available_sounds(sounds_for_mode, user, parent))
+	sound?.play(user, parent)
