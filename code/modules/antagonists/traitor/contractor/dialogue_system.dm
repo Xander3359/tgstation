@@ -8,10 +8,14 @@
 	var/channel = 0
 	/// Estimated end time for the currently playing line on each dialogue channel.
 	var/static/list/channel_busy_until = list()
+	/// Priority of the currently active line per dialogue channel.
+	var/static/list/channel_active_priority = list()
 	/// Monotonic token per channel used to discard stale delayed play-after-fade callbacks.
 	var/static/list/channel_replay_nonce = list()
 	/// Volume preference for dialogue lines.
 	var/datum/preference/numeric/volume/volume_preference = /datum/preference/numeric/volume/sound_dialogue
+	/// Priority used when contesting a busy channel. Higher values can interrupt lower values.
+	var/priority = 0
 	/// Multiplier on sound length to determine line cooldown.
 	var/length_multiplier = 1.5
 	/// Flat delay added after the length-based cooldown.
@@ -37,7 +41,7 @@
 	length_multiplier = 1.3
 	bonus_delay = 5
 
-/datum/dialogue_sound/New(sound_path, volume, vary)
+/datum/dialogue_sound/New(sound_path, volume, vary, priority)
 	. = ..()
 	if(!sound_path)
 		CRASH("Must provide a sound path to dialogue sound!")
@@ -46,15 +50,22 @@
 		src.volume = volume
 	if(!isnull(vary))
 		src.vary = vary
+	if(!isnull(priority))
+		src.priority = priority
 
 /datum/dialogue_sound/proc/delayed_play(mob/player, atom/location, delay)
 	addtimer(CALLBACK(src, PROC_REF(play), player, location), delay, TIMER_UNIQUE)
 
 /datum/dialogue_sound/proc/get_sound_length()
-	return SSsounds.get_sound_length(sound_path)
+	var/sound_length = SSsounds.get_sound_length(sound_path)
+	debug_to_chat(usr, "Sound length for [sound_path] is [sound_length].")
+	if(!sound_length)
+		CRASH("Dialogue sound has invalid sound length (0 or negative): [sound_path]")
+	return sound_length
 
 /datum/dialogue_sound/proc/mark_cooldown()
 	COOLDOWN_START(src, line_cooldown, max(round((get_sound_length() * length_multiplier) + bonus_delay, 1), 1))
+	debug_to_chat(usr, "[src]: cooldown started for [line_cooldown] ticks (length [get_sound_length()] * multiplier [length_multiplier] + bonus [bonus_delay]).")
 
 /datum/dialogue_sound/proc/can_play(mob/player, atom/location)
 	if(!location)
@@ -76,6 +87,7 @@
 	if(!channel)
 		return
 	channel_busy_until["[channel]"] = world.time + get_sound_length()
+	channel_active_priority["[channel]"] = priority
 
 /datum/dialogue_sound/proc/debug_to_chat(mob/player, message, is_warning = FALSE)
 #ifdef TESTING
@@ -137,9 +149,11 @@
 		debug_to_chat(player, "[src]: play aborted (can_play returned FALSE).", TRUE)
 		return FALSE
 	if(is_channel_busy())
+		var/current_priority = (channel_active_priority["[channel]"] || 0)
+		if(priority <= current_priority)
+			debug_to_chat(player, "[src]: play aborted (channel busy; priority [priority] <= active [current_priority]).", TRUE)
+			return FALSE
 		var/fade_duration = fade_interrupting_line(player)
-		if(!fade_duration)
-			fade_duration = 1 SECONDS
 		debug_to_chat(player, "[src]: channel busy, scheduling play_after_fade in [fade_duration + 1] ticks.")
 		addtimer(CALLBACK(src, PROC_REF(play_after_fade), player, location), fade_duration + 1, TIMER_UNIQUE)
 		return TRUE
@@ -158,6 +172,8 @@
 	var/list/pickup_sounds
 	/// Sounds played when the parent is dropped.
 	var/list/dropped_sounds
+	/// Stoppable timer id for a pending delayed dropped line.
+	var/drop_line_timerid
 
 /datum/component/dialogue_system/Initialize()
 	if(!isitem(parent))
@@ -167,6 +183,9 @@
 	apply_dialogue_channel()
 
 /datum/component/dialogue_system/Destroy(force)
+	if(drop_line_timerid)
+		deltimer(drop_line_timerid)
+		drop_line_timerid = null
 	release_dialogue_channel()
 	return ..()
 
@@ -226,15 +245,35 @@
 
 /datum/component/dialogue_system/proc/on_pickup(obj/item/source, mob/taker)
 	SIGNAL_HANDLER
+	if(drop_line_timerid)
+		deltimer(drop_line_timerid)
+		drop_line_timerid = null
+	addtimer(CALLBACK(src, PROC_REF(try_play_pickup_line), taker), 1)
 
+/datum/component/dialogue_system/proc/try_play_pickup_line(mob/taker)
+	if(!taker?.is_holding(parent))
+		return
 	var/datum/dialogue_sound/sound = pick(get_available_sounds(pickup_sounds, taker, parent))
 	sound?.play(taker, parent)
 
 /datum/component/dialogue_system/proc/on_dropped(obj/item/source, mob/user)
 	SIGNAL_HANDLER
+	var/atom/atom_parent = parent
 
-	var/datum/dialogue_sound/sound = pick(get_available_sounds(dropped_sounds, user, parent))
-	sound?.play(user, parent)
+	if(!isturf(atom_parent.loc))
+		return
+	if(drop_line_timerid)
+		deltimer(drop_line_timerid)
+	drop_line_timerid = addtimer(CALLBACK(src, PROC_REF(try_play_dropped_line), user), 5 SECONDS, TIMER_STOPPABLE | TIMER_UNIQUE)
+
+/datum/component/dialogue_system/proc/try_play_dropped_line(mob/user)
+	drop_line_timerid = null
+	var/atom/atom_parent = parent
+	if(!isturf(atom_parent.loc))
+		return
+
+	var/datum/dialogue_sound/sound = pick(get_available_sounds(dropped_sounds, user, atom_parent))
+	sound?.play(user, atom_parent)
 
 /// Raijin Horizon Gauss Rifle dialogue component.
 /datum/component/dialogue_system/contractor_gun
@@ -263,9 +302,9 @@
 	)
 	kidnapped_sounds_by_rank = list(
 		JOB_HEAD_OF_PERSONNEL = list(
-			new /datum/dialogue_sound/local('sound/items/weapons/contractor_gun/kidnapped/hop/kidnapped_1.ogg'),
-			new /datum/dialogue_sound/local('sound/items/weapons/contractor_gun/kidnapped/hop/kidnapped_2.ogg'),
-			new /datum/dialogue_sound/local('sound/items/weapons/contractor_gun/kidnapped/hop/kidnapped_3.ogg'),
+			new /datum/dialogue_sound/local('sound/items/weapons/contractor_gun/kidnapped/hop/kidnapped_1.ogg', priority = 10),
+			new /datum/dialogue_sound/local('sound/items/weapons/contractor_gun/kidnapped/hop/kidnapped_2.ogg', priority = 10),
+			new /datum/dialogue_sound/local('sound/items/weapons/contractor_gun/kidnapped/hop/kidnapped_3.ogg', priority = 10),
 		),
 	)
 	mode_swap_sounds_by_ammo_type = list(

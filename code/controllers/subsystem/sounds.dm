@@ -247,6 +247,8 @@ SUBSYSTEM_DEF(sounds)
 
 	var/ret = RUSTG_CALL(RUST_G, "sound_len")(file_path)
 	var/as_num = text2num(ret)
+	if(!isnum(as_num))
+		CRASH("rustg_sound_length error: [ret]")
 	if(isnull(ret))
 		. = 0
 		CRASH("rustg_sound_length error: [ret]")
