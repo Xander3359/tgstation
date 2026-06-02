@@ -116,3 +116,10 @@ export const sound_ai_vox: Feature<number> = {
   description: 'Volume of vocal AI announcements (also known as "VOX").',
   component: FeatureSliderInput,
 };
+
+export const sound_dialogue: Feature<number> = {
+  name: 'Dialogue volume',
+  category: 'SOUND',
+  description: 'Volume of dialogue voice lines.',
+  component: FeatureSliderInput,
+};
