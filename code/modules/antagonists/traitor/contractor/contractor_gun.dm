@@ -12,7 +12,7 @@
 	worn_icon_state = "contractor_gun_worn_back"
 	weapon_weight = WEAPON_HEAVY
 	w_class = WEIGHT_CLASS_BULKY
-	fire_delay = 10
+	fire_delay = 2 SECONDS
 	fire_mode_switch_sound = SFX_FIRE_MODE_SWITCH
 	slot_flags = ITEM_SLOT_BACK
 	automatic_charge_overlays = FALSE
@@ -29,7 +29,7 @@
 
 /obj/item/gun/energy/gauss_rifle/Initialize(mapload)
 	. = ..()
-	AddComponent(/datum/component/scope, fullscreen_icon = "contractor_scope")
+	AddComponent(/datum/component/scope, range_modifier = 4, fullscreen_icon = "contractor_scope")
 	AddComponent(/datum/component/dialogue_system/contractor_gun)
 	AddElement(/datum/element/empprotection, EMP_PROTECT_ALL)
 	ammo_display = new()
