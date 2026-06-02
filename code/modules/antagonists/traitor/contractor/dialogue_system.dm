@@ -8,6 +8,8 @@
 	var/channel = 0
 	/// Estimated end time for the currently playing line on each dialogue channel.
 	var/static/list/channel_busy_until = list()
+	/// Monotonic token per channel used to discard stale delayed play-after-fade callbacks.
+	var/static/list/channel_replay_nonce = list()
 	/// Volume preference for dialogue lines.
 	var/datum/preference/numeric/volume/volume_preference = /datum/preference/numeric/volume/sound_dialogue
 	/// Multiplier on sound length to determine line cooldown.
@@ -101,8 +103,11 @@
 	debug_to_chat(player, "[src]: stop queued for channel [channel] at +[fade_duration] ticks.")
 	return fade_duration
 
-/datum/dialogue_sound/proc/play_after_fade(mob/player, atom/location)
+/datum/dialogue_sound/proc/play_after_fade(mob/player, atom/location, expected_nonce)
 	debug_to_chat(player, "[src]: play_after_fade fired on channel [channel] at world.time=[world.time].")
+	if(channel && channel_replay_nonce["[channel]"] != expected_nonce)
+		debug_to_chat(player, "[src]: play_after_fade aborted (stale deferred playback).", TRUE)
+		return FALSE
 	if(!can_play(player, location))
 		debug_to_chat(player, "[src]: play_after_fade aborted (can_play returned FALSE).", TRUE)
 		return FALSE
@@ -194,6 +199,10 @@
 	for(var/datum/dialogue_sound/sound as anything in sounds)
 		sound.channel = dialogue_channel
 
+/datum/component/dialogue_system/proc/apply_channel_to_sound_pool_list(list/sound_pools)
+	for(var/list/sounds as anything in sound_pools)
+		apply_channel_to_sound_list(sounds)
+
 /datum/component/dialogue_system/proc/apply_dialogue_channel()
 	if(!dialogue_channel)
 		return
@@ -261,50 +270,48 @@
 	)
 	mode_swap_sounds_by_ammo_type = list(
 		/obj/item/ammo_casing/energy/gauss = list(
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 1_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 1_take2.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 1_take3.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 2_take2.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 3_take2.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/Mode Swap Normal 4_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/mode_swap_normal_1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/mode_swap_normal_1_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/mode_swap_normal_1_take3.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/mode_swap_normal_2_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/mode_swap_normal_3_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_normal/mode_swap_normal_4_take1.ogg'),
 		),
 		/obj/item/ammo_casing/energy/gauss/emp = list(
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 1_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 2_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 3_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 3_take2.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 4_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/Mode Swap EMP 4_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/mode_swap_emp_1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/mode_swap_emp_2_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/mode_swap_emp_3_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/mode_swap_emp_3_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/mode_swap_emp_4_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_emp/mode_swap_emp_4_take2.ogg'),
 		),
 		/obj/item/ammo_casing/energy/gauss/gyro = list(
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 1_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 2_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 3_take2.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 4_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/Mode Swap Gyre 4_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/mode_swap_gyre_1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/mode_swap_gyre_2_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/mode_swap_gyre_3_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/mode_swap_gyre_4_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_gyre/mode_swap_gyre_4_take2.ogg'),
 		),
 		/obj/item/ammo_casing/energy/gauss/antimatter = list(
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 1_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 2_take4.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 4_take3.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 4_take4.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/Mode Swap Anti 4_take5.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/mode_swap_anti_1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/mode_swap_anti_2_take4.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/mode_swap_anti_4_take3.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/mode_swap_anti_4_take4.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_anti/mode_swap_anti_4_take5.ogg'),
 		),
 		/obj/item/ammo_casing/energy/gauss/thermite = list(
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 1_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 2_take2.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 3_take1.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 3_take2.ogg'),
-			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/Mode Swap Thermal 4_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/mode_swap_thermal_1_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/mode_swap_thermal_2_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/mode_swap_thermal_3_take1.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/mode_swap_thermal_3_take2.ogg'),
+			new /datum/dialogue_sound('sound/items/weapons/contractor_gun/mode_swap_thermal/mode_swap_thermal_4_take2.ogg'),
 		),
 	)
 
 /datum/component/dialogue_system/contractor_gun/apply_dialogue_channel()
 	. = ..()
-	for(var/list/sounds_for_rank as anything in kidnapped_sounds_by_rank)
-		apply_channel_to_sound_list(sounds_for_rank)
-	for(var/list/sounds_for_mode as anything in mode_swap_sounds_by_ammo_type)
-		apply_channel_to_sound_list(sounds_for_mode)
+	apply_channel_to_sound_pool_list(assoc_to_values(kidnapped_sounds_by_rank))
+	apply_channel_to_sound_pool_list(assoc_to_values(mode_swap_sounds_by_ammo_type))
 
 /datum/component/dialogue_system/contractor_gun/RegisterWithParent()
 	. = ..()
