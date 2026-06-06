@@ -6,6 +6,10 @@
 	var/vary = FALSE
 	/// Assigned by the owning dialogue component instance.
 	var/channel = 0
+	/// Relative selection chance used by the dialogue system.
+	var/chance = 100
+	/// If TRUE, the datum requires a valid sound path to be constructed.
+	var/requires_sound_path = TRUE
 	/// Estimated end time for the currently playing line on each dialogue channel.
 	var/static/list/channel_busy_until = list()
 	/// Priority of the currently active line per dialogue channel.
@@ -21,6 +25,10 @@
 	/// Flat delay added after the length-based cooldown.
 	var/bonus_delay = 0
 	COOLDOWN_DECLARE(line_cooldown)
+
+/// A silent dialogue outcome used to represent RNG-based no-line results.
+/datum/dialogue_sound/no_sound
+	requires_sound_path = FALSE
 
 /// Plays sound only to the specified player.
 /datum/dialogue_sound/local
@@ -41,9 +49,9 @@
 	length_multiplier = 1.3
 	bonus_delay = 5
 
-/datum/dialogue_sound/New(sound_path, volume, vary, priority)
+/datum/dialogue_sound/New(sound_path, volume, vary, priority, chance)
 	. = ..()
-	if(!sound_path)
+	if(requires_sound_path && !sound_path)
 		CRASH("Must provide a sound path to dialogue sound!")
 	src.sound_path = sound_path
 	if(!isnull(volume))
@@ -52,6 +60,8 @@
 		src.vary = vary
 	if(!isnull(priority))
 		src.priority = priority
+	if(!isnull(chance))
+		src.chance = chance
 
 /datum/dialogue_sound/proc/delayed_play(mob/player, atom/location, delay)
 	addtimer(CALLBACK(src, PROC_REF(play), player, location), delay, TIMER_UNIQUE)
@@ -144,6 +154,24 @@
 	mark_channel_busy()
 	return TRUE
 
+/datum/dialogue_sound/no_sound/can_play(mob/player, atom/location)
+	return !!location
+
+/datum/dialogue_sound/no_sound/is_channel_busy()
+	return FALSE
+
+/datum/dialogue_sound/no_sound/prepare_playback(mob/player)
+	return
+
+/datum/dialogue_sound/no_sound/emit_sound(mob/player, atom/location)
+	return
+
+/datum/dialogue_sound/no_sound/mark_cooldown()
+	return
+
+/datum/dialogue_sound/no_sound/mark_channel_busy()
+	return
+
 /datum/dialogue_sound/proc/play(mob/player, atom/location)
 	if(!can_play(player, location))
 		debug_to_chat(player, "[src]: play aborted (can_play returned FALSE).", TRUE)
@@ -234,6 +262,15 @@
 		if(sound.can_play(player, location))
 			. += sound
 
+/datum/component/dialogue_system/proc/pick_available_sound(list/source_sounds, mob/player, atom/location)
+	var/list/available_sounds = get_available_sounds(source_sounds, player, location)
+	if(!length(available_sounds))
+		return null
+	var/list/weighted_sounds = list()
+	for(var/datum/dialogue_sound/sound as anything in available_sounds)
+		weighted_sounds[sound] = max(sound.chance, 0)
+	return pick_weight(weighted_sounds)
+
 /datum/component/dialogue_system/RegisterWithParent()
 	if(length(pickup_sounds))
 		RegisterSignal(parent, COMSIG_ITEM_PICKUP, PROC_REF(on_pickup))
@@ -253,7 +290,7 @@
 /datum/component/dialogue_system/proc/try_play_pickup_line(mob/taker)
 	if(!taker?.is_holding(parent))
 		return
-	var/datum/dialogue_sound/sound = pick(get_available_sounds(pickup_sounds, taker, parent))
+	var/datum/dialogue_sound/sound = pick_available_sound(pickup_sounds, taker, parent)
 	sound?.play(taker, parent)
 
 /datum/component/dialogue_system/proc/on_dropped(obj/item/source, mob/user)
@@ -272,7 +309,7 @@
 	if(!isturf(atom_parent.loc))
 		return
 
-	var/datum/dialogue_sound/sound = pick(get_available_sounds(dropped_sounds, user, atom_parent))
+	var/datum/dialogue_sound/sound = pick_available_sound(dropped_sounds, user, atom_parent)
 	sound?.play(user, atom_parent)
 
 /// Raijin Horizon Gauss Rifle dialogue component.
@@ -387,12 +424,12 @@
 
 	var/victim_rank = victim?.mind?.assigned_role?.title
 	var/list/sounds_for_rank = kidnapped_sounds_by_rank?[victim_rank]
-	var/datum/dialogue_sound/sound = pick(get_available_sounds(sounds_for_rank, victim, parent))
+	var/datum/dialogue_sound/sound = pick_available_sound(sounds_for_rank, victim, parent)
 	sound?.delayed_play(victim, parent, 3 SECONDS)
 
 /datum/component/dialogue_system/contractor_gun/proc/on_mode_changed(obj/item/gun/energy/gauss_rifle/source, mob/living/user, obj/item/ammo_casing/energy/new_mode)
 	SIGNAL_HANDLER
 
 	var/list/sounds_for_mode = mode_swap_sounds_by_ammo_type?[new_mode.type]
-	var/datum/dialogue_sound/sound = pick(get_available_sounds(sounds_for_mode, user, parent))
+	var/datum/dialogue_sound/sound = pick_available_sound(sounds_for_mode, user, parent)
 	sound?.play(user, parent)
