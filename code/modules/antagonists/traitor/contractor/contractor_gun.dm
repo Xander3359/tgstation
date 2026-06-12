@@ -25,15 +25,17 @@
 		/obj/item/ammo_casing/energy/gauss/thermite,
 	)
 	force = 11
+	/// If TRUE, scope art stretches fullscreen. If FALSE, it renders centered.
+	var/scope_overlay_stretches = FALSE
 	var/atom/movable/screen/gauss_ammo_display/ammo_display
 
 /obj/item/gun/energy/gauss_rifle/Initialize(mapload)
 	. = ..()
-	AddComponent(/datum/component/scope, range_modifier = 4, fullscreen_icon = "contractor_scope")
+	AddComponent(/datum/component/scope, range_modifier = 4, fullscreen_icon = "gauss_scope", tracker_type = /atom/movable/screen/fullscreen/cursor_catcher/scope/gauss)
 	AddComponent(/datum/component/dialogue_system/contractor_gun)
 	AddElement(/datum/element/empprotection, EMP_PROTECT_ALL)
 	ammo_display = new()
-	RegisterSignal(ammo_display, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, TYPE_PROC_REF(/atom/movable/screen/gauss_ammo_display, on_gun_ammo_changed))
+	ammo_display.RegisterSignal(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, TYPE_PROC_REF(/atom/movable/screen/gauss_ammo_display, on_gun_ammo_changed))
 	var/matrix/offset = matrix()
 	offset.Translate(-16, 0)
 	transform = offset
@@ -62,14 +64,33 @@
 	SEND_SIGNAL(src, COMSIG_GAUSS_RIFLE_MODE_CHANGED, user, current_ammo)
 	emit_ammo_signal()
 
+/obj/item/gun/energy/gauss_rifle/try_fire_gun(atom/target, mob/living/user, params)
+	var/obj/item/ammo_casing/energy/gauss/current_ammo = ammo_type[select]
+	if(current_ammo?.requires_scope_to_fire && !HAS_TRAIT(user, TRAIT_USER_SCOPED))
+		balloon_alert(user, "must be scoped!")
+		return ITEM_INTERACT_BLOCKING
+	return ..()
+
+/obj/item/gun/energy/gauss_rifle/proc/get_current_mode_prefix()
+	var/obj/item/ammo_casing/energy/current_ammo = ammo_type[select]
+	return current_ammo?.select_name || "normal"
+
+/obj/item/gun/energy/gauss_rifle/proc/get_scope_icon_state(mode_prefix)
+	var/state = "[mode_prefix]_scope_hollow"
+	if(icon_exists('code/modules/antagonists/traitor/contractor/icons/contractor_gun_hud.dmi', state))
+		return state
+	return "normal_scope_hollow"
+
 /obj/item/gun/energy/gauss_rifle/proc/emit_ammo_signal()
 	var/obj/item/ammo_casing/energy/current_ammo = ammo_type[select]
+	var/mode_prefix = current_ammo?.select_name || "normal"
 	if(!cell || !current_ammo || current_ammo.e_cost <= 0)
-		SEND_SIGNAL(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, 0, 0)
+		SEND_SIGNAL(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, 0, 0, mode_prefix)
 		return
 	SEND_SIGNAL(src, COMSIG_GAUSS_RIFLE_AMMO_CHANGED, \
-		clamp(FLOOR(cell.charge / current_ammo.e_cost, 1), 0, 9), \
-		clamp(FLOOR(cell.maxcharge / current_ammo.e_cost, 1), 0, 9))
+		clamp(FLOOR(cell.charge / current_ammo.e_cost, 1), 0, 10), \
+		clamp(FLOOR(cell.maxcharge / current_ammo.e_cost, 1), 0, 10), \
+		mode_prefix)
 
 /obj/item/gun/energy/gauss_rifle/examine_more(mob/user)
 	. = ..()
@@ -188,6 +209,8 @@
 	caliber = CALIBER_GAUSS
 	projectile_type = /obj/projectile/bullet/gauss
 	select_name = "standard"
+	/// If TRUE, this mode requires being scoped to fire.
+	var/requires_scope_to_fire = FALSE
 
 /obj/item/ammo_casing/energy/gauss/emp
 	name = "smart EMP gauss round"
@@ -228,6 +251,7 @@
 	icon_state = "antimatter"
 	projectile_type = /obj/projectile/bullet/gauss/antimatter
 	select_name = "antimatter"
+	requires_scope_to_fire = TRUE
 
 /obj/item/ammo_casing/energy/gauss/thermite
 	name = "red sun gauss round"
@@ -294,6 +318,9 @@
 	armour_penetration = 100
 	speed = 3
 	wound_bonus = 40
+	hitscan = TRUE
+	tracer_type = /obj/effect/projectile/tracer/gauss_antimatter
+	tracer_use_pixel_scale = TRUE
 	embed_type = null
 
 /obj/projectile/bullet/gauss/antimatter/on_hit(atom/target, blocked, pierce_hit)

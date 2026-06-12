@@ -34,6 +34,7 @@
 	var/x_offset = source.loc.x - oldloc.x
 	var/y_offset = source.loc.y - oldloc.y
 	given_turf = locate(given_turf.x+x_offset, given_turf.y+y_offset, given_turf.z)
+	testing("Cursor catcher moved to [given_turf] at offset [x_offset],[y_offset]")
 
 /// Update when our screen size changes
 /atom/movable/screen/fullscreen/cursor_catcher/proc/on_viewdata_update(datum/source, view)

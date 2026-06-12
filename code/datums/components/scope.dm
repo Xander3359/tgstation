@@ -7,6 +7,8 @@
 	var/range_modifier = 1
 	/// Fullscreen object we use for tracking.
 	var/atom/movable/screen/fullscreen/cursor_catcher/scope/tracker
+	/// Scope tracker type to instantiate when zooming.
+	var/tracker_type = /atom/movable/screen/fullscreen/cursor_catcher/scope
 	/// The owner of the tracker's ckey. For comparing with the current owner mob, in case the client has left it (e.g. ghosted).
 	var/tracker_owner_ckey
 	/// The method which we zoom in and out
@@ -16,13 +18,14 @@
 	/// fullscreen icon to use for the scope overlay, defaults to "scope"
 	var/fullscreen_icon = "scope"
 
-/datum/component/scope/Initialize(range_modifier = 1, zoom_method = ZOOM_METHOD_RIGHT_CLICK, item_action_type, fullscreen_icon = "scope")
+/datum/component/scope/Initialize(range_modifier = 1, zoom_method = ZOOM_METHOD_RIGHT_CLICK, item_action_type, fullscreen_icon = "scope", tracker_type = /atom/movable/screen/fullscreen/cursor_catcher/scope)
 	if(!isitem(parent))
 		return COMPONENT_INCOMPATIBLE
 	src.range_modifier = range_modifier
 	src.zoom_method = zoom_method
 	src.item_action_type = item_action_type
 	src.fullscreen_icon = fullscreen_icon
+	src.tracker_type = tracker_type
 
 /datum/component/scope/Destroy(force)
 	if(tracker)
@@ -168,8 +171,8 @@
 		user.balloon_alert(user, "already zoomed!")
 		return
 	user.playsound_local(parent, 'sound/items/weapons/scope.ogg', 75, TRUE)
-	tracker = user.overlay_fullscreen(fullscreen_icon, /atom/movable/screen/fullscreen/cursor_catcher/scope, isgun(parent))
-	tracker.assign_to_mob(user, range_modifier)
+	tracker = user.overlay_fullscreen(fullscreen_icon, tracker_type, isgun(parent))
+	tracker.assign_to_mob(user, range_modifier, parent)
 	tracker_owner_ckey = user.ckey
 	if(user.is_holding(parent))
 		RegisterSignals(user, list(COMSIG_MOB_SWAP_HANDS, COMSIG_QDELETING), PROC_REF(stop_zooming))

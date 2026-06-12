@@ -156,6 +156,8 @@
 
 	/// Hitscan tracer effect left behind the projectile
 	var/tracer_type
+	/// If TRUE, set PIXEL_SCALE on spawned hitscan tracer effects.
+	var/tracer_use_pixel_scale = FALSE
 	/// Hitscan muzzle effect spawned on the firer
 	var/muzzle_type
 	/// Hitscan impact effect spawned on the target
@@ -1196,6 +1198,13 @@
 	var/datum/point/end_point = beam_points[start_point]
 	var/datum/point/midpoint = point_midpoint_points(start_point, end_point)
 	var/obj/effect/projectile/tracer/tracer_effect = new tracer_type(midpoint.return_turf())
+	if(tracer_use_pixel_scale)
+		tracer_effect.appearance_flags |= PIXEL_SCALE
+	else
+		tracer_effect.appearance_flags &= ~PIXEL_SCALE
+	if(istype(tracer_effect, /obj/effect/projectile/tracer/segmented))
+		var/obj/effect/projectile/tracer/segmented/segmented_tracer = tracer_effect
+		segmented_tracer.use_pixel_scale = tracer_use_pixel_scale
 	tracer_effect.apply_vars(
 		angle_override = angle_between_points(start_point, end_point),
 		p_x = midpoint.pixel_x,
