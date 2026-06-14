@@ -64,13 +64,6 @@
 	SEND_SIGNAL(src, COMSIG_GAUSS_RIFLE_MODE_CHANGED, user, current_ammo)
 	emit_ammo_signal()
 
-/obj/item/gun/energy/gauss_rifle/try_fire_gun(atom/target, mob/living/user, params)
-	var/obj/item/ammo_casing/energy/gauss/current_ammo = ammo_type[select]
-	if(current_ammo?.requires_scope_to_fire && !HAS_TRAIT(user, TRAIT_USER_SCOPED))
-		balloon_alert(user, "must be scoped!")
-		return ITEM_INTERACT_BLOCKING
-	return ..()
-
 /obj/item/gun/energy/gauss_rifle/proc/get_current_mode_prefix()
 	var/obj/item/ammo_casing/energy/current_ammo = ammo_type[select]
 	return current_ammo?.select_name || "normal"
@@ -210,7 +203,6 @@
 	projectile_type = /obj/projectile/bullet/gauss
 	select_name = "standard"
 	/// If TRUE, this mode requires being scoped to fire.
-	var/requires_scope_to_fire = FALSE
 
 /obj/item/ammo_casing/energy/gauss/emp
 	name = "smart EMP gauss round"
@@ -251,7 +243,6 @@
 	icon_state = "antimatter"
 	projectile_type = /obj/projectile/bullet/gauss/antimatter
 	select_name = "antimatter"
-	requires_scope_to_fire = TRUE
 
 /obj/item/ammo_casing/energy/gauss/thermite
 	name = "red sun gauss round"
