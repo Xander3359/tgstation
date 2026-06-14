@@ -3,6 +3,8 @@
 	icon = 'icons/obj/weapons/guns/projectiles_tracer.dmi'
 	/// If TRUE, apply PIXEL_SCALE to this tracer's spawned segment effects.
 	var/use_pixel_scale = FALSE
+	/// handled in code/modules/projectiles/projectile.dm:127
+	var/delete_in = PROJECTILE_TRACER_DURATION
 
 /obj/effect/projectile/tracer/laser
 	name = "laser"
@@ -131,13 +133,15 @@
 	QDEL_LIST(beam_cap_effects)
 	return ..()
 
+
 // GAUSS ANTIMATTER
 /obj/effect/projectile/tracer/gauss_antimatter
 	parent_type = /obj/effect/projectile/tracer/segmented
 	icon = 'icons/obj/weapons/guns/antimatter_beam.dmi'
 	mid_icon_state = "antimatter-mid"
 	start_icon_state = "antimatter-start"
-	end_icon_state = "antimatter-squashed"
+	end_icon_state = "antimatter-end"
+	delete_in = 1.3 SECONDS
 
 // BEAM RIFLE
 /obj/effect/projectile/tracer/tracer/beam_rifle

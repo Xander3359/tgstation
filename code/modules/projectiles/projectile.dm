@@ -1214,7 +1214,7 @@
 	)
 	SET_PLANE_EXPLICIT(tracer_effect, GAME_PLANE, src)
 
-	QDEL_IN(tracer_effect, PROJECTILE_TRACER_DURATION)
+	QDEL_IN_CLIENT_TIME(tracer_effect, tracer_effect.delete_in)
 
 	if (!hitscan_light_range || !hitscan_light_intensity)
 		return
@@ -1224,7 +1224,7 @@
 		if (passed_turfs[light_turf])
 			continue
 		passed_turfs[light_turf] = TRUE
-		QDEL_IN(new /obj/effect/abstract/projectile_lighting(light_turf, hitscan_light_color_override || color, hitscan_light_range, hitscan_light_intensity), PROJECTILE_TRACER_DURATION)
+		QDEL_IN_CLIENT_TIME(new /obj/effect/abstract/projectile_lighting(light_turf, hitscan_light_color_override || color, hitscan_light_range, hitscan_light_intensity), tracer_effect.delete_in)
 
 /**
  * Aims the projectile at a target.
