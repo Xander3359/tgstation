@@ -29,8 +29,10 @@
 	var/ex_heavy = 2
 	var/ex_light = 4
 	var/ex_flame = 2
-	/// If true, will end the round
+	/// If true, the explosion is tripled in size
 	var/is_nuclear = FALSE
+	/// Cached base64 mugshot of the owner, generated for the detonation suite UI
+	var/cached_mugshot
 
 /obj/item/contractor_bomb/Initialize(mapload)
 	. = ..()
@@ -236,10 +238,10 @@
 /// Causes an explosion and eradicates our explodee from existence
 /obj/item/contractor_bomb/proc/try_detonate()
 	if(is_nuclear)
-		ex_dev = 20
-		ex_heavy = 40
-		ex_light = 60
-		ex_flame = 60
+		ex_dev *= 3
+		ex_heavy *= 3
+		ex_light *= 3
+		ex_flame *= 3
 
 	var/obj/item/organ/brain/to_delete = locate(/obj/item/organ/brain) in owner.organs
 	if(to_delete)
@@ -259,6 +261,104 @@
 
 	else
 		. = det_time
+
+/// Arms the bomb, starting the countdown to detonation. Cannot be disarmed once armed.
+/obj/item/contractor_bomb/proc/arm()
+	if(active)
+		return FALSE
+	active = TRUE
+	detonation_timer = world.time + det_time
+	next_beep = world.time
+	START_PROCESSING(SSobj, src)
+	if(!isnull(owner))
+		owner.investigate_log("had their contractor bomb implant remotely armed.", INVESTIGATE_DEATHS)
+		message_admins("[ADMIN_LOOKUPFLW(owner)]'s contractor bomb implant was remotely armed at [ADMIN_VERBOSEJMP(owner)].")
+	return TRUE
+
+/// Builds a base64 mugshot of the owner for the detonation suite UI, cached after first use.
+/obj/item/contractor_bomb/proc/get_mugshot()
+	if(!isnull(cached_mugshot))
+		return cached_mugshot
+	if(isnull(owner))
+		return null
+	var/mutable_appearance/portrait = new(owner)
+	portrait.dir = SOUTH
+	cached_mugshot = icon2base64(getFlatIcon(portrait))
+	return cached_mugshot
+
+/// Returns a list of fluff vitals + status for the detonation suite UI.
+/// Blood pressure, blood oxygen and pulse are simulated from blood volume and
+/// crit state with a little randomization - it is flavor, not a real readout.
+/obj/item/contractor_bomb/proc/to_ui_data()
+	var/list/data = list(
+		"ref" = REF(src),
+		"armed" = active,
+		"nuclear" = is_nuclear,
+		"time_left" = active ? max(0, detonation_timer - world.time) : 0,
+		"fuse_length" = det_time,
+		"mugshot" = get_mugshot(),
+	)
+
+	var/mob/living/carbon/human/victim = owner
+	if(!istype(victim))
+		data["name"] = "Signal Lost"
+		data["rank"] = "Unknown"
+		data["location"] = "Unknown"
+		data["dead"] = TRUE
+		data["stat_text"] = "NO SIGNAL"
+		data["blood_pressure"] = "--/--"
+		data["blood_oxygen"] = 0
+		data["pulse"] = 0
+		data["brute"] = 0
+		data["burn"] = 0
+		data["tox"] = 0
+		data["oxy"] = 0
+		data["max_health"] = 100
+		return data
+
+	var/is_dead = (victim.stat == DEAD)
+	var/blood_pct = clamp(round((victim.blood_volume / BLOOD_VOLUME_NORMAL) * 100), 0, 100)
+	var/oxy = round(victim.get_oxy_loss())
+	// Health as a 0..1 vitality factor blending blood volume and overall health.
+	var/vitality = clamp(((blood_pct / 100) + (victim.health / victim.maxHealth)) / 2, 0, 1)
+
+	data["name"] = victim.real_name
+	data["rank"] = victim.mind?.assigned_role?.title || victim.job || "Unknown"
+	data["location"] = get_area_name(victim, format_text = TRUE) || "Unknown"
+	data["dead"] = is_dead
+	data["brute"] = round(victim.get_brute_loss())
+	data["burn"] = round(victim.get_fire_loss())
+	data["tox"] = round(victim.get_tox_loss())
+	data["oxy"] = oxy
+	data["max_health"] = victim.maxHealth
+
+	switch(victim.stat)
+		if(CONSCIOUS)
+			data["stat_text"] = "CONSCIOUS"
+		if(SOFT_CRIT)
+			data["stat_text"] = "PAIN CRIT"
+		if(UNCONSCIOUS, HARD_CRIT)
+			data["stat_text"] = "CRITICAL"
+		if(DEAD)
+			data["stat_text"] = "FLATLINE"
+		else
+			data["stat_text"] = "UNKNOWN"
+
+	if(is_dead)
+		data["blood_pressure"] = "0/0"
+		data["blood_oxygen"] = 0
+		data["pulse"] = 0
+		return data
+
+	// Pulse climbs as vitality drops (shock/tachycardia), with a little jitter.
+	data["pulse"] = clamp(round(64 + (1 - vitality) * 90 + rand(-4, 4)), 0, 220)
+	// Blood oxygen saturation falls with blood loss and oxygen damage.
+	data["blood_oxygen"] = clamp(round(99 - (100 - blood_pct) * 0.4 - oxy * 0.3 + rand(-2, 2)), 0, 100)
+	// Systolic / diastolic pressures scale with vitality.
+	var/systolic = clamp(round(118 * vitality + 12 + rand(-6, 6)), 0, 200)
+	var/diastolic = clamp(round(76 * vitality + 8 + rand(-4, 4)), 0, 140)
+	data["blood_pressure"] = "[systolic]/[diastolic]"
+	return data
 
 /datum/contractor_wire
 	var/name = "cable"

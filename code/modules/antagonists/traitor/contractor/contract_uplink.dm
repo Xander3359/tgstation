@@ -65,7 +65,6 @@
 	. = ..()
 	if(isnull(handler))
 		handler = new()
-	handler.add_uplink(src)
 	RegisterSignal(parent, COMSIG_MODULE_USED, PROC_REF(relay_ui))
 
 /// Opens the UI for the mob that activated the mod module
@@ -78,6 +77,7 @@
 	. = ..()
 	var/datum/antagonist/traitor/traitor_user = IS_TRAITOR(user)
 	if(!isnull(traitor_user) && isnull(traitor_user.uplink_handler.contractor_state))
+		handler.add_uplink(src)
 		traitor_user.uplink_handler.contractor_state = new()
 		user.playsound_local(user, 'sound/music/antag/contractstartup.ogg', 100, FALSE)
 

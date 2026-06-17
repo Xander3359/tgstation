@@ -314,22 +314,20 @@
 	var/obj/item/contractor_bomb/new_bomb = new(victim)
 
 // XANTODO Make the code here just a bomb proc
-	new_bomb.active = TRUE // XANTODO, the bomb is normally not active until externally activated
+	new_bomb.owner = victim
 	var/icon/target_icon = icon(victim.icon, victim.icon_state)
 	target_icon.Blend(icon(new_bomb.icon, new_bomb.icon_state), ICON_OVERLAY)
 	//var/mutable_appearance/victim_image = mutable_appearance(target_icon)
 	new_bomb.forceMove(victim.get_bodypart(BODY_ZONE_CHEST))
 	new_bomb.plastic_overlay.layer = FLOAT_LAYER
 	victim.add_overlay(new_bomb.plastic_overlay)
-	new_bomb.detonation_timer = world.time + new_bomb.det_time
-	new_bomb.next_beep = world.time
-	START_PROCESSING(SSobj, new_bomb)
 
 	// XANTODO: Unfuck the bomb implanting
 	// After the bomb is created, we add it to the contractor's uplink. If the uplink is destroyed, we just arm the bomb immediately.
-	var/datum/contractor_state/uplink = contractor_uplink.resolve()
+	var/datum/contractor_state/uplink = contractor_uplink?.resolve()
 	if(!uplink)
-		// Forcibly arm the bomb here XANTODO
+		// No uplink to control it remotely, so it arms itself right away.
+		new_bomb.arm()
 		return
 
 	uplink.bomb_implants += new_bomb

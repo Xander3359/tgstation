@@ -65,5 +65,56 @@
 	imp_type = /obj/item/implant/explosive/contractor
 
 /obj/item/implant/explosive/contractor
-	actions_types = list(/datum/action/item_action/explosive_implant)
+	actions_types = list(/datum/action/item_action/contractor_detonator)
 	hidden_implant = TRUE
+
+/// Opens the remote detonation suite instead of self-detonating like a normal explosive implant.
+/obj/item/implant/explosive/contractor/ui_action_click(mob/user, actiontype)
+	if(istype(actiontype, /datum/action/item_action/contractor_detonator))
+		ui_interact(imp_in)
+		return
+	return ..()
+
+/// Resolves the contractor state (and its tracked bomb implants) belonging to the implantee.
+/obj/item/implant/explosive/contractor/proc/get_contractor_state()
+	var/datum/antagonist/traitor/traitor = imp_in?.mind?.has_antag_datum(/datum/antagonist/traitor)
+	return traitor?.uplink_handler?.contractor_state
+
+/obj/item/implant/explosive/contractor/ui_state(mob/user)
+	return GLOB.conscious_state
+
+/obj/item/implant/explosive/contractor/ui_interact(mob/user, datum/tgui/ui)
+	ui = SStgui.try_update_ui(user, src, ui)
+	if(!ui)
+		ui = new(user, src, "BombImplantDetonator")
+		ui.set_autoupdate(TRUE)
+		ui.open()
+
+/obj/item/implant/explosive/contractor/ui_data(mob/user)
+	var/list/data = list()
+	var/list/bombs = list()
+	var/datum/contractor_state/state = get_contractor_state()
+	for(var/obj/item/contractor_bomb/bomb as anything in state?.bomb_implants)
+		if(QDELETED(bomb))
+			continue
+		bombs += list(bomb.to_ui_data())
+	data["bombs"] = bombs
+	return data
+
+/obj/item/implant/explosive/contractor/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
+	. = ..()
+	if(.)
+		return
+	switch(action)
+		if("arm")
+			var/datum/contractor_state/contractor_state = get_contractor_state()
+			var/obj/item/contractor_bomb/bomb = locate(params["ref"]) in contractor_state?.bomb_implants
+			if(QDELETED(bomb) || bomb.active)
+				return TRUE
+			bomb.arm()
+			return TRUE
+
+/datum/action/item_action/contractor_detonator
+	name = "Remote Detonation Suite"
+	check_flags = NONE
+
