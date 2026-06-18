@@ -312,15 +312,7 @@
 /// Donates a bomb to our willing research participant
 /datum/syndicate_contract/proc/donate_bomb(mob/living/victim)
 	var/obj/item/contractor_bomb/new_bomb = new(victim)
-
-// XANTODO Make the code here just a bomb proc
-	new_bomb.owner = victim
-	var/icon/target_icon = icon(victim.icon, victim.icon_state)
-	target_icon.Blend(icon(new_bomb.icon, new_bomb.icon_state), ICON_OVERLAY)
-	//var/mutable_appearance/victim_image = mutable_appearance(target_icon)
-	new_bomb.forceMove(victim.get_bodypart(BODY_ZONE_CHEST))
-	new_bomb.plastic_overlay.layer = FLOAT_LAYER
-	victim.add_overlay(new_bomb.plastic_overlay)
+	new_bomb.on_planted(victim)
 
 	// XANTODO: Unfuck the bomb implanting
 	// After the bomb is created, we add it to the contractor's uplink. If the uplink is destroyed, we just arm the bomb immediately.

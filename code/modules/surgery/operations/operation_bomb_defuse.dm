@@ -6,12 +6,14 @@
 		TOOL_HEMOSTAT = 2.25,
 		TOOL_WIRECUTTER = 0.25,
 		/obj/item/kitchen/fork = 0.01,
-		/obj/item/nuke_core = 1.25,
 	)
 	time = 8 SECONDS
 	preop_sound = 'sound/items/handling/surgery/retractor1.ogg'
 	success_sound = 'sound/items/handling/surgery/retractor2.ogg'
 	all_surgery_states_required = SURGERY_SKIN_OPEN|SURGERY_ORGANS_CUT
+
+/datum/surgery_operation/limb/contractor_bomb_defusal/get_default_radial_image()
+	return image(icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_bomb.dmi', icon_state = "bomb_hatch_open")
 
 /datum/surgery_operation/limb/contractor_bomb_defusal/all_required_strings()
 	return list("the patient must have an implanted bomb") + ..()
@@ -31,32 +33,6 @@
 		)
 		return
 
-	if(istype(tool, /obj/item/nuke_core) || istype(tool, /obj/item/nuke_core_container))
-		display_results(
-			surgeon,
-			limb.owner,
-			span_notice("You start transferring the nuke core into the bomb"),
-			span_notice("[surgeon] begins inserting a nuke core inside the bomb's core"), // ANNETODO
-			span_notice("[surgeon] begins inserting a nuke core inside the bomb's core"), // ANNETODO
-		)
-		return
-
-	display_results(
-		surgeon,
-		limb.owner,
-		span_notice("You begin to stretch [limb.owner]'s windpipe, trying your best to avoid nearby blood vessels..."),
-		span_notice("[surgeon] begins to stretch [limb.owner]'s windpipe, taking care to avoid any nearby blood vessels."),
-		span_notice("[surgeon] begins to stretch [limb.owner]'s windpipe."),
-	)
-	display_pain(limb.owner, "You feel an agonizing stretching sensation in your neck!")
-
-/datum/surgery_operation/limb/contractor_bomb_defusal/tool_check(obj/item/tool)
-	if(istype(tool, /obj/item/nuke_core_container))
-		var/obj/item/nuke_core_container/container
-		if(!container.core)
-			return FALSE
-	return ..()
-
 /datum/surgery_operation/limb/contractor_bomb_defusal/on_success(obj/item/bodypart/limb, mob/living/surgeon, obj/item/tool, list/operation_args)
 	var/obj/item/contractor_bomb/bomb = locate() in limb.contents
 	if(!bomb)
@@ -74,19 +50,11 @@
 		qdel(tool)
 		return
 
-	if(istype(tool, /obj/item/nuke_core))
-		bomb.transfer_core(tool)
-		return
-	if(istype(tool, /obj/item/nuke_core_container))
-		var/obj/item/nuke_core_container/container = tool
-		bomb.transfer_core(container.core)
-		return
-
 	display_results(
 		surgeon,
 		limb.owner,
-		span_notice("You stretch [limb.owner]'s windpipe with [tool], managing to avoid the nearby blood vessels."),
-		span_notice("[surgeon] succeeds at stretching [limb.owner]'s windpipe with [tool], avoiding the nearby blood vessels."),
-		span_notice("[surgeon] finishes stretching [limb.owner]'s windpipe.")
+		span_notice("You begin to mess around with the electronics within the bomb."),
+		span_notice("[surgeon] begins to mess with the wires inside the bomb, opening the hatch to get better access."),
+		span_notice("[surgeon] begins to mess with the wires trapped inside the bomb."),
 	)
 	bomb.perform_defusal(surgeon)

@@ -1,4 +1,5 @@
-import React, {
+import type React from 'react';
+import {
   Component,
   CSSProperties,
   useCallback,
@@ -20,8 +21,13 @@ import { resolveAsset } from '../assets';
 import { useBackend } from '../backend';
 
 import { Window } from '../layouts';
+import {
+  type ItemExtraData,
+  Uplink,
+  type UplinkData,
+  type UplinkState,
+} from './Uplink';
 import { GenericUplink } from './Uplink/GenericUplink';
-import { ItemExtraData, Uplink, UplinkData, UplinkState } from './Uplink';
 import '../styles/interfaces/ContractorUplink.scss';
 
 enum EXTRACTION_TYPE {
@@ -122,7 +128,7 @@ export class ContractorUplink extends Uplink {
   }
 }
 
-let loadedMugshots = false;
+const loadedMugshots = false;
 
 function TabView(props: TabViewProps) {
   const { act } = useBackend();
@@ -172,10 +178,6 @@ function TabView(props: TabViewProps) {
         />
       ),
     },
-    {
-      title: 'Bomb Menu',
-      content: <BombMenu />,
-    },
   ];
 
   const onTabSelect = (tab: number) => {
@@ -208,17 +210,6 @@ function TabView(props: TabViewProps) {
 
 function MissionInfo(props) {
   return <div>Mission Info</div>;
-}
-
-function BombMenu(props: PrimaryObjectiveMenuProps) {
-  const {
-    bounty_targets,
-    low_bounty = 0,
-    high_bounty = 30,
-    refresh_time = 0,
-  } = props;
-  const { act } = useBackend();
-  return <></>;
 }
 
 function BountyTargets(props: PrimaryObjectiveMenuProps) {
@@ -332,7 +323,7 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
         Bounty Targets
       </Box>
       {`${refresh_time > 0 ? 'Next refresh in: ' : 'No active refresh timer.'} `}
-      <TimeDisplay value={refresh_time}></TimeDisplay>
+      <TimeDisplay value={refresh_time} />
 
       {targetsElements.length > 0 ? (
         targetsElements
