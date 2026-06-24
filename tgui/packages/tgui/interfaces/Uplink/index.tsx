@@ -371,21 +371,7 @@ export class Uplink extends Component<any, UplinkState> {
               null}
           </>
         ),
-        cost: (
-          <Box>
-            {item.cost_override_string || `${item.cost} TC`}
-            {has_progression ? (
-              <>
-                ,&nbsp;
-                <Box as="span">
-                  {calculateDangerLevel(item.progression_minimum, true)}
-                </Box>
-              </>
-            ) : (
-              ''
-            )}
-          </Box>
-        ),
+        cost: this.costDisplay(item, !!has_progression),
         population_tooltip:
           'This item is not cleared for operations performed against stations crewed by fewer than ' +
           item.population_minimum +
@@ -404,5 +390,24 @@ export class Uplink extends Component<any, UplinkState> {
       });
     }
     return items;
+  }
+
+  // Cost shown on each purchase button. Overridable so themed uplinks can swap the currency.
+  costDisplay(item: UplinkItem, hasProgression: boolean) {
+    return (
+      <Box>
+        {item.cost_override_string || `${item.cost} TC`}
+        {hasProgression ? (
+          <>
+            ,&nbsp;
+            <Box as="span">
+              {calculateDangerLevel(item.progression_minimum, true)}
+            </Box>
+          </>
+        ) : (
+          ''
+        )}
+      </Box>
+    );
   }
 }

@@ -159,16 +159,8 @@ const ItemList = (props: ItemListProps) => {
             <Section key={item.name} fitted={!!compactMode}>
               <Stack>
                 <Stack.Item>
-                  <Box
-                    width={compactMode ? '32px' : '64px'}
-                    height={compactMode ? '32px' : '64px'}
-                    position="relative"
-                    m={compactMode ? '2px' : 0}
-                    mr={1}
-                  >
+                  <Box className="UplinkItemIcon" inline mr={1}>
                     <DmIcon
-                      position="absolute"
-                      bottom="0"
                       fallback={fallback}
                       icon={item.icon}
                       icon_state={item.icon_state}

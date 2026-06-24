@@ -1,0 +1,61 @@
+// Shared contractor uplink styling — Bounty Targets + Marketplace.
+
+// Bordered dark block with hover, reused by target cards and market items.
+@mixin contractor-card {
+  border: var(--main-border-size) solid var(--main-border-color);
+  border-radius: var(--main-border-radius);
+  background: var(--tabs-container-background);
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--tab-background-selected);
+  }
+}
+
+.theme-contractor {
+  // Topbar coin readout (passed via Window `buttons`).
+  .ContractorCoin {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    vertical-align: middle;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #ac3f00;
+    color: #ffe9a8;
+    font-size: 0.85em;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+
+    // coin1.png is a 32x32 sprite at native size (sharp), but its art only fills the
+    // middle ~16px. Negative vertical margins stop that height from growing the button -
+    // the empty padding just overflows the line instead.
+    &__icon {
+      margin: -8px 4px -6px 0;
+      vertical-align: middle;
+    }
+  }
+
+  .ContractorTitle {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #f1aa03;
+  }
+
+  .ContractorSubtle {
+    font-size: 0.85em;
+    color: #db7317;
+
+    // teal accent on the countdown
+    &__time {
+      color: #2af6bc;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .ContractorCard {
+    @include contractor-card;
+  }
+}

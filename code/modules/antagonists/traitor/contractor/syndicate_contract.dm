@@ -23,23 +23,24 @@
 	var/is_head = FALSE
 	/// The reference to the uplink handler that we will be adding the bomb to if the victim receives one
 	var/datum/weakref/contractor_uplink
+	/// Cached names of safe-dropoff areas that exist on this map. Static: areas don't change midround, so it's built once and shared.
+	var/static/list/valid_safe_dropoffs
 
 /datum/syndicate_contract/proc/to_ui_data()
-	var/area/safe_dropoffs = list()
-	for(var/area/area as anything in GLOB.safe_dropoff_areas)
-		safe_dropoffs += area::name
 	var/area/normal_dropoff = contract.dropoffs[CONTRACTOR_DROPOFF_UNSAFE]
 	var/area/dangerous_dropoff = contract.dropoffs[CONTRACTOR_DROPOFF_DANGEROUS]
+	var/mob/target_mob = contract.target?.current
 	return list(
 		"name" = contract.target?.name || "Unknown Target",
 		"is_head" = is_head,
 		"status" = status,
 		"target_rank" = target_rank,
+		"location" = target_mob ? (get_area_name(target_mob, format_text = TRUE) || "Unknown") : "Unknown",
 		"tc_reward" = contract.payout,
 		"credit_reward" = ransom,
 		"payout_bonus" = contract.payout_bonus,
 		"wanted_message" = wanted_message,
-		"dropoff_location_safe" = safe_dropoffs,
+		"dropoff_location_safe" = valid_safe_dropoffs,
 		"dropoff_location_unsafe" = normal_dropoff?.name,
 		"dropoff_location_dangerous" = dangerous_dropoff?.name,
 		"mugshot_icon" = cached_image,
@@ -49,6 +50,14 @@
 /datum/syndicate_contract/New(blacklist, type = CONTRACT_PAYOUT_SMALL)
 	contract = new(src)
 	payout_type = type
+
+	if(isnull(valid_safe_dropoffs))
+		valid_safe_dropoffs = list()
+		for(var/area/area_type as anything in GLOB.safe_dropoff_areas)
+			for(var/nested_type in typesof(area_type))
+				if(GLOB.areas_by_type[nested_type])
+					valid_safe_dropoffs += area_type::name
+					break
 
 	generate(blacklist)
 	var/mob/target_mob = contract?.target?.current
@@ -83,7 +92,7 @@
 	else
 		contract.payout_bonus = rand(2,4)
 
-	contract.payout = rand(0, 2)
+	contract.payout = rand(1, 2) // floor of 1 so a contract never reads as 0 TC
 	contract.generate_dropoff()
 
 	ransom = 100 * rand(18, 45)
@@ -312,22 +321,6 @@
 /// Donates a bomb to our willing research participant
 /datum/syndicate_contract/proc/donate_bomb(mob/living/victim)
 	var/obj/item/contractor_bomb/new_bomb = new(victim)
-
-// XANTODO Make the code here just a bomb proc
-	new_bomb.owner = victim
-	var/icon/target_icon = icon(victim.icon, victim.icon_state)
-	target_icon.Blend(icon(new_bomb.icon, new_bomb.icon_state), ICON_OVERLAY)
-	//var/mutable_appearance/victim_image = mutable_appearance(target_icon)
-	new_bomb.forceMove(victim.get_bodypart(BODY_ZONE_CHEST))
-	new_bomb.plastic_overlay.layer = FLOAT_LAYER
-	victim.add_overlay(new_bomb.plastic_overlay)
-
-	// XANTODO: Unfuck the bomb implanting
-	// After the bomb is created, we add it to the contractor's uplink. If the uplink is destroyed, we just arm the bomb immediately.
-	var/datum/contractor_state/uplink = contractor_uplink?.resolve()
-	if(!uplink)
-		// No uplink to control it remotely, so it arms itself right away.
-		new_bomb.arm()
-		return
-
-	uplink.bomb_implants += new_bomb
+	// Hand the bomb our contractor state so it can be detonated remotely; if there's no uplink
+	// left to control it, attach_to() arms it immediately instead.
+	new_bomb.attach_to(victim, contractor_uplink?.resolve())

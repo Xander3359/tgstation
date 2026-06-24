@@ -5,7 +5,7 @@
 	///List of all people currently used as targets, to not roll doubles.
 	var/list/assigned_targets = list()
 	/// Time in seconds between contract refreshes.
-	var/refresh_time = 20 MINUTES
+	var/refresh_time = 10 MINUTES
 	/// list of uplinks that need to be updated when contracts change, also used to decide if we want to refresh contracts
 	var/list/linked_uplinks = list()
 	/// timer for refreshing contracts
@@ -39,6 +39,7 @@
 
 /datum/contractor_hub/proc/refresh_contracts()
 	create_contracts()
+	get_highest_lowest()
 	wait_for_refresh()
 	refresh_uplink_data()
 

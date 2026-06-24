@@ -114,6 +114,16 @@
 			bomb.arm()
 			return TRUE
 
+		if("defuse")
+			var/datum/contractor_state/contractor_state = get_contractor_state()
+			var/obj/item/contractor_bomb/bomb = locate(params["ref"]) in contractor_state?.bomb_implants
+			// Can only be defused before it's armed - once the fuse is running there's no calling it off.
+			if(QDELETED(bomb) || bomb.active || QDELETED(bomb.owner))
+				return TRUE
+			contractor_state.bomb_implants -= bomb
+			bomb.defuse()
+			return TRUE
+
 /datum/action/item_action/contractor_detonator
 	name = "Remote Detonation Suite"
 	check_flags = NONE
