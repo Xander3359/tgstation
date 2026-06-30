@@ -12,6 +12,12 @@ import { resolveAsset } from '../assets';
 import { useBackend } from '../backend';
 
 import { Window } from '../layouts';
+import {
+  type ItemExtraData,
+  Uplink,
+  type UplinkData,
+  type UplinkState,
+} from './Uplink';
 import { GenericUplink } from './Uplink/GenericUplink';
 import {
   ItemExtraData,

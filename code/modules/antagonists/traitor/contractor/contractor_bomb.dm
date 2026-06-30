@@ -3,6 +3,8 @@
 	desc = "ANNETODO"
 	icon = 'code/modules/antagonists/traitor/contractor/icons/contractor_bomb.dmi'
 	icon_state = "bomb"
+	/// The icon state for the bomb that is planted on a mob
+	var/planted_icon_state = "mob_bomb"
 	/// What the charge is stuck to
 	var/mob/living/carbon/human/owner = null
 	/// Is the bomb counting down?
@@ -29,18 +31,24 @@
 	var/ex_heavy = 2
 	var/ex_light = 4
 	var/ex_flame = 2
-	/// If true, the explosion is tripled in size
+	/// If true, the explosion is tripled in size and bypasses maxcap restriction
 	var/is_nuclear = FALSE
 	/// Cached base64 mugshot of the owner, generated for the detonation suite UI
 	var/cached_mugshot
 
 /obj/item/contractor_bomb/Initialize(mapload)
 	. = ..()
-	plastic_overlay = mutable_appearance(icon, "Mob bombactivated", HIGH_OBJ_LAYER)
+	plastic_overlay = mutable_appearance(icon, planted_icon_state, HIGH_OBJ_LAYER)
 	for(var/datum/contractor_wire/new_cable as anything in subtypesof(/datum/contractor_wire))
 		cable_icons += list(new_cable.name = image(icon = new_cable.cable_icon, icon_state = new_cable.cable_icon_state))
 		cable_list += list(new_cable.name = new new_cable(src))
 	add_cable_functions()
+
+/obj/item/contractor_bomb/update_icon_state()
+	. = ..()
+	if(active)
+		icon_state = "bomb_active"
+		planted_icon_state = "mob_" + icon_state
 
 /// Assign a function to several cables (Leaving the rest as empty duds)
 /obj/item/contractor_bomb/proc/add_cable_functions()
@@ -117,6 +125,43 @@
 		update_appearance()
 		try_detonate(TRUE)
 
+/// Plants the bomb on our victim and adds it to the contractor's bomb UI
+/obj/item/contractor_bomb/proc/attach_to(mob/living/carbon/human/victim, datum/contractor_state/controlling_state)
+	owner = victim
+	forceMove(victim.get_bodypart(BODY_ZONE_CHEST))
+	plastic_overlay.layer = FLOAT_LAYER
+	victim.add_overlay(plastic_overlay)
+	RegisterSignal(victim, COMSIG_ATOM_ITEM_INTERACTION, PROC_REF(on_item_interact))
+
+	if(isnull(controlling_state))
+		arm()
+		return
+
+	controlling_state.bomb_implants += src
+
+/// Lets you install a nuclear core if the victim is clicked on with the core/container while the bomb is glued on
+/obj/item/contractor_bomb/proc/on_item_interact(atom/source, mob/living/user, obj/item/tool, list/modifiers)
+	SIGNAL_HANDLER
+
+	if(istype(tool, /obj/item/nuke_core))
+		INVOKE_ASYNC(src, PROC_REF(install_core), user, tool, source)
+		return ITEM_INTERACT_SUCCESS
+
+	else if(istype(tool, /obj/item/nuke_core_container))
+		var/obj/item/nuke_core_container/container = tool
+		INVOKE_ASYNC(src, PROC_REF(install_core), user, container.core, source)
+		return ITEM_INTERACT_SUCCESS
+
+	else
+		return NONE
+
+/// Installs the nuke core into the bomb after a do_after
+/obj/item/contractor_bomb/proc/install_core(mob/living/user, obj/item/nuke_core/core, atom/target)
+	if(!do_after(user, 5 SECONDS, target))
+		return
+	transfer_core(core)
+
+// XANTODO: SECOND REMINDER THIS WHOLE PROC IS PLACEHOLDER JUST FOR TESTING SHIT OUT DO NOT LEAVE THIS IN
 // XANTODO : Currently sticking the bomb on someone by stealing C4 code, should be done automatically when the victim is kidnapped
 /obj/item/contractor_bomb/interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
 	if(!ishuman(interacting_with))
@@ -135,7 +180,7 @@
 	if(!user.temporarilyRemoveItemFromInventory(src))
 		return FALSE
 	owner = bomb_target
-	active = TRUE
+	//active = TRUE
 
 	message_admins("[ADMIN_LOOKUPFLW(user)] planted [name] on [owner.name] at [ADMIN_VERBOSEJMP(owner)] with [det_time] second fuse")
 	user.log_message("planted [name] on [owner.name] with a [det_time] second fuse.", LOG_ATTACK)
@@ -157,19 +202,10 @@
 	detonation_timer = world.time + det_time
 	next_beep = world.time
 	START_PROCESSING(SSobj, src)
+	RegisterSignal(bomb_target, COMSIG_ATOM_ITEM_INTERACTION, PROC_REF(on_item_interact))
 	return TRUE
-
-/obj/item/contractor_bomb/proc/attach_to(mob/living/carbon/human/victim, datum/contractor_state/controlling_state)
-	owner = victim
-	forceMove(victim.get_bodypart(BODY_ZONE_CHEST))
-	plastic_overlay.layer = FLOAT_LAYER
-	victim.add_overlay(plastic_overlay)
-
-	if(isnull(controlling_state))
-		arm()
-		return
-
-	controlling_state.bomb_implants += src
+// XANTODO: SECOND REMINDER THIS WHOLE PROC IS PLACEHOLDER JUST FOR TESTING SHIT OUT DO NOT LEAVE THIS IN
+// DON'T LEAVE THIS IN  ^^^^^^^^^^^^^^^^^^^^^
 
 /// Sticking a fork in the bomb has very interesting results
 /obj/item/contractor_bomb/proc/get_forked()
@@ -187,15 +223,38 @@
 	is_nuclear = TRUE
 	qdel(core)
 
-/// The bomb defusal minigame
-/obj/item/contractor_bomb/proc/perform_defusal(mob/surgeon)
-	var/selection = show_radial_menu(surgeon, owner, cable_icons, require_near = TRUE)
+/// Begins defusing the bomb
+/obj/item/contractor_bomb/proc/perform_defusal(mob/defuser)
+	if(active) // If the bomb is already active, we are more lenient
+		defusal_loop(defuser)
+		return
+
+	// ANNETODO: Maybe you want a better prompt?
+	if(tgui_alert(defuser, "Are you sure you want to attempt to defuse the bomb while inactive? The difficulty will be higher", "Attempt Defuse?", list("Try my luck", "Cancel"), 10 SECONDS) != "Try my luck")
+		return
+	// Arms the bomb and gives you the negative effects of cutting a bomb wire. It effectively means you still have 2 explosive cables but only need to hit 1 to explode
+	arm()
+	bad_defusal = TRUE
+	ex_dev = 5
+	ex_heavy = 10
+	ex_light = 20
+	ex_flame = 20
+	detonation_timer = world.time + 30 SECONDS
+	defusal_loop(defuser)
+
+/// Shows the radial menu, performs the cut on the selected wire
+/obj/item/contractor_bomb/proc/defusal_loop(mob/defuser)
+	var/selection = show_radial_menu(defuser, owner, cable_icons, require_near = TRUE)
 	if(!selection)
 		return
 	var/datum/contractor_wire/chosen_wire = cable_list[selection]
 	if(chosen_wire.cut)
 		return
-	cable_icons -= selection
+	cut_wire(chosen_wire)
+
+/// Cuts the selected wire, will perform effects based on the wire (or be a dud)
+/obj/item/contractor_bomb/proc/cut_wire(datum/contractor_wire/chosen_wire, mob/defuser)
+	cable_icons -= chosen_wire.name
 
 	if(chosen_wire.explosive_cable)
 		//XANTODO DEBUG
@@ -230,16 +289,14 @@
 	chosen_wire.cable_icon_state = initial(chosen_wire.cable_icon_state) + "_cut"
 	chosen_wire.cut = TRUE
 	cable_icons += list(chosen_wire.name = image(icon = chosen_wire.cable_icon, icon_state = chosen_wire.cable_icon_state))
-	surgeon.playsound_local(surgeon, 'sound/items/tools/wirecutter.ogg', 50, 0)
+	defuser.playsound_local(defuser, 'sound/items/tools/wirecutter.ogg', 50, 0)
 	if(active)
-		perform_defusal(surgeon) // Loop until defusal, cancellation or explosion
+		defusal_loop(defuser) // Loop until defusal, cancellation or explosion
 
 /obj/item/contractor_bomb/proc/defuse()
 	active = FALSE
-	//examinable_countdown = TRUE
 	detonation_timer = null
 	next_beep = null
-	//countdown.stop()
 	STOP_PROCESSING(SSobj, src)
 	owner.cut_overlay(plastic_overlay)
 	owner.updateappearance(UPDATE_OVERLAYS)
@@ -250,10 +307,12 @@
 /// Causes an explosion and eradicates our explodee from existence
 /obj/item/contractor_bomb/proc/try_detonate()
 	if(is_nuclear)
-		ex_dev *= 3
-		ex_heavy *= 3
-		ex_light *= 3
-		ex_flame *= 3
+		// These values are hard set instead of being x3, because it is forced to be the maximum size variant.
+		// I don't want to see a contractor add a nuke core to the bomb just for it to be 1 deva *3
+		ex_dev = 20
+		ex_heavy = 40
+		ex_light = 60
+		ex_flame = 60
 
 	var/obj/item/organ/brain/to_delete = locate(/obj/item/organ/brain) in owner.organs
 	if(to_delete)
@@ -270,7 +329,6 @@
 /obj/item/contractor_bomb/proc/seconds_remaining()
 	if(active)
 		. = max(0, round((detonation_timer - world.time) / 10))
-
 	else
 		. = det_time
 
