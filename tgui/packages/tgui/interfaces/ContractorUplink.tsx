@@ -1,18 +1,9 @@
-import type React from 'react';
-import {
-  Component,
-  CSSProperties,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
 import {
   Box,
   Button,
   Dimmer,
+  Icon,
   Image,
-  NoticeBox,
   Stack,
   Tabs,
   TimeDisplay,
@@ -28,6 +19,13 @@ import {
   type UplinkState,
 } from './Uplink';
 import { GenericUplink } from './Uplink/GenericUplink';
+import {
+  ItemExtraData,
+  Uplink,
+  UplinkData,
+  UplinkItem,
+  UplinkState,
+} from './Uplink';
 import '../styles/interfaces/ContractorUplink.scss';
 
 enum EXTRACTION_TYPE {
@@ -59,6 +57,7 @@ type BountyTargets = {
   is_head?: boolean;
   status?: string;
   target_rank?: string;
+  location?: string;
   tc_reward?: number;
   credit_reward?: number;
   payout_bonus?: number;
@@ -78,10 +77,17 @@ type BombList = {
 type Tab = {
   title: string;
   content: React.ReactNode;
+  // Right-hand hint shown in the shared footer while this tab is open.
+  footer: React.ReactNode;
   onSelect?: () => void;
 };
 
 export class ContractorUplink extends Uplink {
+  // Contractors pay in coins, labelled as such instead of a "TC" suffix.
+  costDisplay(item: UplinkItem) {
+    return <Box>{item.cost_override_string || `${item.cost} Coins`}</Box>;
+  }
+
   render() {
     const { data } = useBackend<ContractorUplinkData & UplinkData>();
     const { shop_locked } = data;
@@ -128,8 +134,6 @@ export class ContractorUplink extends Uplink {
   }
 }
 
-const loadedMugshots = false;
-
 function TabView(props: TabViewProps) {
   const { act } = useBackend();
   const {
@@ -148,6 +152,7 @@ function TabView(props: TabViewProps) {
     {
       title: 'Mission Info',
       content: <MissionInfo />,
+      footer: 'Orders are final once accepted',
     },
     {
       title: 'Bounty Targets',
@@ -159,24 +164,36 @@ function TabView(props: TabViewProps) {
           refresh_time={refresh_time}
         />
       ),
+      footer: 'Complete contracts alive for the full payout bonus',
       onSelect: () => act('show_mugshots'),
     },
     {
       title: 'Marketplace',
       content: (
-        <GenericUplink
-          currency={`${telecrystals} Coins`}
-          categories={allCategories ?? []}
-          items={items}
-          handleBuy={(item: ItemExtraData) => {
-            if (!item.extraData?.ref) {
-              act('buy', { path: item.id });
-            } else {
-              act('buy', { ref: item.extraData.ref });
+        <Box className="ContractorMarket" height="100%">
+          <GenericUplink
+            currency={
+              <>
+                <Image
+                  className="ContractorCoin__icon"
+                  src={resolveAsset('coin1.png')}
+                />
+                {telecrystals} Coins
+              </>
             }
-          }}
-        />
+            categories={allCategories ?? []}
+            items={items}
+            handleBuy={(item: ItemExtraData) => {
+              if (!item.extraData?.ref) {
+                act('buy', { path: item.id });
+              } else {
+                act('buy', { ref: item.extraData.ref });
+              }
+            }}
+          />
+        </Box>
       ),
+      footer: 'Coins refund on contract completion',
     },
   ];
 
@@ -204,6 +221,13 @@ function TabView(props: TabViewProps) {
       <Stack.Item overflowY="auto" grow>
         {tabs[currentTab].content}
       </Stack.Item>
+
+      <Stack.Item>
+        <Box className="ContractorFooter">
+          <Box as="span">Contractor Support Unit &middot; Secure Channel</Box>
+          <Box as="span">{tabs[currentTab].footer}</Box>
+        </Box>
+      </Stack.Item>
     </Stack>
   );
 }
@@ -226,20 +250,16 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
       type: EXTRACTION_TYPE.Safe,
       description:
         "Static location that doesn't provide additional rewards, bring your target to arrivals, departures, solar arrays or lavaland to extract your target.",
-      backgroundColor: 'green',
     },
     {
       type: EXTRACTION_TYPE.Unsafe,
       description:
         'RNG, any non secure area on the station, grants a small bonus of coins.',
-      backgroundColor: 'yellow',
-      color: 'black',
     },
     {
       type: EXTRACTION_TYPE.Dangerous,
       description:
         'Usually a highly restricted area, provides the biggest reward.',
-      backgroundColor: 'red',
     },
   ];
 
@@ -257,79 +277,128 @@ function BountyTargets(props: PrimaryObjectiveMenuProps) {
 
   const targetsElements =
     bounty_targets?.map((target, index) => (
-      <Box
-        key={index}
-        className="ContractorBorder ContractorBlock"
-        p={1}
-        mb={1}
-        align="center"
-        style={{ display: 'flex' }}
-      >
-        <Box mr={2}>
+      <Box key={index} className="BountyTarget">
+        <Box className="BountyTarget__mug">
           <Image
             width="128px"
             height="128px"
             src={`data:image/jpeg;base64,${target.mugshot_icon}`}
           />
         </Box>
-        <Stack m={1}>
-          <Box>
-            <Box fontWeight="bold" fontSize={1.2} mb={0.5}>
+        <Stack vertical>
+          <Stack.Item>
+            <Box className="BountyTarget__name">
               {target.name}
+              {!!target.is_head && (
+                <Box as="span" className="BountyTarget__headtag">
+                  Head of Staff
+                </Box>
+              )}
             </Box>
-            {!!target.tc_reward && (
-              <Box style={{ display: 'flex', alignItems: 'center' }}>
-                Reward: {target.tc_reward}
+            <Box className="BountyTarget__rank">{target.target_rank}</Box>
+            <Box className="BountyTarget__loc">
+              <Icon name="location-dot" mr={0.5} />
+              {target.location}
+            </Box>
+          </Stack.Item>
+
+          {!!target.tc_reward && (
+            <Stack.Item>
+              <Box className="BountyTarget__reward">
+                Reward: <b>{target.tc_reward}</b>
                 <Image
                   height="32px"
                   src={resolveAsset(
                     `coin${BountyRange(target.tc_reward, low_bounty, high_bounty)}.png`,
                   )}
-                />{' '}
-                and {target.credit_reward} Credits
+                />
               </Box>
-            )}
-          </Box>
-          <Box>
-            <h2>Choose Extraction Type</h2>
-            {extractionInfo.map((info) => (
-              <Box key={info.type} mb={1}>
-                <Button
-                  style={{
-                    backgroundColor: info.backgroundColor,
-                    color: info.color ?? 'white',
-                  }}
-                  onClick={() => {
-                    act('call_extraction', {
-                      extraction_type: info.type,
-                      contract_id: target.contract_id,
-                      target: target.name,
-                    });
-                  }}
-                  tooltip={`${info.description}\n\n ${dropoffLocationMessage(target, info.type as EXTRACTION_TYPE)}`}
-                >
-                  {info.type.charAt(0).toUpperCase() + info.type.slice(1)}
-                </Button>
+            </Stack.Item>
+          )}
+
+          {!!target.wanted_message && (
+            <Stack.Item>
+              <Box className="BountyTarget__wanted">
+                {target.wanted_message}
               </Box>
-            ))}
-          </Box>
+            </Stack.Item>
+          )}
+
+          <Stack.Item>
+            <Box className="BountyTarget__extract-title" mb={0.5}>
+              Choose Extraction Type
+            </Box>
+            <Stack>
+              {extractionInfo.map((info) => (
+                <Stack.Item grow key={info.type}>
+                  <Button
+                    fluid
+                    textAlign="center"
+                    className={`BountyExtract BountyExtract--${info.type}`}
+                    onClick={() => {
+                      act('call_extraction', {
+                        extraction_type: info.type,
+                        contract_id: target.contract_id,
+                        target: target.name,
+                      });
+                    }}
+                    tooltip={`${info.description}\n\n ${dropoffLocationMessage(target, info.type as EXTRACTION_TYPE)}`}
+                  >
+                    {info.type.charAt(0).toUpperCase() + info.type.slice(1)}
+                  </Button>
+                </Stack.Item>
+              ))}
+            </Stack>
+          </Stack.Item>
         </Stack>
       </Box>
     )) ?? [];
 
   return (
-    <Box p={2} overflow="auto" height="100%">
-      <Box fontSize={1.5} fontWeight="bold" mb={1}>
-        Bounty Targets
-      </Box>
-      {`${refresh_time > 0 ? 'Next refresh in: ' : 'No active refresh timer.'} `}
-      <TimeDisplay value={refresh_time} />
+    <Stack vertical fill>
+      <Stack.Item>
+        <Box p={2} pb={0}>
+          <Box className="ContractorTitle" mb={0.5}>
+            Bounty Targets
+          </Box>
+          <Box className="ContractorSubtle">
+            {refresh_time > 0
+              ? 'Next refresh in: '
+              : 'No active refresh timer. '}
+            <Box as="span" className="ContractorSubtle__time">
+              <TimeDisplay value={refresh_time} />
+            </Box>
+          </Box>
+        </Box>
+      </Stack.Item>
 
-      {targetsElements.length > 0 ? (
-        targetsElements
-      ) : (
-        <NoticeBox>No current bounty targets available.</NoticeBox>
-      )}
+      <Stack.Item grow>
+        <Box p={2} pt={1} height="100%" overflowY="auto">
+          {targetsElements.length > 0 ? (
+            <>{targetsElements}</>
+          ) : (
+            <ContractorEmpty />
+          )}
+        </Box>
+      </Stack.Item>
+    </Stack>
+  );
+}
+
+function ContractorEmpty() {
+  return (
+    <Box className="ContractorEmpty">
+      <Icon name="crosshairs" size={4} className="ContractorEmpty__icon" />
+      <Box className="ContractorEmpty__title">No Active Bounties</Box>
+      <Box className="ContractorEmpty__body">
+        No bounty targets are currently assigned to your uplink. Fresh dossiers
+        are issued automatically each cycle &mdash; check back after the next
+        refresh.
+      </Box>
+      <Box className="ContractorEmpty__hint">
+        <Box as="span" className="ContractorEmpty__pulse" />
+        Awaiting target dossiers&hellip;
+      </Box>
     </Box>
   );
 }

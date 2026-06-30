@@ -201,6 +201,18 @@
 	RegisterSignal(bomb_target, COMSIG_ATOM_ITEM_INTERACTION, PROC_REF(on_item_interact))
 	return TRUE
 
+/obj/item/contractor_bomb/proc/attach_to(mob/living/carbon/human/victim, datum/contractor_state/controlling_state)
+	owner = victim
+	forceMove(victim.get_bodypart(BODY_ZONE_CHEST))
+	plastic_overlay.layer = FLOAT_LAYER
+	victim.add_overlay(plastic_overlay)
+
+	if(isnull(controlling_state))
+		arm()
+		return
+
+	controlling_state.bomb_implants += src
+
 /// Sticking a fork in the bomb has very interesting results
 /obj/item/contractor_bomb/proc/get_forked()
 	bad_defusal = TRUE

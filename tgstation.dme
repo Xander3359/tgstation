@@ -3624,6 +3624,7 @@
 #include "code\modules\antagonists\traitor\contractor\contractor_bomb.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_case.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_dart_module.dm"
+#include "code\modules\antagonists\traitor\contractor\contractor_debug.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_gun.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_gun_hud.dm"
 #include "code\modules\antagonists\traitor\contractor\contractor_hub.dm"

@@ -47,31 +47,33 @@ export function BombImplantDetonator() {
   const armedCount = bombs.filter((bomb) => bomb.armed).length;
 
   return (
-    <Window width={620} height={620} theme="contractor">
+    <Window
+      width={620}
+      height={620}
+      theme="contractor"
+      buttons={
+        <Stack>
+          <Stack.Item>
+            <Box className="DetonatorPill">Implants linked: {bombs.length}</Box>
+          </Stack.Item>
+          <Stack.Item>
+            <Box className="DetonatorPill DetonatorPill--danger">
+              Armed: {armedCount}
+            </Box>
+          </Stack.Item>
+        </Stack>
+      }
+    >
       <Window.Content scrollable className="DetonatorContent">
         <Stack vertical fill>
           <Stack.Item>
             <Section className="DetonatorHeader">
-              <Stack align="center">
-                <Stack.Item grow>
-                  <Box className="DetonatorHeader__title">
-                    Remote Detonation Suite
-                  </Box>
-                  <Box className="DetonatorHeader__subtitle">
-                    Contractor Implant &middot; Secure Uplink
-                  </Box>
-                </Stack.Item>
-                <Stack.Item>
-                  <Box className="DetonatorPill">
-                    Implants linked: {bombs.length}
-                  </Box>
-                </Stack.Item>
-                <Stack.Item>
-                  <Box className="DetonatorPill DetonatorPill--danger">
-                    Armed: {armedCount}
-                  </Box>
-                </Stack.Item>
-              </Stack>
+              <Box className="DetonatorHeader__title">
+                Remote Detonation Suite
+              </Box>
+              <Box className="DetonatorHeader__subtitle">
+                Contractor Implant &middot; Secure Uplink
+              </Box>
             </Section>
           </Stack.Item>
 
@@ -148,7 +150,11 @@ function BombCard(props: { bomb: BombData }) {
 
         {/* Detonation column */}
         <Stack.Item>
-          <Detonation bomb={bomb} onArm={() => act('arm', { ref: bomb.ref })} />
+          <Detonation
+            bomb={bomb}
+            onArm={() => act('arm', { ref: bomb.ref })}
+            onDefuse={() => act('defuse', { ref: bomb.ref })}
+          />
         </Stack.Item>
       </Stack>
 
@@ -242,8 +248,12 @@ function DamageBar(props: {
   );
 }
 
-function Detonation(props: { bomb: BombData; onArm: () => void }) {
-  const { bomb, onArm } = props;
+function Detonation(props: {
+  bomb: BombData;
+  onArm: () => void;
+  onDefuse: () => void;
+}) {
+  const { bomb, onArm, onDefuse } = props;
   const imminent = bomb.armed && bomb.time_left <= 600;
   const fuse = bomb.fuse_length || 1;
   const fraction = bomb.armed
@@ -265,7 +275,7 @@ function Detonation(props: { bomb: BombData; onArm: () => void }) {
         }}
       >
         <Box className="Detonation__ringInner">
-          <Box className="Detonation__label">Time to Detonation</Box>
+          <Box className="Detonation__label">Detonation Time</Box>
           <Box
             className={`Detonation__timer ${
               bomb.armed
@@ -307,6 +317,22 @@ function Detonation(props: { bomb: BombData; onArm: () => void }) {
           Arm Implant
         </Button>
       )}
+
+      <Button
+        fluid
+        textAlign="center"
+        className="Detonation__defuse"
+        icon="scissors"
+        disabled={bomb.armed}
+        tooltip={
+          bomb.armed
+            ? 'The fuse is locked — this implant can no longer be defused once armed.'
+            : 'Defuse and disable this implant. Only possible before it is armed.'
+        }
+        onClick={onDefuse}
+      >
+        Defuse
+      </Button>
     </Box>
   );
 }
