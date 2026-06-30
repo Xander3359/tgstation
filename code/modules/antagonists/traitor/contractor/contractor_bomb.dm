@@ -125,15 +125,19 @@
 		update_appearance()
 		try_detonate(TRUE)
 
-/// Plants the bomb on our victim
-/obj/item/contractor_bomb/proc/on_planted(mob/living/victim)
+/// Plants the bomb on our victim and adds it to the contractor's bomb UI
+/obj/item/contractor_bomb/proc/attach_to(mob/living/carbon/human/victim, datum/contractor_state/controlling_state)
 	owner = victim
-	var/icon/target_icon = icon(victim.icon, victim.icon_state)
-	target_icon.Blend(icon(icon, planted_icon_state), ICON_OVERLAY)
 	forceMove(victim.get_bodypart(BODY_ZONE_CHEST))
 	plastic_overlay.layer = FLOAT_LAYER
 	victim.add_overlay(plastic_overlay)
 	RegisterSignal(victim, COMSIG_ATOM_ITEM_INTERACTION, PROC_REF(on_item_interact))
+
+	if(isnull(controlling_state))
+		arm()
+		return
+
+	controlling_state.bomb_implants += src
 
 /// Lets you install a nuclear core if the victim is clicked on with the core/container while the bomb is glued on
 /obj/item/contractor_bomb/proc/on_item_interact(atom/source, mob/living/user, obj/item/tool, list/modifiers)
@@ -200,18 +204,8 @@
 	START_PROCESSING(SSobj, src)
 	RegisterSignal(bomb_target, COMSIG_ATOM_ITEM_INTERACTION, PROC_REF(on_item_interact))
 	return TRUE
-
-/obj/item/contractor_bomb/proc/attach_to(mob/living/carbon/human/victim, datum/contractor_state/controlling_state)
-	owner = victim
-	forceMove(victim.get_bodypart(BODY_ZONE_CHEST))
-	plastic_overlay.layer = FLOAT_LAYER
-	victim.add_overlay(plastic_overlay)
-
-	if(isnull(controlling_state))
-		arm()
-		return
-
-	controlling_state.bomb_implants += src
+// XANTODO: SECOND REMINDER THIS WHOLE PROC IS PLACEHOLDER JUST FOR TESTING SHIT OUT DO NOT LEAVE THIS IN
+// DON'T LEAVE THIS IN  ^^^^^^^^^^^^^^^^^^^^^
 
 /// Sticking a fork in the bomb has very interesting results
 /obj/item/contractor_bomb/proc/get_forked()
